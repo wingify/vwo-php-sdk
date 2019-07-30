@@ -1,4 +1,12 @@
-{   "name": "vwo/vwo",
+{   "name": "vwo/vwo-sdk",
+    "keywords": ["vwo", "sdk"],
+    "license": "MIT",
+    "authors": [
+    {
+      "name": "VWO developers",
+      "email": "dev@wingify.com"
+    }
+    ],
     "description": "VWO server side sdk",
     "require": {
         "monolog/monolog": "1.0.*",
