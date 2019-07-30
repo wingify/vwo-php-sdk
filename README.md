@@ -1,4 +1,4 @@
-# vwo-sdk-server-side
+# VWO PHP SDK
 
 VWO server side sdk helps in integrating you integrating the vwo features in backend.
 Using the sdk you can fetch the campaigns , variations and goals which you have configured 
