@@ -59,12 +59,12 @@ Class VWO
      * @var static variables for log levels
      */
 
-    var static $LOG_LEVEL_DEBUG=100;
-    var static $LOG_LEVEL_INFO=200;
-    var static $LOG_LEVEL_WARNINGG=300;
-    var static $LOG_LEVEL_ERROR=400;
-    var static $LOG_LEVEL_CRITICAL=500;
-    var static $LOG_LEVEL_ALERT=550;
+    static $LOG_LEVEL_DEBUG = 100;
+    static $LOG_LEVEL_INFO = 200;
+    static $LOG_LEVEL_WARNINGG = 300;
+    static $LOG_LEVEL_ERROR = 400;
+    static $LOG_LEVEL_CRITICAL = 500;
+    static $LOG_LEVEL_ALERT = 550;
 
     /**
      * VWO constructor for the VWO sdk.
@@ -86,7 +86,7 @@ Class VWO
         $this->development_mode=(isset($config['isDevelopmentMode']) && $config['isDevelopmentMode']== 1)?1:0;
 
         if ($logger == null) {
-            self::$_logger = new DefaultLogger(Logger::DEBUG, 'stdin'); //stdout
+            self::$_logger = new DefaultLogger(Logger::ERROR, 'php://stdout'); 
         } elseif($logger instanceof LoggerInterface) {
             self::$_logger = $logger;
             self::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['CUSTOM_LOGGER_USED']);

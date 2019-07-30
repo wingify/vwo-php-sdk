@@ -12,7 +12,7 @@ One can also send the goal track data to vwo app to check the conversions on the
 ## Installation
 Install the latest version with
 ```text
-$ composer require vwo/vwo
+$ composer require vwo/vwo-php-sdk
 ```
 
 ## Basic Usage
@@ -36,10 +36,10 @@ $goalIdentifier='LOREM';
 
 
 // to fetch the settings i.e campaigns, variations and goals 
-$settings=VWO::getSettings($account_id,$sdk_key);
+$settings=VWO::getSettingsFile($account_id,$sdk_key);
 $config=['settings'=>$settings,
     'isDevelopmentMode'=>0,  // optional: 1 to enable the dev mode 
-    'logger'=>new CustomLogger(), // optional 
+    'logging'=>new CustomLogger(), // optional 
     'userProfileService'=> new userProfile() // optional
 ];
 
