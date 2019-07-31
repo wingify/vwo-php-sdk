@@ -21,28 +21,8 @@ final class VWOTest extends TestCase
     private $variationResults='';
 
 
-
-
-
-    /**
-     *
-     */
-//    public function testTrackOnSuccess()
-//    {
-//        $this->vwotest = new VWO('60781','ea87170ad94079aa190bc7c9b85d26fb');
-//        $result = $this->vwotest->trackGoal('FIRST','sshkshskjhs','REVENUE1');
-//        $this->assertEquals(["status"=>"success"], $result);
-//    }
-//
-//    public function testTrackOnFailure()
-//    {
-//        $this->vwotest = new VWO('60781','ea87170ad94079aa190bc7c9b85d26fb');
-//        $result = $this->vwotest->trackGoal('FIRSTq','sshkshskjhs','REVENUE1');
-//        $this->assertEquals(False, $result);
-//    }
-
     private function getUsers() {
-         $users = [
+        $users = [
             'Ashley',
             'Bill',
             'Chris',
@@ -78,7 +58,7 @@ final class VWOTest extends TestCase
      * @return mixed
      */
     private function getRandomUser() {
-         $users = $this->getUsers();
+        $users = $this->getUsers();
 
         return $users[rand(0,25)];
     }
@@ -167,7 +147,7 @@ final class VWOTest extends TestCase
             for ($i=0;$i<26;$i++){
                 try{
                     $userId=$users[$i];
-                    $goalname=$this->$setting['campaigns'][0]['goals'][0]['identifier'];
+                    $goalname=$config['settingsFile']['campaigns'][0]['goals'][0]['identifier'];
                     $result=$this->vwotest->track($campaignName,$userId,$goalname);
                     $expected=ucfirst($this->variationResults[$campaignName][$userId]);
                     if($expected == null){
