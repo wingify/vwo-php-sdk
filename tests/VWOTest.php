@@ -108,7 +108,7 @@ final class VWOTest extends TestCase
         for ($devtest=1;$devtest<7;$devtest++){
             $setting='settingsArr'.$devtest;
             $config=[
-                'settings'=>$this->$setting,
+                'settingsFile'=>$this->$setting,
                 'isDevelopmentMode'=>1
             ];
             $this->vwotest = new VWO($config);
@@ -126,13 +126,13 @@ final class VWOTest extends TestCase
             }
         }
     }
-/*
+
     public function testGetVariation()
     {
         for ($devtest=1;$devtest<7;$devtest++){
             $setting='settingsArr'.$devtest;
             $config=[
-                'settings'=>$this->$setting,
+                'settingsFile'=>$this->$setting,
                 'isDevelopmentMode'=>1
             ];
             $this->vwotest = new VWO($config);
@@ -158,7 +158,7 @@ final class VWOTest extends TestCase
         for ($devtest=1;$devtest<7;$devtest++){
             $setting='settingsArr'.$devtest;
             $config=[
-                'settings'=>$this->$setting,
+                'settingsFile'=>$this->$setting,
                 'isDevelopmentMode'=>1
             ];
             $this->vwotest = new VWO($config);
@@ -184,5 +184,5 @@ final class VWOTest extends TestCase
     }
 
 
-*/
+
 }

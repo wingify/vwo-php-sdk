@@ -2,7 +2,7 @@
 namespace vwo;
 Class Settings5{
  var $setting = [
-  'sdkKey'=> 'loremIpsum123456789',
+  'sdkKey'=> 'loremipsum123456',
   'campaigns'=> [
     [
       'goals'=> [
