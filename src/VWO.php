@@ -75,7 +75,6 @@ Class VWO
     function __construct($config)
     {
         if (!is_array($config)) {
-            self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['INVALID_CONFIGURATION']);
             return (object)[];
         }
         // is settings and logger files are provided then set the values to the object

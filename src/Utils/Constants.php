@@ -12,6 +12,10 @@ class Constants
     /**
      * base url for api hit
      */
+    const SDK_VERSION = '1.0.3';
+    /**
+     * base url for api hit
+     */
     const BASE_URL = 'https://dev.visualwebsiteoptimizer.com/server-side/';
     /**
      * query string to fetch settings
