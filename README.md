@@ -1,6 +1,6 @@
 # VWO PHP SDK
 
-[![Latest Stable Version](https://img.shields.io/packagist/v/vwo/vwo-php-sdk.svg)](https://packagist.org/packages/wingify/vwo-php-sdk) [![Build Status](http://img.shields.io/travis/wingify/vwo-php-sdk/master.svg?style=flat)](http://travis-ci.org/wingify/vwo-php-sdk) [![Coverage Status](https://coveralls.io/repos/github/wingify/vwo-php-sdk/badge.svg?branch=master)](https://coveralls.io/github/wingify/vwo-php-sdk?branch=master)
+[![Latest Stable Version](https://img.shields.io/packagist/v/vwo/vwo-php-sdk.svg)](https://packagist.org/packages/vwo/vwo-php-sdk) [![Build Status](http://img.shields.io/travis/wingify/vwo-php-sdk/master.svg?style=flat)](http://travis-ci.org/wingify/vwo-php-sdk) [![Coverage Status](https://coveralls.io/repos/github/wingify/vwo-php-sdk/badge.svg?branch=master)](https://coveralls.io/github/wingify/vwo-php-sdk?branch=master)
 
 VWO server side sdk helps in integrating you integrating the vwo features in backend.
 Using the sdk you can fetch the campaigns , variations and goals which you have configured
