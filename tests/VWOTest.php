@@ -144,8 +144,6 @@ class VWOTest extends TestCase
         ];
         $obj=new VWO($config);
         $obj->activate('LOREM','Ian');
-        $obj->isFeatureEnabled('LOREM','Ian');
-
         $this->assertEquals($expected, $result);
     }
 
