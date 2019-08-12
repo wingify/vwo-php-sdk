@@ -3,12 +3,61 @@ namespace vwo;
 use phpDocumentor\Reflection\Types\Void_;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Util\Exception;
+use vwo\Utils\UserProfileInterface;
+use vwo\Logger\LoggerInterface;
+
+/**
+ * Class CustomLogger
+ */
+Class CustomLogger implements LoggerInterface{
+
+    /**
+     * @param $message
+     * @param $level
+     * @return string
+     */
+    public function addLog($message,$level){
+        //do code for writing logs to your files/databases
+        //throw new Exception('my test');
+        //return $x;
+
+    }
+
+}
+
+Class UserProfileTest implements UserProfileInterface{
+
+    /**
+     * @param $userId
+     * @param $campaignName
+     * @return string
+     */
+    public function lookup($userId,$campaignName){
+        // xyz actions
+        return[
+            'userId'=>$userId,
+            $campaignName=>['variationName'=>'Control']
+        ];
+
+    }
+
+    /**
+     * @param $campaignInfo
+     * @return bool
+     */
+    public function save($campaignInfo){
+        // print_r($campaignInfo);
+        return True;
+
+    }
+
+}
 
 /***
  * Class VWOTest
  * @package vwo
  */
-final class VWOTest extends TestCase
+class VWOTest extends TestCase
 {
 
     private $vwotest;
@@ -83,13 +132,29 @@ final class VWOTest extends TestCase
 
     }
 
+    public function testGetSettings(){
+        $accountId='12345';
+        $sdkKey='1111111111111111111111';
+        $result=VWO::getSettingsFile($accountId,$sdkKey);
+        $expected=False;
+        $obj=new VWO('');
+        $config=[
+            'settingsFile'=>$this->settingsArr1,
+            'isDevelopmentMode'=>1
+        ];
+        $obj=new VWO($config);
+        $obj->activate('LOREM','Ian');
+        $this->assertEquals($expected, $result);
+    }
+
+
     public function testActivate()
     {
         for ($devtest=1;$devtest<7;$devtest++){
             $setting='settingsArr'.$devtest;
             $config=[
                 'settingsFile'=>$this->$setting,
-                'isDevelopmentMode'=>1
+                'isDevelopmentMode'=>0
             ];
             $this->vwotest = new VWO($config);
             $campaignName='DEV_TEST_'.$devtest;
@@ -106,14 +171,13 @@ final class VWOTest extends TestCase
             }
         }
     }
-
     public function testGetVariation()
     {
         for ($devtest=1;$devtest<7;$devtest++){
             $setting='settingsArr'.$devtest;
             $config=[
                 'settingsFile'=>$this->$setting,
-                'isDevelopmentMode'=>1
+                'isDevelopmentMode'=>0
             ];
             $this->vwotest = new VWO($config);
             $campaignName='DEV_TEST_'.$devtest;
@@ -139,7 +203,7 @@ final class VWOTest extends TestCase
             $setting='settingsArr'.$devtest;
             $config=[
                 'settingsFile'=>$this->$setting,
-                'isDevelopmentMode'=>1
+                'isDevelopmentMode'=>0
             ];
             $this->vwotest = new VWO($config);
             $campaignName='DEV_TEST_'.$devtest;
@@ -163,6 +227,27 @@ final class VWOTest extends TestCase
         }
     }
 
-
-
+    public function testTrackForUser()
+    {
+        $setting='settingsArr1';
+        $config=[
+            'settingsFile'=>$this->$setting,
+            'isDevelopmentMode'=>0,
+            'logging'=>new CustomLogger(),
+            'userProfileService'=> new userProfileTest()
+        ];
+        $this->vwotest = new VWO($config);
+        $campaignName='DEV_TEST_1';
+        $users=$this->getUsers();
+        $userId=$users[0];
+        $goalname=$config['settingsFile']['campaigns'][0]['goals'][0]['identifier'];
+        $result=$this->vwotest->track($campaignName,$userId,$goalname);
+        $expected=ucfirst($this->variationResults[$campaignName][$userId]);
+        if($expected == null){
+            $expected=false;
+        }else{
+            $expected=true;
+        }
+        $this->assertEquals($expected,$result);
+    }
 }

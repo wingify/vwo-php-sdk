@@ -1,6 +1,6 @@
 <?php
 namespace vwo\Utils;
-
+use JsonSchema\Constraints\Constraint;
 use vwo\Error\ClientError;
 use vwo\Error\ServerError;
 use vwo\Error\NetworkError;
@@ -318,7 +318,9 @@ class Connection
      * @return mixed
      */
     public function get($url, $query = FALSE)
-    {
+    {   $query['sdk']='php';
+        $query['sdk-v']=Constants::SDK_VERSION;
+
         $this->initializeRequest();
         if (is_array($query)) {
             $url .= '?' . http_build_query($query);

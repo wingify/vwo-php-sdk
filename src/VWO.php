@@ -75,7 +75,6 @@ Class VWO
     function __construct($config)
     {
         if (!is_array($config)) {
-            self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['INVALID_CONFIGURATION']);
             return (object)[];
         }
         // is settings and logger files are provided then set the values to the object
@@ -310,7 +309,7 @@ Class VWO
                     'random'=>rand(0, 1),
                     'sId'=>time(),
                     'u'=>$this->getUUId5($userId, $this->settings['accountId']),
-                    'ed'=>'{“p”:“server”}',
+                    'ed'=>'{"p":"server"}',
                 );
 
                 $response = $this->connection->get(Constants::TRACK_URL, $parameters);
