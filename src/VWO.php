@@ -309,7 +309,7 @@ Class VWO
                     'random'=>rand(0, 1),
                     'sId'=>time(),
                     'u'=>$this->getUUId5($userId, $this->settings['accountId']),
-                    'ed'=>'{“p”:“server”}',
+                    'ed'=>'{"p":"server"}',
                 );
 
                 $response = $this->connection->get(Constants::TRACK_URL, $parameters);
