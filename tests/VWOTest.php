@@ -67,7 +67,6 @@ class VWOTest extends TestCase
     private $settingsArr4='';
     private $settingsArr5='';
     private $settingsArr6='';
-    private $settingsArr7='';
     private $variationResults='';
 
 
@@ -121,7 +120,6 @@ class VWOTest extends TestCase
         $settings4= new Settings4();
         $settings5= new Settings5();
         $settings6= new Settings6();
-        $settings7= new Settings7();
         $results= new VariationResults();
 
         $this->settingsArr1 = $settings1->setting;
@@ -130,7 +128,6 @@ class VWOTest extends TestCase
         $this->settingsArr4 = $settings4->setting;
         $this->settingsArr5 = $settings5->setting;
         $this->settingsArr6 = $settings6->setting;
-        $this->settingsArr7 = $settings7->setting;
         $this->variationResults=$results->results;
 
     }
