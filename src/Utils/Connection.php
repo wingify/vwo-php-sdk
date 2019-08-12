@@ -1,7 +1,5 @@
 <?php
 namespace vwo\Utils;
-use vwo\Utils\Constants;
-use Guzzle\Plugin\Backoff\ConstantBackoffStrategy;
 use JsonSchema\Constraints\Constraint;
 use vwo\Error\ClientError;
 use vwo\Error\ServerError;
