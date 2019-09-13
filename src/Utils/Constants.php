@@ -12,7 +12,7 @@ class Constants
     /**
      * base url for api hit
      */
-    const SDK_VERSION = '1.0.3';
+    const SDK_VERSION = '1.0.4';
     /**
      * base url for api hit
      */
@@ -102,7 +102,8 @@ class Constants
         'INVALID_CAMPAIGN' => '({file}): Invalid campaign passed to {method} of this file',
         'INVALID_USER_ID' => '({file}): Invalid userId:{userId} passed to {method} of this file',
         'IMPRESSION_FAILED' => '({file}): Event could not be sent to VWO - {endPoint}',
-        'CUSTOM_LOGGER_MISCONFIGURED' => '({file}): Custom logger is provided but seems to have misconfigured. Please check the API Docs. Using default logger.'
+        'CUSTOM_LOGGER_MISCONFIGURED' => '({file}): Custom logger is provided but seems to have misconfigured. Please check the API Docs. Using default logger.',
+        'MISSING_GOAL_REVENUE'=>'Revenue value should be passed for revenue goal {goalIdentifier} for campaign {campaignTestKey} and userId {userId}',
     ];
 
 }

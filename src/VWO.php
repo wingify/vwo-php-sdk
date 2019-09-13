@@ -225,7 +225,8 @@ Class VWO
                 }else{
                     self::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['GETTING_STORED_VARIATION'], ['{userId}'=>$userId,'{variationName}'=>$bucketInfo['name'],'{campaignTestKey}'=>$campaignKey]);
                 }
-                $goalId = $this->getGoalId($campaign['goals'], $goalName);
+                $goal = $this->getGoal($campaign['goals'], $goalName);
+                $goalId=$goal['id'];
                 if($goalId &&  isset($bucketInfo['id']) &&  $bucketInfo['id']>0) {
                     if($this->development_mode) {
                         $response['status'] = 'success';
@@ -242,7 +243,11 @@ Class VWO
                             'u' => $this->getUUId5($userId, $this->settings['accountId']),
                             'goal_id'  => $goalId
                         );
-                        if(!empty($revenue) && (is_string($revenue) || is_float($revenue) || is_int($revenue))) {
+                        if($goal['type'] == "REVENUE_TRACKING" && empty($revenue)){
+                            self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['MISSING_GOAL_REVENUE'], ['{goalIdentifier}'=>$goalName,'{campaignTestKey}'=>$campaignKey,'{userId}'=>$userId]);
+                            return false;
+                        }
+                        if($goal['type'] == "REVENUE_TRACKING" && (!empty($revenue) && (is_string($revenue) || is_float($revenue) || is_int($revenue)))) {
                             $parameters['r'] = $revenue;
                         }
                         $response = $this->connection->get(Constants::GOAL_URL, $parameters);
@@ -284,7 +289,24 @@ Class VWO
         }
         return 0;
     }
-
+    /**
+     * To fetch the goal id using goals array and goal identifier
+     *
+     * @param  $goals
+     * @param  $goalIdentifier
+     * @return int
+     */
+    private function getGoal($goals,$goalIdentifier)
+    {
+        if(count($goals)) {
+            foreach ($goals as $goal){
+                if($goal['identifier']===$goalIdentifier) {
+                    return $goal;
+                }
+            }
+        }
+        return 0;
+    }
 
     /***
      * API to send add visitor hit to vwo
