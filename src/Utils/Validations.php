@@ -59,14 +59,9 @@ class Validations {
         $jsonValidator = new Validator( new Factory($schemaStorage));
         $jsonValidator->validate($request, self::$jsonSchemaObject,Constraint::CHECK_MODE_VALIDATE_SCHEMA);
         if ($jsonValidator->isValid()) {
-            return True;
-        } else {
-            foreach ($jsonValidator->getErrors() as $error) {
-                echo sprintf("[%s] %s\n", $error['property'], $error['message']);
-            }
+            return true;
         }
-        return FALSE;
-
+        return false;
     }
 
 }
