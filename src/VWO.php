@@ -6,10 +6,8 @@
  *
  * It helps in making client object and use the sdk
  *
- * @package   vwo
+ * @package   vwo/vwo-php-sdk
  * @author    Gaurav Gupta
- * @version   1.0
- * @copyright never
  */
 
 namespace vwo;
@@ -163,7 +161,7 @@ Class VWO
                 }
             }
         }else{
-            throw new ExceptionaddLog('unable to fetch campaign data from settings in makeRanges function');
+            self::addLog(Logger::ERROR,Constants::ERROR_MESSAGE['NO_CAMPAIGN_FOUND']);
         }
     }
 

@@ -12,7 +12,7 @@ class Constants
     /**
      * base url for api hit
      */
-    const SDK_VERSION = '1.0.4';
+    const SDK_VERSION = '1.0.5';
     /**
      * base url for api hit
      */
@@ -104,6 +104,7 @@ class Constants
         'IMPRESSION_FAILED' => '({file}): Event could not be sent to VWO - {endPoint}',
         'CUSTOM_LOGGER_MISCONFIGURED' => '({file}): Custom logger is provided but seems to have misconfigured. Please check the API Docs. Using default logger.',
         'MISSING_GOAL_REVENUE'=>'Revenue value should be passed for revenue goal {goalIdentifier} for campaign {campaignTestKey} and userId {userId}',
+        'NO_CAMPAIGN_FOUND'=>'No campaign is found in settings file',
     ];
 
 }
