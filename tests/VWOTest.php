@@ -212,7 +212,7 @@ class VWOTest extends TestCase
                 try{
                     $userId=$users[$i];
                     $goalname=$config['settingsFile']['campaigns'][0]['goals'][0]['identifier'];
-                    $result=$this->vwotest->track($campaignName,$userId,$goalname);
+                    $result=$this->vwotest->track($campaignName,$userId,$goalname,'testRevenue');
                     $expected=ucfirst($this->variationResults[$campaignName][$userId]);
                     if($expected == null){
                         $expected=false;
