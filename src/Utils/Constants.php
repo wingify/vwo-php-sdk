@@ -12,7 +12,7 @@ class Constants
     /**
      * base url for api hit
      */
-    const SDK_VERSION = '1.0.5';
+    const SDK_VERSION = '1.0.6';
     /**
      * base url for api hit
      */
