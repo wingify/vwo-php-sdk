@@ -191,6 +191,14 @@ Refer [Official VWO Documentation](https://developers.vwo.com/reference#server-s
 * phpunit/phpunit
 * psr-4 (standard followed)
 
+## Development
+
+1. Run test cases
+
+```bash
+composer require-run test
+```
+
 ## License
 
 ```text

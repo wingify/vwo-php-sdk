@@ -22,5 +22,8 @@
     },
     "autoload-dev": {
          "psr-4": {"vwo\\": "tests/"}
+    },
+    "scripts": {
+        "test": ["./vendor/bin/phpunit"]
     }
 }
