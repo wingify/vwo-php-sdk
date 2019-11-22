@@ -1,6 +1,6 @@
 # VWO PHP SDK
 
-[![Latest Stable Version](https://img.shields.io/packagist/v/vwo/vwo-php-sdk.svg)](https://packagist.org/packages/vwo/vwo-php-sdk) [![Build Status](http://img.shields.io/travis/wingify/vwo-php-sdk/master.svg?style=flat)](http://travis-ci.org/wingify/vwo-php-sdk) [![Coverage Status](https://coveralls.io/repos/github/wingify/vwo-php-sdk/badge.svg?branch=master)](https://coveralls.io/github/wingify/vwo-php-sdk?branch=master)
+[![Latest Stable Version](https://img.shields.io/packagist/v/vwo/vwo-php-sdk.svg)](https://packagist.org/packages/vwo/vwo-php-sdk) [![Build Status](http://img.shields.io/travis/wingify/vwo-php-sdk/master.svg?style=flat)](http://travis-ci.org/wingify/vwo-php-sdk) [![Coverage Status](https://coveralls.io/repos/github/wingify/vwo-php-sdk/badge.svg?branch=master)](https://coveralls.io/github/wingify/vwo-php-sdk?branch=master)[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 
 VWO server side sdk helps in integrating you integrating the vwo features in backend.
 Using the sdk you can fetch the campaigns , variations and goals which you have configured
@@ -183,13 +183,10 @@ $vwoClient->track($campaignKey, $userId, $goalIdentifier, $revenue);
 
 Refer [Official VWO Documentation](https://developers.vwo.com/reference#server-side-introduction)
 
-## Third Party Packages
 
-* Monolog
-* ramsey/uuid
-* justinrainbow/json-schema
-* phpunit/phpunit
-* psr-4 (standard followed)
+## Third-party Resources and Credits
+
+Refer [third-party-attributions.txt](https://github.com/wingify/vwo-php-sdk/blob/master/third-party-attributions.txt)
 
 ## Development
 
@@ -201,26 +198,6 @@ composer require-run test
 
 ## License
 
-```text
-    MIT License
+[Apache License, Version 2.0](https://github.com/wingify/vwo-php-sdk/blob/master/LICENSE)
 
-    Copyright (c) 2019 Wingify Software Pvt. Ltd.
-
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
-
-    The above copyright notice and this permission notice shall be included in all
-    copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-    SOFTWARE.
-```
+Copyright 2019 Wingify Software Pvt. Ltd.
