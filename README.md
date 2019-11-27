@@ -190,10 +190,16 @@ Refer [third-party-attributions.txt](https://github.com/wingify/vwo-php-sdk/blob
 
 ## Development
 
-1. Run test cases
+1. Set dev environment
 
 ```bash
-composer require-run test
+composer run-script start
+```
+
+2. Run test cases
+
+```bash
+composer run-script test
 ```
 
 ## License
