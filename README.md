@@ -188,7 +188,11 @@ Refer [Official VWO Documentation](https://developers.vwo.com/reference#server-s
 
 Refer [third-party-attributions.txt](https://github.com/wingify/vwo-php-sdk/blob/master/third-party-attributions.txt)
 
-## Development
+## Changelog
+
+Refer [CHANGELOG.md](https://github.com/wingify/vwo-php-sdk/blob/master/CHANGELOG.md)
+
+## Development and Test Cases
 
 1. Set dev environment
 
