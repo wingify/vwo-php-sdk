@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright 2019 Wingify Software Pvt. Ltd.
  *
@@ -6,7 +7,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,23 +15,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-namespace vwo\Utils;
+
+namespace vwo\Constants;
+
 /***
  * Class Constants
  * All the constant variables are used from constant class
  *
- * @package vwo\Utils
+ * @package vwo\Constants
  */
 class Constants
 {
     /**
-     * base url for api hit
+     * sdk version for api hit
      */
-    const SDK_VERSION = '1.3.0';
+    const SDK_VERSION = '1.5.0';
+    /**
+     * sdk langauge for api hit
+     */
+    const SDK_LANGUAGE = 'php';
     /**
      * base url for api hit
      */
-    const BASE_URL = 'https://dev.visualwebsiteoptimizer.com/server-side/';
+    const BASE_URL = 'http://dev.visualwebsiteoptimizer.com/server-side/';
     /**
      * query string to fetch settings
      */
@@ -44,9 +51,14 @@ class Constants
      */
     const TRACK_URL = self::BASE_URL . 'track-user';
     /**
+     * query string to push api
+     */
+    const PUSH_URL = self::BASE_URL . 'push';
+    /**
      * base seed for uuid
      */
-    const UUID_SEED='https://vwo.com';
+    const UUID_SEED = 'https://vwo.com';
+
 
     /**
      * messages used for dedug mode
@@ -58,16 +70,18 @@ class Constants
         'CUSTOM_LOGGER_USED' => '({file}): Custom logger used',
         'SDK_INITIALIZED' => '({file}): SDK properly initialzed',
         'SETTINGS_FILE_PROCESSED' => '({file}): Settings file processed',
-        'NO_STORED_VARIATION' => '({file}): No stored variation for UserId:{userId} for Campaign:{campaignTestKey} found in UserProfileService',
-        'NO_USER_PROFILE_SERVICE_LOOKUP' => '({file}): No UserProfileService to look for stored data',
-        'NO_USER_PROFILE_SERVICE_SAVE' => '({file}): No UserProfileService to save data',
-        'GETTING_STORED_VARIATION' => '({file}): Got stored variation for UserId:{userId} of Campaign:{campaignTestKey} as Variation: {variationName}, found in UserProfileService',
+        'NO_STORED_VARIATION' => '({file}): No stored variation for UserId:{userId} for Campaign:{campaignTestKey} found in UserStorageService',
+        'NO_USER_STORAGE_SERVICE_GET' => '({file}): No UserStorageService to get for stored data',
+        'NO_USER_STORAGE_SERVICE_SET' => '({file}): No UserStorageService to set data',
+        'GETTING_STORED_VARIATION' => '({file}): Got stored variation for UserId:{userId} of Campaign:{campaignTestKey} as Variation: {variationName}, found in UserStorageService',
         'CHECK_USER_ELIGIBILITY_FOR_CAMPAIGN' => '({file}): campaign:{campaignTestKey} having traffic allocation:{trafficAllocation} assigned value:{trafficAllocation} to userId:{userId}',
         'USER_HASH_BUCKET_VALUE' => '({file}): userId:{userId} having hash:{hashValue} got bucketValue:{bucketValue}',
         'VARIATION_HASH_BUCKET_VALUE' => '({file}): userId:{userId} for campaign:{campaignTestKey} having percent traffic:{percentTraffic} got hash-value:{hashValue} and bucket value:{bucketValue}',
         'GOT_VARIATION_FOR_USER' => '({file}): userId:{userId} for campaign:{campaignTestKey} got variationName:{variationName} inside method:{method}',
         'USER_NOT_PART_OF_CAMPAIGN' => '({file}): userId:{userId} for campaign:{campaignTestKey} did not become part of campaign, method:{method}',
         'UUID_FOR_USER' => '({file}): Uuid generated for userId:{userid} and accountId:{accountId} is {desiredUuid}',
+        'FEATURE_FLAG_NOT_LINKED' => '({file}): Feature:{featureKey} is not linked to any running campaigns',
+
 
     ];
 
@@ -78,19 +92,30 @@ class Constants
     const INFO_MESSAGES = [
         'VARIATION_RANGE_ALLOCATION' => '({file}): Campaign:{campaignTestKey} having variations:{variationName} with weight:{variationWeight} got range as: ( {start} - {end} ))',
         'VARIATION_ALLOCATED' => '({file}): UserId:{userId} of Campaign:{campaignTestKey} got variation: {variationName}',
-        'LOOKING_UP_USER_PROFILE_SERVICE' => '({file}): Looked into UserProfileService for userId:{userId} successful',
-        'SAVING_DATA_USER_PROFILE_SERVICE' => '({file}): Saving into UserProfileService for userId:{userId} successful',
-        'GOT_STORED_VARIATION' => '({file}): Got stored variation:{variationName} of campaign:{campaignTestKey} for userId:{userId} from UserProfileService',
+        'LOOKING_UP_USER_STORAGE_SERVICE' => '({file}): Looked into UserStorageService for userId:{userId} successful',
+        'SAVING_DATA_USER_STORAGE_SERVICE' => '({file}): Saving into UserStorageService for userId:{userId} successful',
+        'GOT_STORED_VARIATION' => '({file}): Got stored variation:{variationName} of campaign:{campaignTestKey} for userId:{userId} from UserStorageService',
         'NO_VARIATION_ALLOCATED' => '({file}): UserId:{userId} of Campaign:{campaignTestKey} did not get any variation',
         'USER_ELIGIBILITY_FOR_CAMPAIGN' => '({file}): Is userId:{userId} part of campaign? {isUserPart}',
         'AUDIENCE_CONDITION_NOT_MET' => '({file}): userId:{userId} does not become part of campaign because of not meeting audience conditions',
         'GOT_VARIATION_FOR_USER' => '({file}): userId:{userId} for campaign:{campaignTestKey} got variationName:{variationName}',
         'USER_GOT_NO_VARIATION' => '({file}): userId:{userId} for campaign:{campaignTestKey} did not allot any variation',
         'IMPRESSION_SUCCESS' => '({file}): Event sent to VWO - {endPoint} having main keys: accountId:{accountId}, userId:{userId}, campaignId:{campaignId} and vairationId:{variationId}',
+        'IMPRESSION_SUCCESS_PUSH' => '({file}): Event sent to VWO - {endPoint} having main keys: accountId:{accountId}, userId:{userId} and tags:{tags}',
         'INVALID_VARIATION_KEY' => '({file}): Variation was not assigned to userId:{userId} for campaign:{campaignTestKey}',
-        'API_CALLED'=>'({file}): API: {api} called for userid : {userId}',
+        'API_CALLED' => '({file}): API: {api} called for userid : {userId}',
         'IMPRESSION_FOR_TRACK_USER' => '({file}): impression built for track-user - {properties}',
-        'IMPRESSION_FOR_TRACK_GOAL' => '({file}): impression built for track-goal - {properties}'
+        'IMPRESSION_FOR_TRACK_GOAL' => '({file}): impression built for track-goal - {properties}',
+        'IMPRESSION_FOR_PUSH' => '({file}): impression built for push-api - {properties}',
+        'FEATURE_ENABLED_FOR_USER' => '({file}): Feature having feature-key:{featureKey} for user ID:{userId} is enabled',
+        'FEATURE_NOT_ENABLED_FOR_USER' => '({file}): Feature having feature-key:{featureKey} for user ID:{userId} is not enabled',
+        'USER_IN_FEATURE_ROLLOUT' => '({file}): User ID:{userId} is in feature rollout:{featureKey}',
+        'USER_NOT_IN_FEATURE_ROLLOUT' => '({file}): User ID:{userId} is NOT in feature rollout:{featureKey}',
+        'VARIABLE_FOUND' => '({file}): Value for variable:{variableKey} of campaign:{campaignKey} is:{variableValue} for user:{userId}',
+        'VARIABLE_NOT_FOUND' => '({file}): Value for variable:{variableKey} of campaign:{campaignKey} is not found for user:{userId}',
+        'USER_PRE_SEGMENTATION_STATUS' => '({file}): UserId:{userId} of campaign:{campaignKey} with custom_variables:{customVariables} {status} pre segmentation',
+
+
     ];
     /**
      * messages used for warning mode
@@ -111,14 +136,25 @@ class Constants
         'TRACK_API_GOAL_NOT_FOUND' => '({file}): Goal not found for campaign:{campaignTestKey} and userId:{userId}',
         'TRACK_API_VARIATION_NOT_FOUND' => '({file}): Variation not found for campaign:{campaignTestKey} and userId:{userId}',
         'CAMPAIGN_NOT_RUNNING' => '({file}): Campaign:{campaignTestKey} is not RUNNING. Please verify from VWO App',
-        'LOOK_UP_USER_PROFILE_SERVICE_FAILED' => '({file}): Looking data from UserProfileService failed for userId:{userId}',
-        'SAVE_USER_PROFILE_SERVICE_FAILED' => '({file}): Saving data into UserProfileService failed for userId:{userId}',
+        'GET_USER_STORAGE_SERVICE_FAILED' => '({file}): Looking data from UserStorageService failed for userId:{userId}',
+        'SET_USER_STORAGE_SERVICE_FAILED' => '({file}): Saving data into UserStorageService failed for userId:{userId}',
         'INVALID_CAMPAIGN' => '({file}): Invalid campaign passed to {method} of this file',
-        'INVALID_USER_ID' => '({file}): Invalid userId:{userId} passed to {method} of this file',
         'IMPRESSION_FAILED' => '({file}): Event could not be sent to VWO - {endPoint}',
+        'USERID_KEY_CORRUPTED' => '({file}): userId parameter value - {userId} is corrupted',
+        'FEATURE_KEY_CORRUPTED' => '({file}): featureKey parameter value - {featureKey} is corrupted',
         'CUSTOM_LOGGER_MISCONFIGURED' => '({file}): Custom logger is provided but seems to have misconfigured. Please check the API Docs. Using default logger.',
-        'MISSING_GOAL_REVENUE'=>'Revenue value should be passed for revenue goal {goalIdentifier} for campaign {campaignTestKey} and userId {userId}',
-        'NO_CAMPAIGN_FOUND'=>'No campaign is found in settings file',
+        'MISSING_GOAL_REVENUE' => 'Revenue value should be passed for revenue goal {goalIdentifier} for campaign {campaignTestKey} and userId {userId}',
+        'TAG_KEY_LENGTH_ERROR' => '({file}): Length of tagKey:{tagKey} for userID:{userId} can not be greater than 255',
+        'TAG_VALUE_LENGTH_ERROR' => '({file}): Length of tagValue:{tagValue} for userID:{userId} can not be greater than 255',
+        'INVALID_USER_ID' => '({file}): Invalid userId:{userId} passed to {method} of this file',
+        'TAG_KEY_CORRUPTED' => '({file}): Invalid tagKey:{tagKey} passed to {method} of this file',
+        'TAG_VALUE_CORRUPTED' => '({file}): Invalid tagValue:{tagValue} passed to {method} of this file',
+        'INVALID_API_CALL' => '({file}): {api} API is not valid for user ID: {userId} in Campaign Key: {campaignKey} having campaign type: {campaignType}',
     ];
 
+
+    const VARIABLE_TYPE_BOOLEAN = 'boolean';
+    const VARIABLE_TYPE_INTEGER = 'integer';
+    const VARIABLE_TYPE_DOUBLE = 'double';
+    const VARIABLE_TYPE_STRING = 'string';
 }

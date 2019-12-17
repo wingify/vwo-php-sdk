@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright 2019 Wingify Software Pvt. Ltd.
  *
@@ -6,7 +7,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,55 +16,34 @@
  * limitations under the License.
  */
 
-
-/**
- * Class VWO
- * It helps in making client object and use the sdk
- */
-
 namespace vwo;
+
 use \Exception as Exception;
 use vwo\Logger\LoggerInterface;
-use vwo\Utils\Connection as Connection;
-use vwo\Utils\UserProfileInterface;
+use vwo\Handlers\Connection as Connection;
+use vwo\Storage\UserStorageInterface;
 use vwo\Utils\Validations as Validations;
-use vwo\Utils\Constants as Constants;
+use vwo\Constants\Constants as Constants;
 use vwo\Utils\Common as Common;
-use vwo\Logger\DefaultLogger as DefaultLogger;
+use vwo\Logger\VWOLogger as VWOLogger;
+use vwo\Core\Bucketer as Bucketer;
 use Monolog\Logger as Logger;
-use Ramsey\Uuid\Uuid;
-use Ramsey\Uuid\Exception\UnsatisfiedDependencyException;
 
-
-Class VWO
+/***
+ * VWO sdk class
+ *
+ * Class VWO
+ *
+ * It helps in making client object and use the sdk
+ *
+ */
+class VWO
 {
-    /**
-     * @var string to save uuid basic seed
-     */
-    var $uuidSeed = Constants::UUID_SEED;
-    /**
-     * @var mixed|string to save settings
-     */
-    var $settings = '';
-    /**
-     * @var Connection to save connection object for curl requests
-     */
-    var $connection;
     /**
      * @var mixed|null|LoggerInterface
      * to save loggerinterface object
      */
     static $_logger;
-    /**
-     * @var string to save userprofile interface object
-     */
-
-    var $_userProfileObj;
-    /**
-     * @var int to save if dev mode is enabled or not
-     */
-    var $development_mode;
-
     /****
      * @var static variables for log levels
      */
@@ -75,6 +55,30 @@ Class VWO
     static $LOG_LEVEL_CRITICAL = 500;
     static $LOG_LEVEL_ALERT = 550;
 
+    static $FEATURE_ROLLOUT = 'FEATURE_ROLLOUT';
+    static $FEATURE_TEST = 'FEATURE_TEST';
+    static $AB = 'VISUAL_AB';
+
+    /**
+     * @var mixed|string to save settings
+     */
+    var $settings = '';
+    /**
+     * @var Connection to save connection object for curl requests
+     */
+    var $connection;
+    /**
+     * @var string to save userStorage interface object
+     */
+
+    var $_userStorageObj;
+    /**
+     * @var int to save if dev mode is enabled or not
+     */
+    var $development_mode;
+
+    static $apiName;
+
     /**
      * VWO constructor for the VWO sdk.
      *
@@ -83,49 +87,94 @@ Class VWO
      */
     function __construct($config)
     {
+        self::$apiName = 'init';
         if (!is_array($config)) {
             return (object)[];
         }
         // is settings and logger files are provided then set the values to the object
-        $settings = isset($config['settingsFile'])?$config['settingsFile']:'';
-        $logger = isset($config['logging'])?$config['logging']:null;
+        $settings = isset($config['settingsFile']) ? $config['settingsFile'] : '';
+        $logger = isset($config['logging']) ? $config['logging'] : null;
 
         // dev mode enable wont send tracking hits to the servers
-        $this->development_mode=(isset($config['isDevelopmentMode']) && $config['isDevelopmentMode']== 1)?1:0;
+        $this->development_mode = (isset($config['isDevelopmentMode']) && $config['isDevelopmentMode'] == 1) ? 1 : 0;
 
         if ($logger == null) {
-            self::$_logger = new DefaultLogger(Logger::ERROR, 'php://stdout');
-        } elseif($logger instanceof LoggerInterface) {
+            self::$_logger = new VWOLogger(Logger::DEBUG, 'php://stdout');
+        } elseif ($logger instanceof LoggerInterface) {
             self::$_logger = $logger;
             self::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['CUSTOM_LOGGER_USED']);
         }
 
-        // user profile service
-        if(isset($config['userProfileService']) and ($config['userProfileService'] instanceof UserProfileInterface)) {
-            $this->_userProfileObj = clone($config['userProfileService']);
-        }else{
-            $this->_userProfileObj = '';
+        // user storage service
+        if (isset($config['userStorageService']) && ($config['userStorageService'] instanceof UserStorageInterface)) {
+            $this->_userStorageObj = $config['userStorageService'];
+        } else {
+            $this->_userStorageObj = '';
         }
 
         // initial logging started for each new object
-        self::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['SET_DEVELOPMENT_MODE'], ['{devmode}'=>$this->development_mode]);
+        self::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['SET_DEVELOPMENT_MODE'], ['{devmode}' => $this->development_mode]);
 
         $res = Validations::checkSettingSchema($settings);
-        if($res) {
-            self::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['VALID_CONFIGURATION']);
+        if ($res) {
             $this->settings = $settings;
             $this->makeRanges();
-        }else{
-            self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['SETTINGS_FILE_CORRUPTED']);
+        } else {
             return [];
         }
 
         $this->connection = new Connection();
         self::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['SDK_INITIALIZED']);
     }
+
+    /**
+     * function to addlog to the default/ custom logger
+     *
+     * @param  $level
+     * @param  $message
+     * @param  array $params
+     * @param  string $classname
+     * @return bool
+     */
+    static function addLog($level, $message, $params = [], $classname = '')
+    {
+        try {
+            if (empty($classname)) {
+                $classname = self::name();
+            }
+            $message = Common::makelogMessage($message, $params, $classname, self::$apiName);
+            self::$_logger->addLog($message, $level);
+        } catch (Exception $e) {
+            error_log($e->getMessage());
+        }
+        return true;
+    }
+
     static function name()
     {
         return 'vwo\VWO';
+    }
+
+    /**
+     * set the ranges of all the campaigns
+     */
+    private function makeRanges()
+    {
+        if (isset($this->settings['campaigns']) && count($this->settings['campaigns'])) {
+            foreach ($this->settings['campaigns'] as $key => $campaign) {
+                $offset = 0;
+                foreach ($campaign['variations'] as $vkey => $variation) {
+                    $limit = Bucketer::getLimit($variation['weight']);
+                    $max_range = $offset + $limit;
+                    $this->settings['campaigns'][$key]['variations'][$vkey]['min_range'] = $offset + 1;
+                    $this->settings['campaigns'][$key]['variations'][$vkey]['max_range'] = $max_range;
+                    $offset = $max_range;
+                }
+            }
+        } else {
+            self::addLog(Logger::ERROR, 'unable to fetch campaign data from settings in makeRanges function');
+            throw new \Exception();
+        }
     }
 
     /***
@@ -135,186 +184,168 @@ Class VWO
      * @param  $sdkKey
      * @return bool|mixed
      */
-    public static function getSettingsFile($accountId,$sdkKey)
+    public static function getSettingsFile($accountId, $sdkKey)
     {
-        try{
+        try {
             $connection = new Connection();
             $params = array(
                 'a' => $accountId,
                 'i' => $sdkKey,
-                'r' => time()/10,
+                'r' => time() / 10,
                 'platform' => 'server',
                 'api-version' => 2
             );
             return $settings = $connection->get(Constants::SETTINGS_URL, $params);
-        }catch(Exception $e){
+        } catch (Exception $e) {
             return false;
         }
         return false;
-
     }
 
     /**
-     * set the ranges of all the campaigns
+     * @param $featureCampaignKey
+     * @param $userId
+     * @param string $customVariables
+     * @return bool|null
      */
-    private function makeRanges()
+    public function isFeatureEnabled($featureCampaignKey, $userId, $customVariables = [])
     {
-        if (isset($this->settings['campaigns']) && count($this->settings['campaigns'])) {
+        try {
+            self::$apiName = 'isFeatureEnabled';
+            self::addLog(Logger::INFO, Constants::INFO_MESSAGES['API_CALLED'], ['{api}' => 'isFeatureEnabled', '{userId}' => $userId]);
 
-            foreach ($this->settings['campaigns'] as $key => $campaign) {
-                $offset = 0;
-                foreach ($campaign['variations'] as $vkey => $variation) {
-                    $limit  =  BucketService::getLimit($variation['weight']);
-                    $max_range = $offset + $limit;
-                    $this->settings['campaigns'][$key]['variations'][$vkey]['min_range'] = $offset + 1;
-                    $this->settings['campaigns'][$key]['variations'][$vkey]['max_range'] = $max_range;
-                    $offset = $max_range;
-                }
-            }
-        }else{
-            self::addLog(Logger::ERROR,Constants::ERROR_MESSAGE['NO_CAMPAIGN_FOUND']);
-        }
-    }
-
-    /***
-     * API for track the user goals and revenue
-     *
-     * @param  string $campaignKey
-     * @param  string $userId
-     * @param  string $goalName
-     * @param  string $revenue
-     * @return bool
-     */
-    public function track($campaignKey = '',$userId = '',$goalName = '',$revenue = '')
-    {
-        try{
-            $bucketInfo = null;
-            self::addLog(Logger::INFO, Constants::INFO_MESSAGES['API_CALLED'], ['{api}'=>'track','{userId}'=>$userId]);
-            if(empty($campaignKey)||empty($userId)||empty($goalName)) {
-                self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['TRACK_API_MISSING_PARAMS']);
+            $campaign = Validations::validateCampaignName($featureCampaignKey, $this->settings);
+            if ($campaign != null && $campaign['type'] == self::$AB) {
+                self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['INVALID_API_CALL'], ['{api}' => 'isFeatureEnabled', '{userId}' => $userId, '{campaignKey}' => $featureCampaignKey, '{campaignType}' => 'SERVER AB']);
                 return false;
             }
-            $campaign = $this->validateCampaignName($campaignKey);
-            if($campaign!==null) {
-
-
-                try{
-                    if(!empty($this->_userProfileObj)) {
-                        $variationInfo = $this->_userProfileObj->lookup($userId, $campaignKey);
-                        if(isset($variationInfo[$campaignKey]['variationName']) && is_string($variationInfo[$campaignKey]['variationName'])&& !empty($variationInfo[$campaignKey]['variationName']) ) {
-                            self::addLog(Logger::INFO, Constants::INFO_MESSAGES['LOOKING_UP_USER_PROFILE_SERVICE'], ['{userId}'=>$userId]);
-                            $bucketInfo = BucketService::getBucketVariationId($campaign, $variationInfo[$campaignKey]['variationName']);
-                        }else{
-                            self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['LOOK_UP_USER_PROFILE_SERVICE_FAILED']);
-
-                        }
-                    }else{
-                        self::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['NO_USER_PROFILE_SERVICE_LOOKUP']);
-                    }
-                }catch (Exception $e) {
-                    self::addLog(Logger::ERROR, $e->getMessage());
+            $result = $this->fetchFeatureEnabledData($featureCampaignKey, $userId, $customVariables);
+            if (isset($result['variationData'])) {
+                $variationData = $result['variationData'];
+                $bucketInfo = isset($variationData['bucketInfo']) ? $variationData['bucketInfo'] : null;
+                $campaign = isset($variationData['campaign']) ? $variationData['campaign'] : null;
+                // addVisitor to
+                if ($bucketInfo !== null && $variationData['campaign']['type'] == self::$FEATURE_TEST) {
+                    $this->addVisitor($campaign, $userId, $bucketInfo['id']);
                 }
-                if($bucketInfo==null) {
-                    $bucketInfo = BucketService::getBucket($userId, $campaign);
-                    if($bucketInfo ==null) {
-                        return null;
-                    }
-                    self::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['NO_STORED_VARIATION'], ['{userId}'=>$userId,'{campaignTestKey}'=>$campaignKey]);
-                    try{
-                        if(!empty($this->_userProfileObj)) {
-                            $campaignInfo = $this->getUserProfileSaveData($campaignKey, $bucketInfo, $userId);
-                            $this->_userProfileObj->save($campaignInfo);
-                        }else{
-                            self::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['NO_USER_PROFILE_SERVICE_SAVE']);
-                        }
-                    }catch (Exception $e){
-                        self::addLog(Logger::ERROR, $e->getMessage());
-
-                    }
-                }else{
-                    self::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['GETTING_STORED_VARIATION'], ['{userId}'=>$userId,'{variationName}'=>$bucketInfo['name'],'{campaignTestKey}'=>$campaignKey]);
-                }
-                $goal = $this->getGoal($campaign['goals'], $goalName);
-                $goalId=$goal['id'];
-                if($goalId &&  isset($bucketInfo['id']) &&  $bucketInfo['id']>0) {
-                    if($this->development_mode) {
-                        $response['status'] = 'success';
-                        return true;
-                    }else {
-                        $parameters = array(
-                            'account_id' => $this->settings['accountId'],
-                            'experiment_id' => $campaign['id'],
-                            'ap' => 'server',
-                            'uId' => $userId,
-                            'combination' => $bucketInfo['id'],
-                            'random' => rand(0, 1),
-                            'sId' => time(),
-                            'u' => $this->getUUId5($userId, $this->settings['accountId']),
-                            'goal_id'  => $goalId
-                        );
-                        if($goal['type'] == "REVENUE_TRACKING" && empty($revenue)){
-                            self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['MISSING_GOAL_REVENUE'], ['{goalIdentifier}'=>$goalName,'{campaignTestKey}'=>$campaignKey,'{userId}'=>$userId]);
-                            return false;
-                        }
-                        if($goal['type'] == "REVENUE_TRACKING" && (!empty($revenue) && (is_string($revenue) || is_float($revenue) || is_int($revenue)))) {
-                            $parameters['r'] = $revenue;
-                        }
-                        $response = $this->connection->get(Constants::GOAL_URL, $parameters);
-                    }
-                    self::addLog(Logger::INFO, Constants::INFO_MESSAGES['IMPRESSION_FOR_TRACK_GOAL'], ['{properties}'=>json_encode($parameters)]);
-                    if(isset($response['status'])  && $response['status'] == 'success') {
-                        self::addLog(Logger::INFO, Constants::INFO_MESSAGES['IMPRESSION_SUCCESS'], ['{userId}'=>$userId,'{endPoint}'=>'track-goal','{campaignId}'=>$campaign['id'],'{variationId}'=>$bucketInfo['id'],'{accountId}'=>$this->settings['accountId']]);
-                        return true;
-
-                    }
-                    self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['IMPRESSION_FAILED'], ['{endPoint}'=>'trackGoal']);
-                    self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['TRACK_API_GOAL_NOT_FOUND'], ['{campaignTestKey}'=>$campaignKey,'{userId}'=>$userId]);
-
-                }else{
-                    self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['TRACK_API_GOAL_NOT_FOUND'], ['{campaignTestKey}'=>$campaignKey,'{userId}'=>$userId]);
+                if ($bucketInfo !== null && $result['response']) {
+                    self::addLog(Logger::INFO, Constants::INFO_MESSAGES['FEATURE_ENABLED_FOR_USER'], ['{featureKey}' => $featureCampaignKey, '{userId}' => $userId]);
+                    return true;
                 }
             }
-        }catch(Exception $e){
+        } catch (\Exception $e) {
             self::addLog(Logger::ERROR, $e->getMessage());
         }
+        self::addLog(Logger::INFO, Constants::INFO_MESSAGES['FEATURE_NOT_ENABLED_FOR_USER'], ['{featureKey}' => $featureCampaignKey, '{userId}' => $userId]);
         return false;
     }
 
     /**
-     * To fetch the goal id using goals array and goal identifier
-     *
-     * @param  $goals
-     * @param  $goalIdentifier
-     * @return int
+     * @param $campaignKey
+     * @param $userId
+     * @param array $variableData
+     * @return array - array of selected variation and result in response param
      */
-    private function getGoalId($goals,$goalIdentifier)
+    public function fetchFeatureEnabledData($campaignKey, $userId, $options)
     {
-        if(count($goals)) {
-            foreach ($goals as $goal){
-                if($goal['identifier']===$goalIdentifier) {
-                    return $goal['id'];
-                }
-            }
+        // get campaigns here
+        $result['response'] = false;
+        // validate the parameters and settings
+        if (Validations::validateIsFeatureEnabledParams($campaignKey, $userId) && Validations::checkSettingSchema($this->settings)) {
+            $customVariables = isset($options['customVariables']) ? $options['customVariables'] : [];
+            $variationData = $this->fetchVariationData($campaignKey, $userId);
+            $result['variationData'] = $variationData;
+            // below condition says that if bucket is there and isFeatureEnabled is not present it means it will be feature rollout type campaign and return true
+            // if isFeatureEnabled is there and it must be true then result is true
+            // else return to false
+            $result['response'] = ((isset($variationData['bucketInfo']) && !isset($variationData['bucketInfo']['isFeatureEnabled'])) || (isset($variationData['bucketInfo']['isFeatureEnabled']) && $variationData['bucketInfo']['isFeatureEnabled']) == true) ? true : false;
         }
-        return 0;
+        return $result;
     }
+
     /**
-     * To fetch the goal id using goals array and goal identifier
-     *
-     * @param  $goals
-     * @param  $goalIdentifier
-     * @return int
+     * @param $campaignKey
+     * @param $userId
+     * @return null
      */
-    private function getGoal($goals,$goalIdentifier)
+    private function fetchVariationData($campaignKey, $userId, $customVariables = [])
     {
-        if(count($goals)) {
-            foreach ($goals as $goal){
-                if($goal['identifier']===$goalIdentifier) {
-                    return $goal;
+        $res = null;
+        $bucketInfo = null;
+        $campaign = Validations::validateCampaignName($campaignKey, $this->settings);
+
+        if ($campaign !== null) {
+            $res['campaign'] = $campaign;
+            $bucketInfo = $this->userStorageGet($userId, $campaignKey);
+            // do murmur operations and get Variation for the customer
+            if ($bucketInfo == null) {
+                //check for pre-segmentation if applied
+                $customVariables = isset($customVariables) ? $customVariables : [];
+                $result = Validations::checkPreSegmentation($campaign, $customVariables);
+                $status = 'passed';
+                if ($result == false) {
+                    $status = 'failed';
+                    self::addLog(Logger::INFO, Constants::INFO_MESSAGES['USER_PRE_SEGMENTATION_STATUS'], ['{userId}' => $userId, '{customVariables}' => json_encode($customVariables), '{campaignKey}' => $campaignKey,'{status}' => $status]);
+                    return null;
                 }
+                self::addLog(Logger::INFO, Constants::INFO_MESSAGES['USER_PRE_SEGMENTATION_STATUS'], ['{userId}' => $userId, '{customVariables}' => json_encode($customVariables), '{campaignKey}' => $campaignKey,'{status}' => $status]);
+                $bucketInfo = Bucketer::getBucket($userId, $campaign);
+                if ($bucketInfo == null) {
+                    return null;
+                } else {
+                    $res['bucketInfo'] = $bucketInfo;
+                }
+                $this->userStorageSet($userId, $campaignKey, $bucketInfo);
+            } else {
+                $res['bucketInfo'] = $bucketInfo;
+                self::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['GETTING_STORED_VARIATION'], ['{userId}' => $userId, '{variationName}' => $bucketInfo['name'], '{campaignTestKey}' => $campaignKey]);
             }
+            return $res;
         }
-        return 0;
+        return null;
+    }
+
+    /***
+     * @param $userId
+     * @param $campaignKey
+     * @return array|null
+     */
+    private function userStorageGet($userId, $campaignKey)
+    {
+        try {
+            if (!empty($this->_userStorageObj)) {
+                $variationInfo = $this->_userStorageObj->get($userId, $campaignKey);
+                if (isset($variationInfo[$campaignKey]['variationName']) && is_string($variationInfo[$campaignKey]['variationName']) && !empty($variationInfo[$campaignKey]['variationName'])) {
+                    self::addLog(Logger::INFO, Constants::INFO_MESSAGES['LOOKING_UP_USER_STORAGE_SERVICE'], ['{userId}' => $userId]);
+                    $campaign = Validations::validateCampaignName($campaignKey, $this->settings);
+                    if ($campaign !== null) {
+                        return $bucketInfo = Bucketer::getBucketVariationId($campaign, $variationInfo[$campaignKey]['variationName']);
+                    }
+                } else {
+                    self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['GET_USER_STORAGE_SERVICE_FAILED']);
+                }
+            } else {
+                self::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['NO_USER_STORAGE_SERVICE_GET']);
+            }
+        } catch (\Exception $e) {
+            self::addLog(Logger::ERROR, $e->getMessage());
+        }
+        return null;
+    }
+
+    private function userStorageSet($userId, $campaignKey, $userData)
+    {
+        self::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['NO_STORED_VARIATION'], ['{userId}' => $userId, '{campaignTestKey}' => $campaignKey]);
+        try {
+            if (!empty($this->_userStorageObj)) {
+                $campaignInfo = Common::getUserSaveData($campaignKey, $userData, $userId);
+                $this->_userStorageObj->set($campaignInfo);
+            } else {
+                self::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['NO_USER_STORAGE_SERVICE_SET']);
+            }
+        } catch (Exception $e) {
+            self::addLog(Logger::ERROR, $e->getMessage());
+        }
     }
 
     /***
@@ -324,39 +355,188 @@ Class VWO
      * @param  $customerHash
      * @return mixed
      */
-    private function addVisitor($campaign,$userId,$varientId)
+    private function addVisitor($campaign, $userId, $varientId)
     {
-        try{
-            if($this->development_mode) {
+        try {
+            if ($this->development_mode) {
                 $response['status'] = 'success';
                 return true;
-            }else {
-                $parameters = array(
-                    'account_id'=>$this->settings['accountId'],
-                    'experiment_id'=>$campaign['id'],
-                    'ap'=>'server',
-                    'uId'=>$userId,
-                    'combination'=>$varientId, // variation id
-                    'random'=>rand(0, 1),
-                    'sId'=>time(),
-                    'u'=>$this->getUUId5($userId, $this->settings['accountId']),
-                    'ed'=>'{"p":"server"}',
+            } else {
+                $params = array(
+                    'experiment_id' => $campaign['id'],
+                    'combination' => $varientId, // variation id
+                    'ed' => '{"p":"server"}',
                 );
+                $parameters = Common::mergeCommonQueryParams($this->settings['accountId'], $userId, $params);
 
                 $response = $this->connection->get(Constants::TRACK_URL, $parameters);
             }
-            self::addLog(Logger::INFO, Constants::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'], ['{properties}'=>json_encode($parameters)]);
+            self::addLog(Logger::INFO, Constants::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'], ['{properties}' => json_encode($parameters)]);
 
-            if(isset($response['status'])  && $response['status'] == 'success') {
-                self::addLog(Logger::INFO, Constants::INFO_MESSAGES['IMPRESSION_SUCCESS'], ['{userId}'=>$userId,'{endPoint}'=>'track-user','{campaignId}'=>$campaign['id'],'{variationId}'=>$varientId,'{accountId}'=>$this->settings['accountId']]);
+            if (isset($response['httpStatus']) && $response['httpStatus'] == 200) {
+                self::addLog(Logger::INFO, Constants::INFO_MESSAGES['IMPRESSION_SUCCESS'], ['{userId}' => $userId, '{endPoint}' => 'track-user', '{campaignId}' => $campaign['id'], '{variationId}' => $varientId, '{accountId}' => $this->settings['accountId']]);
 
                 return true;
             }
-            self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['IMPRESSION_FAILED'], ['{endPoint}'=>'addvistior']);
-
-        }catch(Exception $e){
+            self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['IMPRESSION_FAILED'], ['{endPoint}' => 'addvistior']);
+        } catch (Exception $e) {
             self::addLog(Logger::ERROR, $e->getMessage());
+        }
+        return false;
+    }
 
+    /**
+     * @param $campaignKey
+     * @param $variableKey
+     * @param $userId
+     * @return bool|float|int|null|string
+     */
+    public function getFeatureVariableValue($campaignKey, $variableKey, $userId, $customVariables = [])
+    {
+        try {
+            self::$apiName = 'getFeatureVariableValue';
+            self::addLog(Logger::INFO, Constants::INFO_MESSAGES['API_CALLED'], ['{api}' => 'getFeatureVariableValue', '{userId}' => $userId]);
+
+            $campaign = Validations::validateCampaignName($campaignKey, $this->settings);
+            if ($campaign != null && $campaign['type'] == self::$AB) {
+                self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['INVALID_API_CALL'], ['{api}' => 'getFeatureVariableValue', '{userId}' => $userId, '{campaignKey}' => $campaignKey, '{campaignType}' => 'SERVER AB']);
+                return false;
+            }
+            $value = null;
+            $variableData = ['key' => $variableKey];
+            $featureData = $this->fetchFeatureEnabledData($campaignKey, $userId, ['variableData' => $variableData, 'customVariables' => $customVariables]);
+            if ($featureData) {
+                if (isset($featureData['variationData']['bucketInfo'])) {
+                    if ($featureData['variationData']['campaign']['type'] == self::$FEATURE_ROLLOUT) {
+                        $featureVariable = $featureData['variationData']['campaign']['variables'];
+                    } else {
+                        // it is part of feature test
+                        if ($featureData['response'] == 1) {
+                            $featureVariable = $featureData['variationData']['bucketInfo']['variables'];
+                        } else {
+                            $featureVariable = Common::fetchControlVariation($featureData['variationData']['campaign']['variations'])['variables'];
+                        }
+                    }
+                    $value = Common::fetchVariableValueFromCampaign($featureVariable, $variableKey);
+                }
+            }
+            if ($value == null) {
+                self::addLog(Logger::DEBUG, Constants::INFO_MESSAGES['VARIABLE_NOT_FOUND'], ['{userId}' => $userId, '{variableKey}' => $variableKey, '{campaignKey}' => $campaignKey, '{variableValue}' => $value]);
+            } else {
+                self::addLog(Logger::DEBUG, Constants::INFO_MESSAGES['VARIABLE_FOUND'], ['{userId}' => $userId, '{variableKey}' => $variableKey, '{campaignKey}' => $campaignKey, '{variableValue}' => $value]);
+            }
+
+            return $value;
+        } catch (\Exception $e) {
+            self::addLog(Logger::ERROR, $e->getMessage());
+        }
+    }
+
+    /**
+     * API for track the user goals and revenueValue
+     *
+     * @param  string $campaignKey
+     * @param  string $userId
+     * @param  string $goalName
+     * @param  string $revenueValue
+     * @return bool
+     */
+    public function track($campaignKey = '', $userId = '', $goalName = '', $revenueValue = '', $customVariables = [])
+    {
+        try {
+            self::$apiName = 'track';
+            $bucketInfo = null;
+            self::addLog(Logger::INFO, Constants::INFO_MESSAGES['API_CALLED'], ['{api}' => 'track', '{userId}' => $userId]);
+            if (empty($campaignKey) || empty($userId) || empty($goalName)) {
+                self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['TRACK_API_MISSING_PARAMS']);
+                return false;
+            }
+            $campaign = Validations::validateCampaignName($campaignKey, $this->settings);
+            if ($campaign !== null) {
+                try {
+                    if ($campaign['type'] == self::$FEATURE_ROLLOUT) {
+                        self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['INVALID_API_CALL'], ['{api}' => 'track', '{userId}' => $userId, '{campaignKey}' => $campaignKey, '{campaignType}' => $campaign['type']]);
+                        return false;
+                    }
+
+                    if (!empty($this->_userStorageObj)) {
+                        $variationInfo = $this->_userStorageObj->get($userId, $campaignKey);
+                        if (isset($variationInfo[$campaignKey]['variationName']) && is_string($variationInfo[$campaignKey]['variationName']) && !empty($variationInfo[$campaignKey]['variationName'])) {
+                            self::addLog(Logger::INFO, Constants::INFO_MESSAGES['LOOKING_UP_USER_STORAGE_SERVICE'], ['{userId}' => $userId]);
+                            $bucketInfo = Bucketer::getBucketVariationId($campaign, $variationInfo[$campaignKey]['variationName']);
+                        } else {
+                            self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['GET_USER_STORAGE_SERVICE_FAILED']);
+                        }
+                    } else {
+                        self::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['NO_USER_STORAGE_SERVICE_GET']);
+                    }
+                } catch (Exception $e) {
+                    self::addLog(Logger::ERROR, $e->getMessage());
+                }
+                if ($bucketInfo == null) {
+                    $customVariables = isset($customVariables) ? $customVariables : [];
+                    $result = Validations::checkPreSegmentation($campaign, $customVariables);
+                    $status = 'passed';
+                    if ($result == false) {
+                        $status = 'failed';
+                        self::addLog(Logger::INFO, Constants::INFO_MESSAGES['USER_PRE_SEGMENTATION_STATUS'], ['{userId}' => $userId,'{api}' => 'track', '{customVariables}' => json_encode($customVariables), '{campaignKey}' => $campaignKey,'{status}' => $status]);
+
+                        return null;
+                    }
+                    self::addLog(Logger::INFO, Constants::INFO_MESSAGES['USER_PRE_SEGMENTATION_STATUS'], ['{userId}' => $userId, '{customVariables}' => json_encode($customVariables), '{campaignKey}' => $campaignKey,'{status}' => $status]);
+                    $bucketInfo = Bucketer::getBucket($userId, $campaign);
+                    if ($bucketInfo == null) {
+                        return null;
+                    }
+                    self::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['NO_STORED_VARIATION'], ['{userId}' => $userId, '{campaignTestKey}' => $campaignKey]);
+                    try {
+                        if (!empty($this->_userStorageObj)) {
+                            $campaignInfo = Common::getUserSaveData($campaignKey, $bucketInfo, $userId);
+                            $this->_userStorageObj->set($campaignInfo);
+                        } else {
+                            self::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['NO_USER_STORAGE_SERVICE_SET']);
+                        }
+                    } catch (Exception $e) {
+                        self::addLog(Logger::ERROR, $e->getMessage());
+                    }
+                } else {
+                    self::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['GETTING_STORED_VARIATION'], ['{userId}' => $userId, '{variationName}' => $bucketInfo['name'], '{campaignTestKey}' => $campaignKey]);
+                }
+
+                $goal = Common::getGoal($campaign['goals'], $goalName);
+                $goalId = isset($goal['id']) ? $goal['id'] : 0;
+                if ($goalId && isset($bucketInfo['id']) && $bucketInfo['id'] > 0) {
+                    if ($this->development_mode) {
+                        return true;
+                    } else {
+                        $params = array(
+                            'experiment_id' => $campaign['id'],
+                            'combination' => $bucketInfo['id'],
+                            'goal_id' => $goalId
+                        );
+                        $parameters = Common::mergeCommonQueryParams($this->settings['accountId'], $userId, $params);
+                        if ($goal['type'] == "REVENUE_TRACKING" && empty($revenueValue)) {
+                            self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['MISSING_GOAL_REVENUE'], ['{goalIdentifier}' => $goalName, '{campaignTestKey}' => $campaignKey, '{userId}' => $userId]);
+                            return false;
+                        }
+                        if ($goal['type'] == "REVENUE_TRACKING" && (!empty($revenueValue) && (is_string($revenueValue) || is_float($revenueValue) || is_int($revenueValue)))) {
+                            $parameters['r'] = $revenueValue;
+                        }
+                        $response = $this->connection->get(Constants::GOAL_URL, $parameters);
+                    }
+                    self::addLog(Logger::INFO, Constants::INFO_MESSAGES['IMPRESSION_FOR_TRACK_GOAL'], ['{properties}' => json_encode($parameters)]);
+                    if (isset($response['httpStatus']) && $response['httpStatus'] == 200) {
+                        self::addLog(Logger::INFO, Constants::INFO_MESSAGES['IMPRESSION_SUCCESS'], ['{userId}' => $userId, '{endPoint}' => 'track-goal', '{campaignId}' => $campaign['id'], '{variationId}' => $bucketInfo['id'], '{accountId}' => $this->settings['accountId']]);
+                        return true;
+                    }
+                    self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['IMPRESSION_FAILED'], ['{endPoint}' => 'trackGoal']);
+                    self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['TRACK_API_GOAL_NOT_FOUND'], ['{campaignTestKey}' => $campaignKey, '{userId}' => $userId]);
+                } else {
+                    self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['TRACK_API_GOAL_NOT_FOUND'], ['{campaignTestKey}' => $campaignKey, '{userId}' => $userId]);
+                }
+            }
+        } catch (Exception $e) {
+            self::addLog(Logger::ERROR, $e->getMessage());
         }
         return false;
     }
@@ -368,168 +548,85 @@ Class VWO
      * @param  $userId
      * @return string|null
      */
-    public function activate($campaignKey,$userId)
+    public function activate($campaignKey, $userId, $customVariables = [])
     {
-        return $this->getVariation($campaignKey, $userId, 1);
+        return $this->getVariationName($campaignKey, $userId, $customVariables, 1);
     }
+
 
     /**
      * fetch the variation name
      *
      * @param  $campaignKey
      * @param  $customerHash
-     * @param  int          $addVisitor
+     * @param  int $addVisitor
      * @return null| bucketname
      */
-    public function getVariation($campaignKey,$userId,$addVisitor = 0)
+    public function getVariationName($campaignKey, $userId, $customVariables = [], $addVisitor = 0)
     {
-        if($addVisitor == 0) {
-            self::addLog(Logger::INFO, Constants::INFO_MESSAGES['API_CALLED'], ['{api}'=>'getVariation','{userId}'=>$userId]);
-        }else{
-            self::addLog(Logger::INFO, Constants::INFO_MESSAGES['API_CALLED'], ['{api}'=>'activate','{userId}'=>$userId]);
+        if ($addVisitor == 0) {
+            self::$apiName = 'getVariation';
+            self::addLog(Logger::INFO, Constants::INFO_MESSAGES['API_CALLED'], ['{api}' => 'getVariation', '{userId}' => $userId]);
+        } else {
+            self::$apiName = 'activate';
+            self::addLog(Logger::INFO, Constants::INFO_MESSAGES['API_CALLED'], ['{api}' => 'activate', '{userId}' => $userId]);
         }
         $bucketInfo = null;
-        try{
-            // if campai
-            $campaign = $this->validateCampaignName($campaignKey);
-            if($campaign !== null) {
-
-                try{
-                    if(!empty($this->_userProfileObj)) {
-                        $variationInfo = $this->_userProfileObj->lookup($userId, $campaignKey);
-                        if(isset($variationInfo[$campaignKey]['variationName']) && is_string($variationInfo[$campaignKey]['variationName'])&& !empty($variationInfo[$campaignKey]['variationName']) ) {
-                            self::addLog(Logger::INFO, Constants::INFO_MESSAGES['LOOKING_UP_USER_PROFILE_SERVICE'], ['{userId}'=>$userId]);
-                            $bucketInfo=BucketService::getBucketVariationId($campaign, $variationInfo[$campaignKey]['variationName']);
-                        }else{
-                            self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['LOOK_UP_USER_PROFILE_SERVICE_FAILED']);
-
-                        }
-                    }else{
-                        self::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['NO_USER_PROFILE_SERVICE_LOOKUP']);
-                    }
-                }catch (Exception $e) {
-                    self::addLog(Logger::ERROR, $e->getMessage());
+        try {
+            $campaign = Validations::validateCampaignName($campaignKey, $this->settings);
+            if ($campaign !== null) {
+                if (($campaign['type'] == self::$FEATURE_ROLLOUT) || ($campaign['type'] == self::$FEATURE_TEST && $addVisitor == 1)) {
+                    self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['INVALID_API_CALL'], ['{api}' => $addVisitor == 1 ? 'activate' : 'getVariationName', '{userId}' => $userId, '{campaignKey}' => $campaignKey, '{campaignType}' => $campaign['type']]);
+                    return false;
                 }
-
-                // do murmur operations and get Variation for the customer
-                if($bucketInfo == null) {
-                    $bucketInfo = BucketService::getBucket($userId, $campaign);
-                    if($bucketInfo == null) {
-                        return null;
-                    }
-                    self::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['NO_STORED_VARIATION'], ['{userId}'=>$userId,'{campaignTestKey}'=>$campaignKey]);
-                    try{
-                        if(!empty($this->_userProfileObj)) {
-                            $campaignInfo = $this->getUserProfileSaveData($campaignKey, $bucketInfo, $userId);
-                            $this->_userProfileObj->save($campaignInfo);
-                        }else{
-                            self::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['NO_USER_PROFILE_SERVICE_SAVE']);
-                        }
-                    }catch (Exception $e){
-                        self::addLog(Logger::ERROR, $e->getMessage());
-
-                    }
-                }else{
-                    self::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['GETTING_STORED_VARIATION'], ['{userId}'=>$userId,'{variationName}'=>$bucketInfo['name'],'{campaignTestKey}'=>$campaignKey]);
-                }
-                if($addVisitor) {
+            }
+            $res = $this->fetchVariationData($campaignKey, $userId, $customVariables);
+            $bucketInfo = isset($res['bucketInfo']) ? $res['bucketInfo'] : null;
+            $campaign = isset($res['campaign']) ? $res['campaign'] : null;
+            if ($bucketInfo !== null) {
+                if ($addVisitor) {
                     $this->addVisitor($campaign, $userId, $bucketInfo['id']);
                 }
                 return $bucketInfo['name'];
             }
-        }catch(Exception $e){
+        } catch (Exception $e) {
             self::addLog(Logger::ERROR, $e->getMessage());
         }
         return null;
     }
 
     /**
-     * function to check if the campaignkey exists in campign array from settings
-     *
-     * @param  $campaignKey
-     * @return null
-     */
-    private function validateCampaignName($campaignKey)
-    {
-        if(isset($this->settings['campaigns']) and count($this->settings['campaigns'])) {
-            foreach ($this->settings['campaigns'] as $campaign) {
-                if(isset($campaign['status']) && $campaign['status'] !=='RUNNING') {
-                    continue;
-                }
-                if ($campaignKey === $campaign['key']) {
-                    return $campaign;
-                }
-            }
-        }
-        self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['CAMPAIGN_NOT_RUNNING'], ['{campaignTestKey}'=>$campaignKey]);
-        return null ;
-    }
-
-    /**
-     * create a uuid
-     *
-     * @param  $name
-     * @return string
-     */
-    private function getUUId5($userId,$accountId)
-    {
-        try {
-            $uuid5_seed = Uuid::uuid5(Uuid::NAMESPACE_URL, $this->uuidSeed);
-            $uuid5_seed_accountId = Uuid::uuid5($uuid5_seed, $accountId);
-            $uuid5 = Uuid::uuid5($uuid5_seed_accountId, $userId);
-            $uuid = strtoupper(str_replace('-', '', $uuid5->toString()));
-            self::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['UUID_FOR_USER'], ['{userid}'=>$userId,'{accountId}'=>$accountId,'{desiredUuid}'=>$uuid]);
-            return $uuid;
-
-        } catch (UnsatisfiedDependencyException $e) {
-            // Some dependency was ot met. Either the method cannot be called on a
-            // 32-bit system, or it can, but it relies on Moontoast\Math to be present.
-            self::addLog(Logger::ERROR, 'UnsatisfiedDependencyException : '.$e->getMessage());
-
-        }catch (Exception $e) {
-            self::addLog(Logger::ERROR, $e->getMessage());
-
-        }
-        return '';
-    }
-
-    /**
-     * method to create the input array for userprofile save function
-     *
-     * @param  $campaignKey
-     * @param  $bucketInfo
-     * @param  $customerHash
-     * @return array
-     */
-
-    private function getUserProfileSaveData($campaignKey,$bucketInfo,$customerHash)
-    {
-        return[
-            'userId'=>$customerHash,
-            $campaignKey=>['variationName'=>$bucketInfo['name']],
-        ];
-    }
-
-    /**
-     * function to addlog to the default/ custom logger
-     *
-     * @param  $level
-     * @param  $message
-     * @param  array   $params
-     * @param  string  $classname
+     * @param $tagKey
+     * @param $tagValue
+     * @param $userId
      * @return bool
      */
-    static function addLog($level,$message,$params=[],$classname='')
+    public function push($tagKey, $tagValue, $userId)
     {
-        try{
-            if (empty($classname)) {
-                $classname = self::name();
+        self::$apiName = 'activate';
+        //Check if tagName and tagValue are defined and are string, otherwise log and return FALSE
+        if (Validations::pushApiParams($tagKey, $tagValue, $userId) && Validations::checkSettingSchema($this->settings)) {
+            //Send a call to VWO server
+            try {
+                if ($this->development_mode) {
+                    return true;
+                } else {
+                    $params = array(
+                        'tags' => '{"u":{"' . $tagKey . '":"' . $tagValue . '"}}'
+                    );
+                    $parameters = Common::mergeCommonQueryParams($this->settings['accountId'], $userId, $params);
+                    $response = $this->connection->get(Constants::PUSH_URL, $parameters);
+                }
+                self::addLog(Logger::INFO, Constants::INFO_MESSAGES['IMPRESSION_FOR_PUSH'], ['{properties}' => json_encode($parameters)]);
+                if (isset($response['httpStatus']) && $response['httpStatus'] == 200) {
+                    self::addLog(Logger::INFO, Constants::INFO_MESSAGES['IMPRESSION_SUCCESS_PUSH'], ['{userId}' => $userId, '{endPoint}' => 'push', '{accountId}' => $this->settings['accountId'], '{tags}' => $parameters['tags']]);
+                    return true;
+                }
+                self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['IMPRESSION_FAILED'], ['{endPoint}' => 'push']);
+            } catch (Exception $e) {
+                self::addLog(Logger::ERROR, $e->getMessage());
             }
-            $message = Common::makelogMessage($message, $params, $classname);
-            self::$_logger->addLog($message, $level);
-        }catch (Exception $e){
-            error_log($e->getMessage());
         }
-        return true;
+        return false;
     }
 }

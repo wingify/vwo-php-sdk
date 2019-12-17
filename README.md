@@ -27,7 +27,7 @@ composer require vwo/vwo-php-sdk
 <?php
 
 require_once('vendor/autoload.php');
-require_once('userProfile.php'); // Optional :if you are using userProfile service feature
+require_once('userStorage.php'); // Optional :if you are using UserStorage service feature
 require_once('customLogger.php');// Optional :if you are using custom logging feature
 
 
@@ -46,7 +46,7 @@ $settingsFile=VWO::getSettingsFile($accountId, $sdkKey);
 $config=['settings'=>$settingsFile,
     'isDevelopmentMode'=>0,  // optional: 1 to enable the dev mode
     'logging'=>new CustomLogger(), // optional
-    'userProfileService'=> new userProfile() // optional
+    'userStorageService'=> new userStorageService() // optional
 ];
 
 $vwoClient = new VWO($config);
@@ -71,38 +71,34 @@ $varient=$vwoClient->getVariation($campaignKey, $userId);
 $vwoClient->track($campaignKey, $userId, $goalIdentifier, $revenue);
 ```
 
-**Code for UserProfile service**
+**Code for UserStorage service**
 
 ```php
 <?php
 require_once('vendor/autoload.php');
-use vwo\Utils\UserProfileInterface;
-Class UserProfile implements UserProfileInterface{
+use vwo\Utils\UserStorageInterface;
+Class UserStorage implements UserStorageInterface{
 
     /**
      * @param $userId
      * @param $campaignKey
      * @return string
      */
-    public function lookup($userId, $campaignKey){
-        // xyz actions
-       return[
-            'userId'=>$userId,
-            $campaignKey=>['variationName'=>'Control']
-        ];
-
+    public function get($userId, $campaignKey){
+      return[
+          'userId'=>$userId,
+          $campaignKey=>['variationName'=>'Control']
+      ];
     }
 
     /**
      * @param $campaignInfo
      * @return bool
      */
-    public function save($campaignInfo){
-       // print_r($campaignInfo);
-        return True;
+    public function set($campaignInfo){
+      return True;
 
     }
-
 }
 ```
 
@@ -148,7 +144,7 @@ $settingsFile=VWO::getSettings($accountId, $sdkKey);
 $config=['settingsFile'=> $settingsFile,
     'isDevelopmentMode'=> 0,  // optional: 1 to enable the dev mode
     'logger'=> new CustomLogger(), // optional
-    'userProfileService'=> new userProfile() // optional
+    'userStorageService'=> new userStorageService() // optional
 ];
 
 $vwoClient = new VWO($config);

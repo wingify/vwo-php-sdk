@@ -30,14 +30,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-namespace vwo\Utils;
-use JsonSchema\Constraints\Constraint;
+
+namespace vwo\Handlers;
+
 use vwo\Error\ClientError;
 use vwo\Error\ServerError;
 use vwo\Error\NetworkError;
 
 /**
  * HTTP connection.
+ * @codeCoverageIgnore
  */
 class Connection
 {
@@ -77,13 +79,13 @@ class Connection
     /**
      * @var boolean
      */
-    private $failOnError = FALSE;
+    private $failOnError = false;
     /**
      * Manually follow location redirects. Used if CURLOPT_FOLLOWLOCATION
      * is unavailable due to open_basedir restriction.
      * @var boolean
      */
-    private $followLocation = FALSE;
+    private $followLocation = false;
     /**
      * Maximum number of redirects to try.
      * @var int
@@ -98,15 +100,16 @@ class Connection
      * Deal with failed requests if failOnError is not set.
      * @var string|FALSE
      */
-    private $lastError = FALSE;
+    private $lastError = false;
     /**
      * Determines whether the response body should be returned as a raw string.
      */
-    private $rawResponse = FALSE;
+    private $rawResponse = false;
     /**
      * Determines the default content type to use with requests and responses.
      */
     private $contentType;
+
     /**
      * Initializes the connection object.
      */
@@ -121,40 +124,55 @@ class Connection
         // Set to a blank string to make cURL include all encodings it can handle (gzip, deflate, identity) in the 'Accept-Encoding' request header and respect the 'Content-Encoding' response header
         curl_setopt($this->curl, CURLOPT_ENCODING, '');
         if (!ini_get("open_basedir")) {
-            curl_setopt($this->curl, CURLOPT_FOLLOWLOCATION, TRUE);
+            curl_setopt($this->curl, CURLOPT_FOLLOWLOCATION, true);
         } else {
-            $this->followLocation = TRUE;
+            $this->followLocation = true;
         }
         $this->setTimeout(60);
     }
+
+    /**
+     * Set a default timeout for the request. The client will error if the
+     * request takes longer than this to respond.
+     *
+     * @param int $timeout number of seconds to wait on a response
+     */
+    public function setTimeout($timeout)
+    {
+        curl_setopt($this->curl, CURLOPT_TIMEOUT, $timeout);
+        curl_setopt($this->curl, CURLOPT_CONNECTTIMEOUT, $timeout);
+    }
+
     /**
      * Controls whether requests and responses should be treated
      * as XML. Defaults to FALSE (using JSON).
      *
      * @param bool $option the new state of this feature
      */
-    public function useXml($option = TRUE)
+    public function useXml($option = true)
     {
         if ($option) {
             $this->contentType = self::MEDIA_TYPE_XML;
-            $this->rawResponse = TRUE;
+            $this->rawResponse = true;
         } else {
             $this->contentType = self::MEDIA_TYPE_JSON;
-            $this->rawResponse = FALSE;
+            $this->rawResponse = false;
         }
     }
+
     /**
      * Controls whether requests or responses should be treated
      * as urlencoded form data.
      *
      * @param bool $option the new state of this feature
      */
-    public function useUrlEncoded($option = TRUE)
+    public function useUrlEncoded($option = true)
     {
         if ($option) {
             $this->contentType = self::MEDIA_TYPE_WWW;
         }
     }
+
     /**
      * Throw an exception if the request encounters an HTTP error condition.
      *
@@ -170,10 +188,11 @@ class Connection
      *
      * @param bool $option the new state of this feature
      */
-    public function failOnError($option = TRUE)
+    public function failOnError($option = true)
     {
         $this->failOnError = $option;
     }
+
     /**
      * Sets the HTTP basic authentication.
      *
@@ -184,6 +203,7 @@ class Connection
     {
         curl_setopt($this->curl, CURLOPT_USERPWD, "$username:$password");
     }
+
     /**
      * Sets Oauth authentication headers
      *
@@ -195,38 +215,7 @@ class Connection
         $this->addHeader('X-Auth-Client', $clientId);
         $this->addHeader('X-Auth-Token', $authToken);
     }
-    /**
-     * Set a default timeout for the request. The client will error if the
-     * request takes longer than this to respond.
-     *
-     * @param int $timeout number of seconds to wait on a response
-     */
-    public function setTimeout($timeout)
-    {
-        curl_setopt($this->curl, CURLOPT_TIMEOUT, $timeout);
-        curl_setopt($this->curl, CURLOPT_CONNECTTIMEOUT, $timeout);
-    }
-    /**
-     * Set a proxy server for outgoing requests to tunnel through.
-     *
-     * @param string $server
-     * @param int|bool $port optional port number
-     */
-    public function useProxy($server, $port = FALSE)
-    {
-        curl_setopt($this->curl, CURLOPT_PROXY, $server);
-        if ($port) {
-            curl_setopt($this->curl, CURLOPT_PROXYPORT, $port);
-        }
-    }
-    /**
-     * @todo may need to handle CURLOPT_SSL_VERIFYHOST and CURLOPT_CAINFO as well
-     * @param boolean
-     */
-    public function verifyPeer($option = FALSE)
-    {
-        curl_setopt($this->curl, CURLOPT_SSL_VERIFYPEER, $option);
-    }
+
     /**
      * Add a custom header to the request.
      *
@@ -237,6 +226,30 @@ class Connection
     {
         $this->headers[$header] = "$header: $value";
     }
+
+    /**
+     * Set a proxy server for outgoing requests to tunnel through.
+     *
+     * @param string $server
+     * @param int|bool $port optional port number
+     */
+    public function useProxy($server, $port = false)
+    {
+        curl_setopt($this->curl, CURLOPT_PROXY, $server);
+        if ($port) {
+            curl_setopt($this->curl, CURLOPT_PROXYPORT, $port);
+        }
+    }
+
+    /**
+     * @todo may need to handle CURLOPT_SSL_VERIFYHOST and CURLOPT_CAINFO as well
+     * @param boolean
+     */
+    public function verifyPeer($option = false)
+    {
+        curl_setopt($this->curl, CURLOPT_SSL_VERIFYPEER, $option);
+    }
+
     /**
      * Remove a header from the request.
      *
@@ -246,6 +259,41 @@ class Connection
     {
         unset($this->headers[$header]);
     }
+
+    /**
+     * Return an representation of an error returned by the last request, or FALSE
+     * if the last request was not an error.
+     */
+    public function getLastError()
+    {
+        return $this->lastError;
+    }
+
+    /**
+     * Make an HTTP POST request to the specified endpoint.
+     *
+     * @param string $url URL to which we send the request
+     * @param mixed $body Data payload (JSON string or raw data)
+     *
+     * @return mixed
+     */
+    public function post($url, $body)
+    {
+        $this->addHeader('Content-Type', $this->getContentType());
+        if (!is_string($body)) {
+            $body = json_encode($body);
+        }
+        $this->initializeRequest();
+        curl_setopt($this->curl, CURLOPT_CUSTOMREQUEST, 'POST');
+        curl_setopt($this->curl, CURLOPT_URL, $url);
+        curl_setopt($this->curl, CURLOPT_POST, true);
+        curl_setopt($this->curl, CURLOPT_PUT, false);
+        curl_setopt($this->curl, CURLOPT_HTTPGET, false);
+        curl_setopt($this->curl, CURLOPT_POSTFIELDS, $body);
+        curl_exec($this->curl);
+        return $this->handleResponse();
+    }
+
     /**
      * Get the MIME type that should be used for this request.
      *
@@ -255,6 +303,7 @@ class Connection
     {
         return ($this->contentType) ? $this->contentType : self::MEDIA_TYPE_JSON;
     }
+
     /**
      * Clear previously cached request data and prepare for
      * making a fresh request.
@@ -263,13 +312,14 @@ class Connection
     {
         $this->responseBody = '';
         $this->responseHeaders = array();
-        $this->lastError = FALSE;
+        $this->lastError = false;
         $this->addHeader('Accept', $this->getContentType());
-        curl_setopt($this->curl, CURLOPT_POST, FALSE);
-        curl_setopt($this->curl, CURLOPT_PUT, FALSE);
-        curl_setopt($this->curl, CURLOPT_HTTPGET, FALSE);
+        curl_setopt($this->curl, CURLOPT_POST, false);
+        curl_setopt($this->curl, CURLOPT_PUT, false);
+        curl_setopt($this->curl, CURLOPT_HTTPGET, false);
         curl_setopt($this->curl, CURLOPT_HTTPHEADER, $this->headers);
     }
+
     /**
      * Check the response for possible errors and handle the response body returned.
      *
@@ -281,36 +331,50 @@ class Connection
         if (curl_errno($this->curl)) {
             throw new NetworkError(curl_error($this->curl), curl_errno($this->curl));
         }
-        $body = ($this->rawResponse) ? $this->getBody() : json_decode($this->getBody(),1);
+        $body = ($this->rawResponse) ? $this->getBody() : json_decode($this->getBody(), 1);
         $status = $this->getStatus();
         if ($status >= 400 && $status <= 499) {
             if ($this->failOnError) {
                 throw new ClientError($body, $status);
             } else {
                 $this->lastError = $body;
-                return FALSE;
+                return false;
             }
         } elseif ($status >= 500 && $status <= 599) {
             if ($this->failOnError) {
                 throw new ServerError($body, $status);
             } else {
                 $this->lastError = $body;
-                return FALSE;
+                return false;
             }
         }
         if ($this->followLocation) {
             $this->followRedirectPath();
         }
+        $body['httpStatus'] = $status;
         return $body;
     }
+
     /**
-     * Return an representation of an error returned by the last request, or FALSE
-     * if the last request was not an error.
+     * Access the content body of the response
+     *
+     * @return string
      */
-    public function getLastError()
+    public function getBody()
     {
-        return $this->lastError;
+        return $this->responseBody;
     }
+
+    /**
+     * Access the status code of the response.
+     *
+     * @return mixed
+     */
+    public function getStatus()
+    {
+        return curl_getinfo($this->curl, CURLINFO_HTTP_CODE);
+    }
+
     /**
      * Recursively follow redirect until an OK response is received or
      * the maximum redirects limit is reached.
@@ -340,6 +404,27 @@ class Connection
             $this->redirectsFollowed = 0;
         }
     }
+
+    /**
+     * Access given header from the response.
+     *
+     * @param string $header Header name to retrieve
+     *
+     * @return string|void
+     */
+    public function getHeader($header)
+    {
+        if (array_key_exists($header, $this->responseHeaders)) {
+            return $this->responseHeaders[$header];
+        }
+        // Do case-insensitive search
+        foreach ($this->responseHeaders as $k => $v) {
+            if (strtolower($k) == strtolower($header)) {
+                return $v;
+            }
+        }
+    }
+
     /**
      * Make an HTTP GET request to the specified endpoint.
      *
@@ -348,46 +433,21 @@ class Connection
      *
      * @return mixed
      */
-    public function get($url, $query = FALSE)
-    {   $query['sdk']='php';
-        $query['sdk-v']=Constants::SDK_VERSION;
-
+    public function get($url, $query = false)
+    {
         $this->initializeRequest();
         if (is_array($query)) {
             $url .= '?' . http_build_query($query);
         }
         curl_setopt($this->curl, CURLOPT_CUSTOMREQUEST, 'GET');
         curl_setopt($this->curl, CURLOPT_URL, $url);
-        curl_setopt($this->curl, CURLOPT_POST, FALSE);
-        curl_setopt($this->curl, CURLOPT_PUT, FALSE);
-        curl_setopt($this->curl, CURLOPT_HTTPGET, TRUE);
+        curl_setopt($this->curl, CURLOPT_POST, false);
+        curl_setopt($this->curl, CURLOPT_PUT, false);
+        curl_setopt($this->curl, CURLOPT_HTTPGET, true);
         curl_exec($this->curl);
         return $this->handleResponse();
     }
-    /**
-     * Make an HTTP POST request to the specified endpoint.
-     *
-     * @param string $url URL to which we send the request
-     * @param mixed $body Data payload (JSON string or raw data)
-     *
-     * @return mixed
-     */
-    public function post($url, $body)
-    {
-        $this->addHeader('Content-Type', $this->getContentType());
-        if (!is_string($body)) {
-            $body = json_encode($body);
-        }
-        $this->initializeRequest();
-        curl_setopt($this->curl, CURLOPT_CUSTOMREQUEST, 'POST');
-        curl_setopt($this->curl, CURLOPT_URL, $url);
-        curl_setopt($this->curl, CURLOPT_POST, TRUE);
-        curl_setopt($this->curl, CURLOPT_PUT, FALSE);
-        curl_setopt($this->curl, CURLOPT_HTTPGET, FALSE);
-        curl_setopt($this->curl, CURLOPT_POSTFIELDS, $body);
-        curl_exec($this->curl);
-        return $this->handleResponse();
-    }
+
     /**
      * Make an HTTP HEAD request to the specified endpoint.
      *
@@ -399,10 +459,11 @@ class Connection
         $this->initializeRequest();
         curl_setopt($this->curl, CURLOPT_CUSTOMREQUEST, 'HEAD');
         curl_setopt($this->curl, CURLOPT_URL, $url);
-        curl_setopt($this->curl, CURLOPT_NOBODY, TRUE);
+        curl_setopt($this->curl, CURLOPT_NOBODY, true);
         curl_exec($this->curl);
         return $this->handleResponse();
     }
+
     /**
      * Make an HTTP PUT request to the specified endpoint.
      *
@@ -427,14 +488,15 @@ class Connection
         curl_setopt($this->curl, CURLOPT_INFILESIZE, strlen($body));
         curl_setopt($this->curl, CURLOPT_CUSTOMREQUEST, 'PUT');
         curl_setopt($this->curl, CURLOPT_URL, $url);
-        curl_setopt($this->curl, CURLOPT_HTTPGET, FALSE);
-        curl_setopt($this->curl, CURLOPT_POST, FALSE);
-        curl_setopt($this->curl, CURLOPT_PUT, TRUE);
+        curl_setopt($this->curl, CURLOPT_HTTPGET, false);
+        curl_setopt($this->curl, CURLOPT_POST, false);
+        curl_setopt($this->curl, CURLOPT_PUT, true);
         curl_exec($this->curl);
         fclose($handle);
         curl_setopt($this->curl, CURLOPT_INFILE, STDIN);
         return $this->handleResponse();
     }
+
     /**
      * Make an HTTP DELETE request to the specified endpoint.
      *
@@ -444,14 +506,41 @@ class Connection
     public function delete($url)
     {
         $this->initializeRequest();
-        curl_setopt($this->curl, CURLOPT_PUT, FALSE);
-        curl_setopt($this->curl, CURLOPT_HTTPGET, FALSE);
-        curl_setopt($this->curl, CURLOPT_POST, FALSE);
+        curl_setopt($this->curl, CURLOPT_PUT, false);
+        curl_setopt($this->curl, CURLOPT_HTTPGET, false);
+        curl_setopt($this->curl, CURLOPT_POST, false);
         curl_setopt($this->curl, CURLOPT_CUSTOMREQUEST, 'DELETE');
         curl_setopt($this->curl, CURLOPT_URL, $url);
         curl_exec($this->curl);
         return $this->handleResponse();
     }
+
+    /**
+     * Access the message string from the status line of the response.
+     *
+     * @return string
+     */
+    public function getStatusMessage()
+    {
+        return $this->responseStatusLine;
+    }
+
+    /**
+     * Return the full list of response headers
+     */
+    public function getHeaders()
+    {
+        return $this->responseHeaders;
+    }
+
+    /**
+     * Close the cURL resource when the instance is garbage collected
+     */
+    public function __destruct()
+    {
+        curl_close($this->curl);
+    }
+
     /**
      * Method that appears unused, but is in fact called by curl
      *
@@ -464,6 +553,7 @@ class Connection
         $this->responseBody .= $body;
         return strlen($body);
     }
+
     /**
      * Method that appears unused, but is in fact called by curl
      *
@@ -482,65 +572,5 @@ class Connection
             }
         }
         return strlen($headers);
-    }
-    /**
-     * Access the status code of the response.
-     *
-     * @return mixed
-     */
-    public function getStatus()
-    {
-        return curl_getinfo($this->curl, CURLINFO_HTTP_CODE);
-    }
-    /**
-     * Access the message string from the status line of the response.
-     *
-     * @return string
-     */
-    public function getStatusMessage()
-    {
-        return $this->responseStatusLine;
-    }
-    /**
-     * Access the content body of the response
-     *
-     * @return string
-     */
-    public function getBody()
-    {
-        return $this->responseBody;
-    }
-    /**
-     * Access given header from the response.
-     *
-     * @param string $header Header name to retrieve
-     *
-     * @return string|void
-     */
-    public function getHeader($header)
-    {
-        if (array_key_exists($header, $this->responseHeaders)) {
-            return $this->responseHeaders[$header];
-        }
-        // Do case-insensitive search
-        foreach ($this->responseHeaders as $k => $v) {
-            if (strtolower($k) == strtolower($header)) {
-                return $v;
-            }
-        }
-    }
-    /**
-     * Return the full list of response headers
-     */
-    public function getHeaders()
-    {
-        return $this->responseHeaders;
-    }
-    /**
-     * Close the cURL resource when the instance is garbage collected
-     */
-    public function __destruct()
-    {
-        curl_close($this->curl);
     }
 }

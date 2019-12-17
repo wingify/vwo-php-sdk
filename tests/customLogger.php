@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright 2019 Wingify Software Pvt. Ltd.
  *
@@ -14,24 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-namespace vwo\Logger;
-use Monolog\Logger as Logger;
-use Monolog\Handler\StreamHandler;
-use Monolog\Formatter\LineFormatter;
+
+require_once('vendor/autoload.php');
+use vwo\Logger\LoggerInterface;
+
 /**
- *
+ * Class CustomLogger
  */
-class Loggers implements LoggerInterface
+class CustomLogger implements LoggerInterface
 {
 
-    function __construct($argument)
+    /**
+     * @param $message
+     * @param $level
+     * @return string
+     */
+    public function addLog($message, $level)
     {
-        # code...
-        // credentisla
-
-
-    }
-    function addLog($msg, $level){
-        error_log($msg);
+        //do code for writing logs to your files/databases
+        //throw new Exception('my test');
+        //return $x;
     }
 }

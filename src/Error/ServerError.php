@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file has code referenced from "bigcommerce-api-php" project, under MIT License
  *
@@ -29,6 +30,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 namespace vwo\Error;
 
 /**

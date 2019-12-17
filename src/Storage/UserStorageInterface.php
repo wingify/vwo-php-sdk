@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright 2019 Wingify Software Pvt. Ltd.
  *
@@ -6,7 +7,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,24 +15,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-namespace vwo\Utils;
+
+namespace vwo\Storage;
+
 /**
- * Interface UserProfileInterface
+ * Interface UserStorageInterface
  *
- * user profile interface should be included and used to save and lookup
- * @package vwo\Utils
+ * user interface should be included and used to set and get
  */
-interface UserProfileInterface {
+interface UserStorageInterface
+{
     /**
      * @param $userId
      * @param $campaignName
      * @return mixed
      */
-    public function lookup($userId,$campaignName);
+    public function get($userId, $campaignName);
 
     /**
      * @param $campaignInfo
      * @return mixed
      */
-    public function save($campaignInfo);
+    public function set($campaignInfo);
 }

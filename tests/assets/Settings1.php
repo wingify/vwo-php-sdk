@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright 2019 Wingify Software Pvt. Ltd.
  *
@@ -14,42 +15,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 namespace vwo;
 
-Class Settings1{
+class Settings1
+{
     var $setting = [
-    'sdkKey'=> 'loremipsum123456',
-  'campaigns'=> [
+    'sdkKey' => 'loremipsum123456',
+    'campaigns' => [
     [
-        'goals'=> [
+        'goals' => [
         [
-            'identifier'=> 'CUSTOM',
-          'id'=> 213,
-          'type'=> 'CUSTOM_GOAL'
+            'identifier' => 'CUSTOM',
+          'id' => 213,
+          'type' => 'CUSTOM_GOAL'
         ]
-],
-'variations'=> [
+        ],
+        'variations' => [
         [
-            'id'=>1,
-          'name'=> 'Control',
-          'changes'=> [],
-          'weight'=> 50
+            'id' => 1,
+          'name' => 'Control',
+          'changes' => [],
+          'weight' => 50
         ],
         [
-            'id'=> 2,
-          'name'=> 'Variation-1',
-          'changes'=> [],
-          'weight'=> 50
+            'id' => 2,
+          'name' => 'Variation-1',
+          'changes' => [],
+          'weight' => 50
         ]
-      ],
-      'id'=> 230,
-      'percentTraffic'=> 50,
-      'key'=> 'DEV_TEST_1',
-      'status'=> 'RUNNING',
-      'type'=> 'VISUAL_AB'
+        ],
+        'id' => 230,
+        'percentTraffic' => 50,
+        'key' => 'DEV_TEST_1',
+        'status' => 'RUNNING',
+        'type' => 'VISUAL_AB'
     ]
-  ],
-  'accountId'=> 60781,
-  'version'=> 1
-];
+    ],
+    'accountId' => 123456,
+    'version' => 1
+    ];
 }

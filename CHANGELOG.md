@@ -4,13 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unrealsed, coming in v1.4.0]
+## [1.5.0] - 2019-12-17
 ### Added
-Feature Rollout and Feature Test capabilities
-- Introduced two new APIs i.e. `isFeatureEnabled` and `getFeatureVariableValue`
+- Feature Rollout and Feature Test capabilities
+- Pre and Post segmentation capabilites
+  Introduced new Segmentation service to evaluate whether user is eligible for campaign based on campaign pre-segmentation conditions and passed custom-variables
 ### Changed
 - Existing APIs to handle new type of campaigns i.e. feature-rollout and feature-test
-- Code refactored to support feature-rollout and feature-test capabilites
+- All existing APIs to handle custom-variables for tageting audience
+- Code refactored to support feature-rollout, feature-test, campaign tageting and post segmentation
 
 ## [1.3.0] - 2019-11-21
 ### Changed
