@@ -17,12 +17,16 @@
 
 const run = require('./utils/run').run;
 
-require('./utils/check-license');
-
 function runAll() {
   const tasks = [{
-    name: 'Test Cases',
-    command: 'composer run-script test',
+    name: 'Linting',
+    command: 'composer run-script lint',
+  }, /*{
+    name: 'Code Sniffing',
+    command: 'composer run-script phpcs',
+  }, */{
+    name: 'Code Beautifier Formatter',
+    command: 'composer run-script phpcbf',
   }];
 
   for (let i = 0; i < tasks.length; i++) {

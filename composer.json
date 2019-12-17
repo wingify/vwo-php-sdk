@@ -1,30 +1,38 @@
-{   "name": "vwo/vwo-php-sdk",
+{
+    "name": "vwo/vwo-php-sdk",
     "keywords": ["vwo", "sdk"],
     "license": "Apache-2.0",
-    "authors": [
-    {
-      "name": "VWO developers",
-      "email": "dev@wingify.com"
-    }
-    ],
+    "authors": [{
+        "name": "VWO developers",
+        "email": "dev@wingify.com"
+    }],
     "description": "VWO server side sdk",
     "require": {
         "monolog/monolog": "1.0.*",
         "ramsey/uuid": "^3.8",
-        "justinrainbow/json-schema": "^5.2"
+        "justinrainbow/json-schema": "^5.2",
+        "squizlabs/php_codesniffer": "*"
     },
     "require-dev": {
         "phpunit/phpunit": "^4.0",
-        "php-coveralls/php-coveralls": "^2.1"
+        "php-coveralls/php-coveralls": "^2.1",
+        "overtrue/phplint": "^1.2"
     },
     "autoload": {
-         "psr-4": {"vwo\\": "src/"}
+        "psr-4": {
+            "vwo\\": "src/"
+        }
     },
     "autoload-dev": {
-         "psr-4": {"vwo\\": "tests/"}
+        "psr-4": {
+            "vwo\\": "tests/"
+        }
     },
     "scripts": {
-        "start": ["cp ./git-hooks/* ./.git/hooks/ && chmod -R +x ./.git/hooks;"],
+        "lint": ["./vendor/bin/phplint"],
+        "phpcs": ["./vendor/bin/phpcs ./src/ ./tests/"],
+        "phpcbf": ["./vendor/bin/phpcbf ./src/ ./tests/"],
+        "start": ["cp -r ./git-hooks/* ./.git/hooks/ && chmod -R +x ./.git/hooks; cp ./.codesniffer.conf ./vendor/squizlabs/php_codesniffer/CodeSniffer.conf;"],
         "test": ["./vendor/bin/phpunit"]
     }
 }
