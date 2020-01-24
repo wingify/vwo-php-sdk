@@ -315,17 +315,17 @@ class VWO
         try {
             if (!empty($this->_userStorageObj)) {
                 $variationInfo = $this->_userStorageObj->get($userId, $campaignKey);
-                if (isset($variationInfo[$campaignKey]['variationName']) && is_string($variationInfo[$campaignKey]['variationName']) && !empty($variationInfo[$campaignKey]['variationName'])) {
+                if (isset($variationInfo['variationName']) && is_string($variationInfo['variationName']) && !empty($variationInfo['variationName']) && isset($variationInfo['campaignKey']) && $variationInfo['campaignKey'] == $campaignKey) {
                     self::addLog(Logger::INFO, Constants::INFO_MESSAGES['LOOKING_UP_USER_STORAGE_SERVICE'], ['{userId}' => $userId]);
                     $campaign = Validations::validateCampaignName($campaignKey, $this->settings);
                     if ($campaign !== null) {
-                        return $bucketInfo = Bucketer::getBucketVariationId($campaign, $variationInfo[$campaignKey]['variationName']);
+                        return $bucketInfo = Bucketer::getBucketVariationId($campaign, $variationInfo['variationName']);
                     }
                 } else {
-                    self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['GET_USER_STORAGE_SERVICE_FAILED']);
+                    self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['GET_USER_STORAGE_SERVICE_FAILED'], ['{userId}' => $userId]);
                 }
             } else {
-                self::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['NO_USER_STORAGE_SERVICE_GET']);
+                self::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['NO_USER_STORAGE_SERVICE_GET'], ['{userId}' => $userId]);
             }
         } catch (\Exception $e) {
             self::addLog(Logger::ERROR, $e->getMessage());
