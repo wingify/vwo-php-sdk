@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.2] - 2020-01-24
+### Changed
+- Update endpoint to use `https` protocol instead of `http`
+- Update UserStorage `set` function to properly validate user-data structure before setting
+
+## [1.5.1] - 2020-01-23
+### Changed
+- Move "squizlabs/php_codesniffer" from dependencies to dev-dependencies in `composer.json`
+- Add `.gitattributes` file for smaller downloads i.e. only required files and folders when downloaded
+
 ## [1.5.0] - 2019-12-17
 ### Added
 - Feature Rollout and Feature Test capabilities
