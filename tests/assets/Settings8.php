@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright 2019 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2020 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ class Settings8
                         'status' => 'RUNNING',
                         'percentTraffic' => 100,
                         'type' => 'FEATURE_ROLLOUT',
+                        'segments' => [],
                         'variables' =>
                             array(
                                 0 =>
@@ -73,6 +74,7 @@ class Settings8
                 1 =>
                     array(
                         'percentTraffic' => 100,
+                        'segments' => [],
                         'goals' =>
                             array(
                                 0 =>
@@ -152,6 +154,7 @@ class Settings8
                 2 =>
                     array(
                         'percentTraffic' => 67,
+                        'segments' => [],
                         'goals' =>
                             array(
                                 0 =>

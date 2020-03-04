@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright 2019 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2020 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,11 @@
 
 namespace vwo;
 
-use phpDocumentor\Reflection\Types\Void_;
 use PHPUnit\Framework\TestCase;
-use PHPUnit\Util\Exception;
+use \Exception as Exception;
 use vwo\Storage\UserStorageInterface;
 use vwo\Logger\LoggerInterface;
 use vwo\Utils\SegmentEvaluator;
-use vwo\Utils\OperandEvaluator;
 
 /**
  * Class CustomLogger
@@ -33,8 +31,8 @@ class CustomLogger implements LoggerInterface
 {
 
     /**
-     * @param $message
-     * @param $level
+     * @param  $message
+     * @param  $level
      * @return string
      */
     public function addLog($message, $level)
@@ -49,8 +47,8 @@ class UserStorageTest implements UserStorageInterface
 {
 
     /**
-     * @param $userId
-     * @param $campaignName
+     * @param  $userId
+     * @param  $campaignName
      * @return string
      */
     public function get($userId, $campaignName)
@@ -63,7 +61,7 @@ class UserStorageTest implements UserStorageInterface
     }
 
     /**
-     * @param $campaignInfo
+     * @param  $campaignInfo
      * @return bool
      */
     public function set($campaignInfo)
@@ -74,6 +72,7 @@ class UserStorageTest implements UserStorageInterface
 
 /***
  * Class VWOTest
+ *
  * @package vwo
  */
 class VWOTest extends TestCase
@@ -130,7 +129,7 @@ class VWOTest extends TestCase
                 try {
                     $variationName = $this->vwotest->isFeatureEnabled($featureName1, $userId);
                     $variableValue = $this->vwotest->getFeatureVariableValue($featureName1, 'V1', $userId);
-                    //$expected=ucfirst($this->variationResults[$campaignName][$userId]);
+                    //$expected=ucfirst($this->variationResults[$featureName1][$userId]);
                     $expected = $variableValue;
                     $this->assertEquals($expected, $variationName);
                     // running only one test case
@@ -166,37 +165,37 @@ class VWOTest extends TestCase
 
     public function testGetVariation()
     {
-        for ($devtest = 8; $devtest < 9; $devtest++) {
-            $setting = 'settingsArr' . $devtest;
-            $config = [
-                'settingsFile' => $this->$setting,
-                'isDevelopmentMode' => 1
-            ];
-            $this->vwotest = new VWO($config);
-            $campaignName = 'DEV_TEST_' . $devtest;
-            $users = $this->getUsers();
-            for ($i = 0; $i < 26; $i++) {
-                try {
-                    $userId = $users[$i];
-                    $variationName = $this->vwotest->getVariationName($campaignName, $userId);
-                    $expected = ucfirst($this->variationResults[$campaignName][$userId]);
-                    $this->assertEquals($expected, $variationName);
-                    break;
-                } catch (Exception $e) {
+        try {
+            for ($devtest = 8; $devtest < 9; $devtest++) {
+                $setting = 'settingsArr' . $devtest;
+                $config = [
+                    'settingsFile' => $this->$setting,
+                    'isDevelopmentMode' => 1
+                ];
+                $this->vwotest = new VWO($config);
+                $campaignName = 'DEV_TEST_' . $devtest;
+                $users = $this->getUsers();
+                for ($i = 0; $i < 26; $i++) {
+                        $userId = $users[$i];
+                        $variationName = $this->vwotest->getVariationName($campaignName, $userId);
+                        $expected = ucfirst($this->variationResults[$campaignName][$userId]);
+                        $this->assertEquals($expected, $variationName);
+                        break;
                 }
             }
+        } catch (Exception $e) {
         }
     }
+
+
     public function testSegmentEvaluator()
     {
-        $segmentData = json_decode(str_replace('\\', '\\\\', $this->segmentEvaluatorJson), 1);
+        $whitlistingEvaluatorJson = new SegmentEvaluatorJson();
+        $segmentData = json_decode(str_replace('\\', '\\\\', $whitlistingEvaluatorJson->setting), 1);
         foreach ($segmentData as $key => $segments) {
             foreach ($segments as $segment) {
                 $segmentObj = new SegmentEvaluator();
-                if (($key == 'starts_with_operand_tests' || $key == 'ends_with_operand_tests' || $key = 'contains_operand') && $segment['description'] == 'boolean_data_type') {
-                    continue;
-                }
-                $res = $segmentObj->evaluate($segment['dsl'], $segment['tags']);
+                $res = $segmentObj->evaluate($segment['dsl'], $segment['customVariables']);
                 $this->assertEquals($segment['expectation'], $res);
             }
         }
@@ -256,20 +255,52 @@ class VWOTest extends TestCase
         $this->assertEquals($expected, $result);
     }
 
+    public function testWhitelisting()
+    {
+        $data = ['camapaignKey' => 'DEV_TEST_6', 'userId' => 'user_1'];
+        $whitelistingTags = [
+            'chrome' => false,
+              'safari' => true,
+              'browser' => 'chrome 107.107'
+            ];
+        $falseWhiteListingTags = [
+            'chrome' => true,
+            'safari' => false,
+            'browser' => 'firefox 106.69'
+        ];
+
+        $whitelistingObj = new WhitelistingJson();
+
+        $whitelistingSetting = $whitelistingObj->setting;
+        $config = [
+            'settingsFile' => $whitelistingSetting,
+            'isDevelopmentMode' => 0
+        ];
+        $customVariables = ['contains_vwo' => 'qqvwoqq','regex_for_all_letters' => 'abc','regex_for_small_letters' => 'www','regex_for_zeros' => 0,'regex_for_capital_letters' => 'ABC','regex_for_no_zeros' => 123,'regex_real_number' => 123,'starts_with' => 'vwo'];
+        $this->vwotest = new VWO($config);
+        $variationName = $this->vwotest->getVariationName($data['camapaignKey'], $data['userId'], ['variationTargetingVariables' => $whitelistingTags,'customVariables' => $customVariables]);
+        $variationNameForFalse = $this->vwotest->getVariationName($data['camapaignKey'], $data['userId'], ['variationTargetingVariables' => $falseWhiteListingTags,'customVariables' => $customVariables]);
+
+        $expected1 = 'Variation-2';
+        $expected2 = 'Control';
+        $this->assertEquals($expected1, $variationName);
+        $this->assertEquals($expected2, $variationNameForFalse);
+    }
+
     public function testPushApi()
     {
         $userId = 'Ashley';
         $cases = [
             //empty case
-            ['tagKey' => '','tagValue' => '','expected' => false],
+            ['tagKey' => '', 'tagValue' => '', 'expected' => false],
             //length check
             ['tagKey' => 'qwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuiopptyeytry',
                 'tagValue' => 'qwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuiopptyeytry',
                 'expected' => false],
             //datatype case
-            ['tagKey' => 1,'tagValue' => 2,'expected' => false],
+            ['tagKey' => 1, 'tagValue' => 2, 'expected' => false],
             //happy case
-            ['tagKey' => 'foo','tagValue' => 'bar','expected' => true],
+            ['tagKey' => 'foo', 'tagValue' => 'bar', 'expected' => true],
         ];
 
         $setting = 'settingsArr8';
@@ -310,21 +341,6 @@ class VWOTest extends TestCase
         $this->settingsArr8 = $settings8->setting;
         $this->variationResults = $results->results;
         $this->segmentEvaluatorJson = $segmentEvaluatorJson->setting;
-    }
-
-
-
-
-
-
-    /***
-     * @return mixed
-     */
-    private function getRandomUser()
-    {
-        $users = $this->getUsers();
-
-        return $users[rand(0, 25)];
     }
 
     private function getUsers()

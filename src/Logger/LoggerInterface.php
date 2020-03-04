@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Copyright 2019 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2020 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,21 +16,18 @@
  * limitations under the License.
  */
 
-/*
- * This file has references from “Optimizely PHP SDK, version 3.2.0” Copyright 2016-2019 Optimizely,used under Apache 2.0 License.
- * Source - https://github.com/optimizely/php-sdk/blob/master/src/Optimizely/Logger/LoggerInterface.php
- */
 namespace vwo\Logger;
 
 /***
  * Interface LoggerInterface
+ *
  * @package vwo\Logger
  */
 interface LoggerInterface
 {
     /**
-     * @param $msg
-     * @param $level
+     * @param  $msg
+     * @param  $level
      * @return mixed
      */
     public function addLog($msg, $level);

@@ -35,7 +35,7 @@ use vwo\VWO;
 
 
 $accountId = 123456;
-$sdkKey = 'VWO_ACCOUNTK';
+$sdkKey = 'PROJECT_ENVIRONMENT_KEY';
 $campaignKey = 'CAMPAIGN_UNIQUE_TEST_KEY';
 $userId = 'USER_IDENTIFIER';
 $goalIdentifier = 'CAMPAIGN_GOAL_IDENTIFIER';
@@ -43,20 +43,21 @@ $goalIdentifier = 'CAMPAIGN_GOAL_IDENTIFIER';
 
 // to fetch the settings i.e campaigns, variations and goals
 $settingsFile=VWO::getSettingsFile($accountId, $sdkKey);
-$config=['settings'=>$settingsFile,
-    'isDevelopmentMode'=>0,  // optional: 1 to enable the dev mode
-    'logging'=>new CustomLogger(), // optional
-    'userStorageService'=> new userStorageService() // optional
+
+$config=['settings' => $settingsFile,
+    'isDevelopmentMode' => 0,  // optional: 1 to enable the dev mode
+    'logging' => new CustomLogger(), // optional
+    'userStorageService' => new userStorageService() // optional
 ];
 
 $vwoClient = new VWO($config);
 
 // to get the variation name along with add a visitor hit to vwo app stats
-$varient=$vwoClient->activate($campaignKey, $userId);
+$varient=$vwoClient->activate($campaignKey, $userId, $options);
 
 
 // to get the variation name
-$varient=$vwoClient->getVariation($campaignKey, $userId);
+$varient=$vwoClient->getVariation($campaignKey, $userId, $options);
 
 
 // add code here to use variation
@@ -65,10 +66,10 @@ $varient=$vwoClient->getVariation($campaignKey, $userId);
 
 /**
 *send the track api hit to the vwo app stats to increase conversions
-* $revenue is optional send in case if there is any revenue
+* $revenue is optional send in case if there is any revenue inside $options
 */
 
-$vwoClient->track($campaignKey, $userId, $goalIdentifier, $revenue);
+$vwoClient->track($campaignKey, $userId, $goalIdentifier, $options);
 ```
 
 **Code for UserStorage service**
@@ -86,18 +87,19 @@ Class UserStorage implements UserStorageInterface{
      */
     public function get($userId, $campaignKey){
       return[
-          'userId'=>$userId,
-          $campaignKey=>['variationName'=>'Control']
+          'userId' => $userId,
+          'campaignKey' => $campaignKey,
+          'variationName' => 'Variation-2'
       ];
     }
 
     /**
-     * @param $campaignInfo
+     * @param $campaignUserMapping
      * @return bool
      */
-    public function set($campaignInfo){
+    public function set($campaignUserMapping){
+      // S...code to tore in DB/storage system
       return True;
-
     }
 }
 ```
@@ -154,14 +156,14 @@ $vwoClient = new VWO($config);
 
 ```php
 // to get the variation name along with add a visitor hit to vwo app stats
-$varient=$vwoClient->activate($campaignKey, $userId);
+$varient=$vwoClient->activate($campaignKey, $userId, $options);
 ```
 
 **Use the code below to get variation name**
 
 ```php
 // to get the variation name along with add a visitor hit to vwo app stats
-$varient=$vwoClient->getVariation($campaignKey, $userId);
+$varient=$vwoClient->getVariation($campaignKey, $userId, $options);
 ```
 
 **Use the code below to track**
@@ -169,10 +171,10 @@ $varient=$vwoClient->getVariation($campaignKey, $userId);
 ```php
 /**
 *send the track api hit to the vwo app stats to increase conversions
-* $revenue is optional send in case if there is any revenue
+* $revenue is optional send in case if there is any revenue inside $options
 */
 
-$vwoClient->track($campaignKey, $userId, $goalIdentifier, $revenue);
+$vwoClient->track($campaignKey, $userId, $goalIdentifier, $options);
 ```
 
 ## Documentation
@@ -202,8 +204,20 @@ composer run-script start
 composer run-script test
 ```
 
+3. Run linter
+
+```bash
+composer run-script test
+```
+
+4. Run code beautifier
+
+```bash
+composer run-script phpcbf
+```
+
 ## License
 
 [Apache License, Version 2.0](https://github.com/wingify/vwo-php-sdk/blob/master/LICENSE)
 
-Copyright 2019 Wingify Software Pvt. Ltd.
+Copyright 2019-2020 Wingify Software Pvt. Ltd.

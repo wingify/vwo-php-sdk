@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * Copyright 2019 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2020 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,13 +21,13 @@
  * Description - Check Python source files for Apache License headers
  * Author - Andrew Crozier https://github.com/acroz
  * License - Apache 2.0
- * Copyright 2019 Faculty Science Limited
+ * Copyright 2019-2020 Faculty Science Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -70,13 +70,17 @@ let fsUtil = {
       let isSuccess = false;
 
       for (let i = 0; i < excludes.length; i++) {
-        if (excludes[i].indexOf(path) > -1) {
+        if (path.indexOf(excludes[i]) > -1) {
           isSuccess = true;
           break;
         }
       }
-      return isSuccess;
-    } else if (fs.existsSync(path) && fs.lstatSync(path).isDirectory()) {
+      if (isSuccess) {
+        return true;
+      }
+    }
+
+    if (fs.existsSync(path) && fs.lstatSync(path).isDirectory()) {
       let dirs = fsUtil.getAllDirectories(path);
       for (let i = 0; i < dirs.length; i++) {
         fsUtil.getAllFiles({
@@ -208,11 +212,11 @@ let checkLicenseUtil = {
 console.time('Execution time for License and Copyright');
 console.log(`${AnsiColorEnum.CYAN}\nVerifying License and Copyright${AnsiColorEnum.RESET}\n`);
 const isSuccess = checkLicenseUtil.checkLicenseAndCopyright({
-  year: 2019,
+  year: '2019-2020',
   author: 'Wingify Software Pvt. Ltd.',
   paths: 'src,tests',
   stoppingCriteria: '\\*\\/',
-  excludes: ['src/Error', 'src/Utils/Connection.php', 'src/Utils/murmur.php'],
+  excludes: ['src/Error', 'src/Handlers/Connection.php', 'src/Utils/murmur.php'],
   extension: 'php'
 });
 console.timeEnd('Execution time for License and Copyright');

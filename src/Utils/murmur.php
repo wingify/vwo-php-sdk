@@ -4,11 +4,11 @@
  * PHP Implementation of MurmurHash3
  *
  * @author Stefano Azzolini (lastguest@gmail.com)
- * @see https://github.com/lastguest/murmurhash-php
+ * @see    https://github.com/lastguest/murmurhash-php
  * @author Gary Court (gary.court@gmail.com)
- * @see http://github.com/garycourt/murmurhash-js
+ * @see    http://github.com/garycourt/murmurhash-js
  * @author Austin Appleby (aappleby@gmail.com)
- * @see http://sites.google.com/site/murmurhash/
+ * @see    http://sites.google.com/site/murmurhash/
  *
  * Name: murmurhash-php
  * Published name: murmurhash-php
@@ -39,11 +39,11 @@ namespace vwo\Utils;
 
 class Murmur
 {
-  /**
-   * @param  string $key   Text to hash.
-   * @param  number $seed  Positive integer only
-   * @return number 32-bit positive integer hash
-   */
+    /**
+     * @param  string $key  Text to hash.
+     * @param  number $seed Positive integer only
+     * @return number 32-bit positive integer hash
+     */
     public static function hash3_int($key, $seed)
     {
         $key  = array_values(unpack('C*', $key));

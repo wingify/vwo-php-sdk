@@ -1,20 +1,40 @@
 <?php
 
+/**
+ * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 namespace vwo\Utils;
 
 use vwo\Utils\Common as Common;
 use vwo\Constants\Segments as SegmentConstants;
+use vwo\Constants\Constants;
+use Monolog\Logger as Logger;
 
 /**
  * Class SegmentEvaluator
+ *
  * @package vwo\Utils
  */
 class OperandEvaluator
 {
+    static $CLASSNAME = '/Utils/OperandEvaluator';
 
     /**
-     * @param $operand
-     * @param $customVariables
+     * @param  $operand
+     * @param  $customVariables
      * @return bool
      */
     public static function evaluateCustomVariableOperand($operand, $customVariables)
@@ -98,8 +118,8 @@ class OperandEvaluator
     }
 
     /**
-     * @param $op_value
-     * @param $customVariable
+     * @param  $op_value
+     * @param  $customVariable
      * @return array
      */
     public static function processValues($operandValue, $customVariable)
@@ -122,5 +142,26 @@ class OperandEvaluator
         }
         // convert it back to string and return
         return [(string)$processedOperandValue, (string)$processedTagValue];
+    }
+
+    /**
+     * @param  $operand
+     * @param  $customVariables
+     * @return bool
+     */
+    public static function evaluateUserOperand($operand, $customVariables)
+    {
+        if (!isset($customVariables['_vwoUserId'])) {
+            return false;
+        }
+        $userId = $customVariables['_vwoUserId'];
+        $useridArr = explode(',', $operand);
+        foreach ($useridArr as $operandUserId) {
+            $operandUserId = trim($operandUserId);
+            if ($userId == $operandUserId) {
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Copyright 2019 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2020 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,6 +30,7 @@ use vwo\Constants\Constants as Constants;
 /***
  * Class Validations
  * All the validations will be done using Class Validations
+ *
  * @package vwo\Utils
  */
 class Validations
@@ -38,7 +39,6 @@ class Validations
     static $CLASSNAME = 'vwo\Utils\Validations';
 
     /**
-     *
      * schema for settings array
      *
      * @var array
@@ -73,9 +73,9 @@ class Validations
     /**
      * Validate the tags and userId for push api
      *
-     * @param $tagKey
-     * @param $tagValue
-     * @param $userId
+     * @param  $tagKey
+     * @param  $tagValue
+     * @param  $userId
      * @return bool
      */
     public static function pushApiParams($tagKey, $tagValue, $userId)
@@ -104,17 +104,36 @@ class Validations
         return true;
     }
 
-    public static function checkPreSegmentation($campaign, $custiomVariables)
+    public static function checkPreSegmentation($campaign, $userId, $options)
     {
+        $customVariables = Common::getValueFromOptions($options, 'customVariables');
         $segment = new SegmentEvaluator();
-        return $segment->evaluate($campaign['segments'], $custiomVariables);
+        if (array_key_exists('segments', $campaign) && count($campaign['segments'])) {
+            $response = $segment->evaluate($campaign['segments'], $customVariables);
+             VWO::addLog(
+                 Logger::INFO,
+                 Constants::INFO_MESSAGES['SEGMENTATION_STATUS'],
+                 [
+                             '{status}' => $response === true ? 'passed' : 'failed',
+                             '{campaignKey}' => $campaign['key'],
+                             '{userId}' => $userId,
+                             '{customVariables}' => json_encode($customVariables),
+                             '{segmentationType}' => 'pre-segmentation',
+                             '{variation}' => ''
+                         ],
+                 self::$CLASSNAME
+             );
+            return $response;
+        } else {
+            VWO::addLog(Logger::INFO, Constants::INFO_MESSAGES['SEGMENTATION_SKIPPED'], ['{campaignKey}' => $campaign['key'],'{userId}' => $userId,'{variation}' => '']);
+            return true;
+        }
     }
 
     /**
-     *
      * function to validation request setting schema provided by client
      *
-     * @param $request
+     * @param  $request
      * @return bool
      */
     public static function checkSettingSchema($request)
@@ -165,7 +184,7 @@ class Validations
      * @param  $campaignKey
      * @return null
      */
-    public static function validateCampaignName($campaignKey, $settings)
+    public static function getCampaignFromCampaignKey($campaignKey, $settings)
     {
         if (isset($settings['campaigns']) and count($settings['campaigns'])) {
             foreach ($settings['campaigns'] as $campaign) {

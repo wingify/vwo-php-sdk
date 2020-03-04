@@ -4,6 +4,58 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2020-03-05
+### Breaking Changes
+To prevent ordered arguments and increasing use-cases, we are moving all optional arguments into a combined argument(Associative Array).
+
+- customVariables argument in APIs: `activate`, `getVariation`, `track`, `isFeatureEnabled`, and `getFeatureVariableValue` have been moved into `options`.
+- `revenueValue` parameter in `track` API is now moved into `options` argument.
+
+#### Before
+
+```php
+// activae API
+$vwoClient->activate($campaignKey, $userId, $customVariables);
+// getVariation API
+$vwoClient->getVariation($campaignKey, $userId, $customVariables);
+// track API
+$vwoClient->track($campaignKey, $userId, $goalIdentifier, $revenueValue, $customVariables);
+// isFeatureEnabled API
+$vwoClient->isFeatureEnabled($campaignKey, $userId, $customVariables);
+// getFeatureVariableValue API
+$vwoClient->getFeatureVariableValue($campaignKey, $variableKey, $userId, $customVariables);
+```
+
+#### After
+
+```php
+
+$options = [];
+$options["customVariables"] = [];
+  // Optional, neeeded for Forced Variation
+$options["variationTargetingVariables"] = [];
+
+// activae API
+$vwoClient->activate($campaignKey, $userId, $options);
+// getVariation API
+$vwoClient->getVariation($campaignKey, $userId, $options);
+// track API
+  // Optional, needed to track revenue goal with revenue value
+$options["revenueValue"] = 1000.12;
+$vwoClient->track($campaignKey, $userId, $goalIdentifier, options);
+// isFeatureEnabled API
+$vwoClient->isFeatureEnabled($campaignKey, $userId, $options);
+// getFeatureVariableValue API
+$vwoClient->getFeatureVariableValue($campaignKey, $variableKey, $userId, $options);
+```
+
+### Added
+Forced Variation capabilites
+- Introduced `Forced Variation` to force certain users into specific variation. Forcing can be based on User IDs or custom variables defined.
+### Changed
+- All existing APIs to handle variation-targeting-variables as an option for forcing variation
+- Code refactored to support Whitelisting.
+
 ## [1.5.2] - 2020-01-24
 ### Changed
 - Update endpoint to use `https` protocol instead of `http`

@@ -39,6 +39,7 @@ use vwo\Error\NetworkError;
 
 /**
  * HTTP connection.
+ *
  * @codeCoverageIgnore
  */
 class Connection
@@ -69,6 +70,7 @@ class Connection
     private $responseHeaders = array();
     /**
      * The status line of the response.
+     *
      * @var string
      */
     private $responseStatusLine;
@@ -83,21 +85,25 @@ class Connection
     /**
      * Manually follow location redirects. Used if CURLOPT_FOLLOWLOCATION
      * is unavailable due to open_basedir restriction.
+     *
      * @var boolean
      */
     private $followLocation = false;
     /**
      * Maximum number of redirects to try.
+     *
      * @var int
      */
     private $maxRedirects = 20;
     /**
      * Number of redirects followed in a loop.
+     *
      * @var int
      */
     private $redirectsFollowed = 0;
     /**
      * Deal with failed requests if failOnError is not set.
+     *
      * @var string|FALSE
      */
     private $lastError = false;
@@ -230,8 +236,8 @@ class Connection
     /**
      * Set a proxy server for outgoing requests to tunnel through.
      *
-     * @param string $server
-     * @param int|bool $port optional port number
+     * @param string   $server
+     * @param int|bool $port   optional port number
      */
     public function useProxy($server, $port = false)
     {
@@ -242,7 +248,7 @@ class Connection
     }
 
     /**
-     * @todo may need to handle CURLOPT_SSL_VERIFYHOST and CURLOPT_CAINFO as well
+     * @todo  may need to handle CURLOPT_SSL_VERIFYHOST and CURLOPT_CAINFO as well
      * @param boolean
      */
     public function verifyPeer($option = false)
@@ -272,8 +278,8 @@ class Connection
     /**
      * Make an HTTP POST request to the specified endpoint.
      *
-     * @param string $url URL to which we send the request
-     * @param mixed $body Data payload (JSON string or raw data)
+     * @param string $url  URL to which we send the request
+     * @param mixed  $body Data payload (JSON string or raw data)
      *
      * @return mixed
      */
@@ -428,7 +434,7 @@ class Connection
     /**
      * Make an HTTP GET request to the specified endpoint.
      *
-     * @param string $url URL to retrieve
+     * @param string     $url   URL to retrieve
      * @param array|bool $query Optional array of query string parameters
      *
      * @return mixed
@@ -451,7 +457,7 @@ class Connection
     /**
      * Make an HTTP HEAD request to the specified endpoint.
      *
-     * @param string $url URL to which we send the request
+     * @param  string $url URL to which we send the request
      * @return mixed
      */
     public function head($url)
@@ -470,8 +476,8 @@ class Connection
      * Requires a tmpfile() handle to be opened on the system, as the cURL
      * API requires it to send data.
      *
-     * @param string $url URL to which we send the request
-     * @param mixed $body Data payload (JSON string or raw data)
+     * @param  string $url  URL to which we send the request
+     * @param  mixed  $body Data payload (JSON string or raw data)
      * @return mixed
      */
     public function put($url, $body)
@@ -500,7 +506,7 @@ class Connection
     /**
      * Make an HTTP DELETE request to the specified endpoint.
      *
-     * @param string $url URL to which we send the request
+     * @param  string $url URL to which we send the request
      * @return mixed
      */
     public function delete($url)
@@ -544,8 +550,8 @@ class Connection
     /**
      * Method that appears unused, but is in fact called by curl
      *
-     * @param resource $curl
-     * @param string $body
+     * @param  resource $curl
+     * @param  string   $body
      * @return int
      */
     private function parseBody($curl, $body)
@@ -557,8 +563,8 @@ class Connection
     /**
      * Method that appears unused, but is in fact called by curl
      *
-     * @param resource $curl
-     * @param string $headers
+     * @param  resource $curl
+     * @param  string   $headers
      * @return int
      */
     private function parseHeader($curl, $headers)

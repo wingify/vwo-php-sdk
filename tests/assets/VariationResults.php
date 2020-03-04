@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright 2019 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2020 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ namespace vwo;
 class VariationResults
 {
     // These settings correspond to the settingsFile - 1,2,3,4,5,6 respectively
-// The results were first calculated and then hardcoded for Unit Testing
+    // The results were first calculated and then hardcoded for Unit Testing
 
     var $results = [
         'DEV_TEST_1' => [
@@ -870,6 +870,6 @@ class VariationResults
 
                 'Zeba'
                 => 'Variation-1'
-            ]
+            ],
     ];
 }

@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Copyright 2019 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2020 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,14 +32,15 @@ class Bucketer
     private static $SEED = 1;
     private static $MAX_VALUE = 0x100000000;
     private static $MAX_RANGE = 10000;
-    private static $MAX_CAMPAIGN_TRAFFIC = 100;
     private static $CLASSNAME = 'vwo\BucketService';
 
+
+    public static $MAX_CAMPAIGN_TRAFFIC = 100;
+
     /***
-     *
      * get max limit
      *
-     * @param $weight
+     * @param  $weight
      * @return float
      */
 
@@ -49,11 +50,10 @@ class Bucketer
     }
 
     /***
-     *
      * to fetch the variation id
      *
-     * @param $campaign campaign array
-     * @param $variationName
+     * @param  $campaign campaign array
+     * @param  $variationName
      * @return array|null
      */
 
@@ -68,11 +68,10 @@ class Bucketer
     }
 
     /***
-     *
      * To get the bucket value using userId and campaign
      *
-     * @param $userid
-     * @param $campaign
+     * @param  $userid
+     * @param  $campaign
      * @return array|null
      */
     public static function getBucket($userId, $campaign)
@@ -84,23 +83,34 @@ class Bucketer
             return null;
         }
         $multiplier = self::getMultiplier($campaign['percentTraffic']);
+
         $rangeForVariations = self::getRangeForVariations($bucketVal, $multiplier);
-        foreach ($campaign['variations'] as $variation) {
+
+        $variation = self::variationUsingRange($rangeForVariations, $campaign['variations']);
+        \vwo\VWO::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['VARIATION_HASH_BUCKET_VALUE'], ['{userId}' => $userId,'{bucketValue}' => $rangeForVariations, '{percentTraffic}' => $campaign['percentTraffic'], '{campaignKey}' => $campaign['key']], self::$CLASSNAME);
+        if ($variation !== null) {
+            \vwo\VWO::addLog(Logger::INFO, Constants::INFO_MESSAGES['GOT_VARIATION_FOR_USER'], ['{variationName}' => $variation['name'], '{userId}' => $userId, '{method}' => 'getBucket', '{campaignTestKey}' => $campaign['key']], self::$CLASSNAME);
+            return $variation;
+        }
+        \vwo\VWO::addLog(Logger::INFO, Constants::INFO_MESSAGES['NO_VARIATION_ALLOCATED'], ['{userId}' => $userId, '{campaignTestKey}' => $campaign['key']], self::$CLASSNAME);
+        return null;
+    }
+
+    public static function variationUsingRange($rangeForVariations, $variations)
+    {
+        foreach ($variations as $variation) {
             if ($variation['max_range'] >= $rangeForVariations && $rangeForVariations >= $variation['min_range']) {
-                \vwo\VWO::addLog(Logger::INFO, Constants::INFO_MESSAGES['GOT_VARIATION_FOR_USER'], ['{variationName}' => $variation['name'], '{userId}' => $userId, '{method}' => 'getBucket', '{campaignTestKey}' => $campaign['key']], self::$CLASSNAME);
                 return $variation;
             }
         }
-        \vwo\VWO::$_logger->addLog(Logger::INFO, Constants::INFO_MESSAGES['NO_VARIATION_ALLOCATED'], ['{userId}' => $userId, '{campaignTestKey}' => $campaign['key']], self::$CLASSNAME);
         return null;
     }
 
     /***
-     *
      * return range of the current string value
      *
-     * @param $str
-     * @param $maxPercent
+     * @param  $str
+     * @param  $maxPercent
      * @return float|int
      */
     /*
@@ -119,10 +129,9 @@ class Bucketer
     }
 
     /***
-     *
      * get murmurhash from the murmur file
      *
-     * @param $str
+     * @param  $str
      * @return number
      */
 
@@ -132,11 +141,10 @@ class Bucketer
     }
 
     /****
-     *
      * check if the bucketvalue is part of campaign or not on basis of percent traffic
      *
-     * @param $bucketVal
-     * @param $percentTraffic
+     * @param  $bucketVal
+     * @param  $percentTraffic
      * @return bool
      */
     public static function isUserPartofCampaign($bucketVal, $percentTraffic)
@@ -148,9 +156,9 @@ class Bucketer
     }
 
     /**
-     *
      * to find out the value of multiplier
-     * @param $traffic
+     *
+     * @param  $traffic
      * @return float|int
      */
     public static function getMultiplier($traffic)
@@ -159,15 +167,31 @@ class Bucketer
     }
 
     /**
-     *
      * fetch the range of the variation
-     * @param $range
-     * @param $multiplier
+     *
+     * @param  $range
+     * @param  $multiplier
      * @return int
      */
 
-    private static function getRangeForVariations($range, $multiplier)
+
+    public static function getRangeForVariations($range, $multiplier = 1)
     {
         return intval(floor(($range * self::$MAX_RANGE) + 1) * $multiplier);
+    }
+
+
+
+    public static function addRangesToVariations($variations)
+    {
+        $offset = 0;
+        foreach ($variations as $vkey => $variation) {
+            $limit = Bucketer::getLimit($variation['weight']);
+            $max_range = $offset + $limit;
+            $variations[$vkey]['min_range'] = $offset + 1;
+            $variations[$vkey]['max_range'] = $max_range;
+            $offset = $max_range;
+        }
+        return $variations;
     }
 }
