@@ -8,7 +8,7 @@
     }],
     "description": "VWO server side sdk",
     "require": {
-        "monolog/monolog": "1.0.*",
+        "monolog/monolog": "^1.0",
         "ramsey/uuid": "^3.8",
         "justinrainbow/json-schema": "^5.2"
     },
