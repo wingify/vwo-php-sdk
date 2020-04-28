@@ -29,7 +29,7 @@ class Constants
     /**
      * sdk version for api hit
      */
-    const SDK_VERSION = '1.6.1';
+    const SDK_VERSION = '1.7.0';
     /**
      * sdk langauge for api hit
      */
