@@ -44,7 +44,7 @@ $goalIdentifier = 'CAMPAIGN_GOAL_IDENTIFIER';
 // to fetch the settings i.e campaigns, variations and goals
 $settingsFile=VWO::getSettingsFile($accountId, $sdkKey);
 
-$config=['settings' => $settingsFile,
+$config=['settingsFile' => $settingsFile,
     'isDevelopmentMode' => 0,  // optional: 1 to enable the dev mode
     'logging' => new CustomLogger(), // optional
     'userStorageService' => new userStorageService() // optional
