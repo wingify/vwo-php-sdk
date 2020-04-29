@@ -255,7 +255,7 @@ class VWO
             // below condition says that if bucket is there and isFeatureEnabled is not present it means it will be feature rollout type campaign and return true
             // if isFeatureEnabled is there and it must be true then result is true
             // else return to false
-            $result['response'] = ((isset($variationData['bucketInfo']) && !isset($variationData['bucketInfo']['isFeatureEnabled'])) || (isset($variationData['bucketInfo']['isFeatureEnabled']) && $variationData['bucketInfo']['isFeatureEnabled']) == true) ? true : false;
+            $result['response'] = ((isset($variationData) && !isset($variationData['isFeatureEnabled'])) || (isset($variationData['isFeatureEnabled']) && $variationData['isFeatureEnabled']) == true) ? true : false;
         }
         return $result;
     }
