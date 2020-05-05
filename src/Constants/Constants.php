@@ -29,7 +29,7 @@ class Constants
     /**
      * sdk version for api hit
      */
-    const SDK_VERSION = '1.7.1';
+    const SDK_VERSION = '1.7.2';
     /**
      * sdk langauge for api hit
      */
@@ -71,15 +71,15 @@ class Constants
         'CUSTOM_LOGGER_USED' => '({file}): Custom logger used',
         'SDK_INITIALIZED' => '({file}): SDK properly initialzed',
         'SETTINGS_FILE_PROCESSED' => '({file}): Settings file processed',
-        'NO_STORED_VARIATION' => '({file}): No stored variation for UserId:{userId} for Campaign:{campaignTestKey} found in UserStorageService',
+        'NO_STORED_VARIATION' => '({file}): No stored variation for UserId:{userId} for Campaign:{campaignKey} found in UserStorageService',
         'NO_USER_STORAGE_SERVICE_GET' => '({file}): No UserStorageService to get for stored data',
         'NO_USER_STORAGE_SERVICE_SET' => '({file}): No UserStorageService to set data',
-        'GETTING_STORED_VARIATION' => '({file}): Got stored variation for UserId:{userId} of Campaign:{campaignTestKey} as Variation: {variationName}, found in UserStorageService',
-        'CHECK_USER_ELIGIBILITY_FOR_CAMPAIGN' => '({file}): campaign:{campaignTestKey} having traffic allocation:{trafficAllocation} assigned value:{trafficAllocation} to userId:{userId}',
+        'GETTING_STORED_VARIATION' => '({file}): Got stored variation for UserId:{userId} of Campaign:{campaignKey} as Variation: {variationName}, found in UserStorageService',
+        'CHECK_USER_ELIGIBILITY_FOR_CAMPAIGN' => '({file}): campaign:{campaignKey} having traffic allocation:{trafficAllocation} assigned value:{trafficAllocation} to userId:{userId}',
         'USER_HASH_BUCKET_VALUE' => '({file}): userId:{userId} having hash:{hashValue} got bucketValue:{bucketValue}',
-        'VARIATION_HASH_BUCKET_VALUE' => '({file}): userId:{userId} for campaign:{campaignTestKey} having percent traffic:{percentTraffic} got hash-value:{hashValue} and bucket value:{bucketValue}',
-        'GOT_VARIATION_FOR_USER' => '({file}): userId:{userId} for campaign:{campaignTestKey} got variationName:{variationName} inside method:{method}',
-        'USER_NOT_PART_OF_CAMPAIGN' => '({file}): userId:{userId} for campaign:{campaignTestKey} did not become part of campaign, method:{method}',
+        'VARIATION_HASH_BUCKET_VALUE' => '({file}): userId:{userId} for campaign:{campaignKey} having percent traffic:{percentTraffic} got hash-value:{hashValue} and bucket value:{bucketValue}',
+        'GOT_VARIATION_FOR_USER' => '({file}): userId:{userId} for campaign:{campaignKey} got variationName:{variationName} inside method:{method}',
+        'USER_NOT_PART_OF_CAMPAIGN' => '({file}): userId:{userId} for campaign:{campaignKey} did not become part of campaign, method:{method}',
         'UUID_FOR_USER' => '({file}): Uuid generated for userId:{userid} and accountId:{accountId} is {desiredUuid}',
         'FEATURE_FLAG_NOT_LINKED' => '({file}): Feature:{featureKey} is not linked to any running campaigns',
         'USER_HASH_BUCKET_VALUE' => '({file}): User ID:{userId} having hash:{hashValue} got bucketValue:{bucketValue}',
@@ -91,19 +91,19 @@ class Constants
      */
 
     const INFO_MESSAGES = [
-        'VARIATION_RANGE_ALLOCATION' => '({file}): Campaign:{campaignTestKey} having variations:{variationName} with weight:{variationWeight} got range as: ( {start} - {end} ))',
-        'VARIATION_ALLOCATED' => '({file}): UserId:{userId} of Campaign:{campaignTestKey} got variation: {variationName}',
+        'VARIATION_RANGE_ALLOCATION' => '({file}): Campaign:{campaignKey} having variations:{variationName} with weight:{variationWeight} got range as: ( {start} - {end} ))',
+        'VARIATION_ALLOCATED' => '({file}): UserId:{userId} of Campaign:{campaignKey} got variation: {variationName}',
         'GETTING_UP_USER_STORAGE_SERVICE' => '({file}): Getting data into UserStorageService for userId:{userId} successful',
         'SETTING_DATA_USER_STORAGE_SERVICE' => '({file}): Setting data into UserStorageService for userId:{userId} successful',
-        'GOT_STORED_VARIATION' => '({file}): Got stored variation:{variationName} of campaign:{campaignTestKey} for userId:{userId} from UserStorageService',
-        'NO_VARIATION_ALLOCATED' => '({file}): UserId:{userId} of Campaign:{campaignTestKey} did not get any variation',
+        'GOT_STORED_VARIATION' => '({file}): Got stored variation:{variationName} of campaign:{campaignKey} for userId:{userId} from UserStorageService',
+        'NO_VARIATION_ALLOCATED' => '({file}): UserId:{userId} of Campaign:{campaignKey} did not get any variation',
         'USER_ELIGIBILITY_FOR_CAMPAIGN' => '({file}): Is userId:{userId} part of campaign? {isUserPart}',
         'AUDIENCE_CONDITION_NOT_MET' => '({file}): userId:{userId} does not become part of campaign because of not meeting audience conditions',
-        'GOT_VARIATION_FOR_USER' => '({file}): userId:{userId} for campaign:{campaignTestKey} got variationName:{variationName}',
-        'USER_GOT_NO_VARIATION' => '({file}): userId:{userId} for campaign:{campaignTestKey} did not allot any variation',
+        'GOT_VARIATION_FOR_USER' => '({file}): userId:{userId} for campaign:{campaignKey} got variationName:{variationName}',
+        'USER_GOT_NO_VARIATION' => '({file}): userId:{userId} for campaign:{campaignKey} did not allot any variation',
         'IMPRESSION_SUCCESS' => '({file}): Event sent to VWO - {endPoint} having main keys: accountId:{accountId}, userId:{userId}, campaignId:{campaignId} and variationId:{variationId}',
         'IMPRESSION_SUCCESS_PUSH' => '({file}): Event sent to VWO - {endPoint} having main keys: accountId:{accountId}, userId:{userId} and tags:{tags}',
-        'INVALID_VARIATION_KEY' => '({file}): Variation was not assigned to userId:{userId} for campaign:{campaignTestKey}',
+        'INVALID_VARIATION_KEY' => '({file}): Variation was not assigned to userId:{userId} for campaign:{campaignKey}',
         'API_CALLED' => '({file}): API: {api} called for userid : {userId}',
         'IMPRESSION_FOR_TRACK_USER' => '({file}): impression built for track-user - {properties}',
         'IMPRESSION_FOR_TRACK_GOAL' => '({file}): impression built for track-goal - {properties}',
@@ -133,15 +133,15 @@ class Constants
     const ERROR_MESSAGE = [
         'INVALID_CONFIGURATION' => '({file}): SDK configuration or account settings or both is/are not valid.',
         'SETTINGS_FILE_CORRUPTED' => '({file}): Settings file is corrupted. Please contact VWO Support for help.',
-        'ACTIVATE_API_MISSING_PARAMS' => '({file}): "activate" API got bad parameters. It expects campaignTestKey(String) as first and userId(String/Number) as second argument',
+        'ACTIVATE_API_MISSING_PARAMS' => '({file}): "activate" API got bad parameters. It expects campaignKey(String) as first and userId(String/Number) as second argument',
         'ACTIVATE_API_CONFIG_CORRUPTED' => '({file}): "activate" API has corrupted configuration',
-        'GET_VARIATION_API_MISSING_PARAMS' => '({file}): "getVariation" API got bad parameters. It expects campaignTestKey(String) as first and userId(String/Number) as second argument',
+        'GET_VARIATION_API_MISSING_PARAMS' => '({file}): "getVariation" API got bad parameters. It expects campaignKey(String) as first and userId(String/Number) as second argument',
         'GET_VARIATION_API_CONFIG_CORRUPTED' => '({file}): "getVariation" API has corrupted configuration',
-        'TRACK_API_MISSING_PARAMS' => '({file}): "track" API got bad parameters. It expects campaignTestKey(String) as first, userId(String/Number) as second and goalIdentifier (string) as third argument. options is revenueValue(Float/Number/String) and is required for revenue goal only.',
+        'TRACK_API_MISSING_PARAMS' => '({file}): "track" API got bad parameters. It expects campaignKey(String) as first, userId(String/Number) as second and goalIdentifier (string) as third argument. options is revenueValue(Float/Number/String) and is required for revenue goal only.',
         'TRACK_API_CONFIG_CORRUPTED' => '({file}): "track" API has corrupted configuration',
-        'TRACK_API_GOAL_NOT_FOUND' => '({file}): Goal not found for campaign:{campaignTestKey} and userId:{userId}',
-        'TRACK_API_VARIATION_NOT_FOUND' => '({file}): Variation not found for campaign:{campaignTestKey} and userId:{userId}',
-        'CAMPAIGN_NOT_RUNNING' => '({file}): Campaign:{campaignTestKey} is not RUNNING. Please verify from VWO App',
+        'TRACK_API_GOAL_NOT_FOUND' => '({file}): Goal not found for campaign:{campaignKey} and userId:{userId}',
+        'TRACK_API_VARIATION_NOT_FOUND' => '({file}): Variation not found for campaign:{campaignKey} and userId:{userId}',
+        'CAMPAIGN_NOT_RUNNING' => '({file}): Campaign:{campaignKey} is not RUNNING. Please verify from VWO App',
         'GET_USER_STORAGE_SERVICE_FAILED' => '({file}): Getting data from UserStorageService failed for userId:{userId}',
         'SET_USER_STORAGE_SERVICE_FAILED' => '({file}): Setting data into UserStorageService failed for userId:{userId}',
         'INVALID_CAMPAIGN' => '({file}): Invalid campaign passed to {method} of this file',
@@ -149,7 +149,7 @@ class Constants
         'USERID_KEY_CORRUPTED' => '({file}): userId parameter value - {userId} is corrupted',
         'FEATURE_KEY_CORRUPTED' => '({file}): featureKey parameter value - {featureKey} is corrupted',
         'CUSTOM_LOGGER_MISCONFIGURED' => '({file}): Custom logger is provided but seems to have misconfigured. Please check the API Docs. Using default logger.',
-        'MISSING_GOAL_REVENUE' => 'Revenue value should be passed for revenue goal {goalIdentifier} for campaign {campaignTestKey} and userId {userId}',
+        'MISSING_GOAL_REVENUE' => 'Revenue value should be passed for revenue goal {goalIdentifier} for campaign {campaignKey} and userId {userId}',
         'TAG_KEY_LENGTH_ERROR' => '({file}): Length of tagKey:{tagKey} for userID:{userId} can not be greater than 255',
         'TAG_VALUE_LENGTH_ERROR' => '({file}): Length of tagValue:{tagValue} for userID:{userId} can not be greater than 255',
         'INVALID_USER_ID' => '({file}): Invalid userId:{userId} passed to {method} of this file',

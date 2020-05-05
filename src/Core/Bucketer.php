@@ -79,7 +79,7 @@ class Bucketer
         // if bucketing to be done
         $bucketVal = self::getBucketVal($userId, self::$MAX_CAMPAIGN_TRAFFIC);
         if (!self::isUserPartofCampaign($bucketVal, $campaign['percentTraffic'])) {
-            \vwo\VWO::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['USER_NOT_PART_OF_CAMPAIGN'], ['{userId}' => $userId, '{method}' => 'getBucket', '{campaignTestKey}' => $campaign['key']], self::$CLASSNAME);
+            \vwo\VWO::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['USER_NOT_PART_OF_CAMPAIGN'], ['{userId}' => $userId, '{method}' => 'getBucket', '{campaignKey}' => $campaign['key']], self::$CLASSNAME);
             return null;
         }
         $multiplier = self::getMultiplier($campaign['percentTraffic']);
@@ -89,10 +89,10 @@ class Bucketer
         $variation = self::variationUsingRange($rangeForVariations, $campaign['variations']);
         \vwo\VWO::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['VARIATION_HASH_BUCKET_VALUE'], ['{userId}' => $userId,'{bucketValue}' => $rangeForVariations, '{percentTraffic}' => $campaign['percentTraffic'], '{campaignKey}' => $campaign['key']], self::$CLASSNAME);
         if ($variation !== null) {
-            \vwo\VWO::addLog(Logger::INFO, Constants::INFO_MESSAGES['GOT_VARIATION_FOR_USER'], ['{variationName}' => $variation['name'], '{userId}' => $userId, '{method}' => 'getBucket', '{campaignTestKey}' => $campaign['key']], self::$CLASSNAME);
+            \vwo\VWO::addLog(Logger::INFO, Constants::INFO_MESSAGES['GOT_VARIATION_FOR_USER'], ['{variationName}' => $variation['name'], '{userId}' => $userId, '{method}' => 'getBucket', '{campaignKey}' => $campaign['key']], self::$CLASSNAME);
             return $variation;
         }
-        \vwo\VWO::addLog(Logger::INFO, Constants::INFO_MESSAGES['NO_VARIATION_ALLOCATED'], ['{userId}' => $userId, '{campaignTestKey}' => $campaign['key']], self::$CLASSNAME);
+        \vwo\VWO::addLog(Logger::INFO, Constants::INFO_MESSAGES['NO_VARIATION_ALLOCATED'], ['{userId}' => $userId, '{campaignKey}' => $campaign['key']], self::$CLASSNAME);
         return null;
     }
 

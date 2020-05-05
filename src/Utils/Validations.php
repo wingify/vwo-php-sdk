@@ -182,6 +182,7 @@ class Validations
      * function to check if the campaignkey exists in campign array from settings
      *
      * @param  $campaignKey
+     * @param  $settings
      * @return null
      */
     public static function getCampaignFromCampaignKey($campaignKey, $settings)
@@ -196,7 +197,7 @@ class Validations
                 }
             }
         }
-        VWO::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['CAMPAIGN_NOT_RUNNING'], ['{campaignTestKey}' => $campaignKey], self::$CLASSNAME);
+        VWO::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['CAMPAIGN_NOT_RUNNING'], ['{campaignKey}' => $campaignKey], self::$CLASSNAME);
         return null;
     }
 }

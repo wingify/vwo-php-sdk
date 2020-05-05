@@ -58,7 +58,7 @@ class Common
      *
      * @param  $campaignKey
      * @param  $bucketInfo
-     * @param  $customerHash
+     * @param  $userId
      * @return array
      */
 

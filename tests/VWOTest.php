@@ -48,15 +48,15 @@ class UserStorageTest implements UserStorageInterface
 
     /**
      * @param  $userId
-     * @param  $campaignName
+     * @param  $campaignKey
      * @return string
      */
-    public function get($userId, $campaignName)
+    public function get($userId, $campaignKey)
     {
         return [
             'userId' => $userId,
             'variationName' => 'Control',
-            'campaignName' => $campaignName
+            'campaignKey' => $campaignKey
         ];
     }
 
@@ -149,13 +149,13 @@ class VWOTest extends TestCase
                 'isDevelopmentMode' => 1
             ];
             $this->vwotest = new VWO($config);
-            $campaignName = 'DEV_TEST_' . $devtest;
+            $campaignKey = 'DEV_TEST_' . $devtest;
             $users = $this->getUsers();
             for ($i = 0; $i < 1; $i++) {
                 try {
                     $userId = $users[$i];
-                    $variationName = $this->vwotest->activate($campaignName, $userId);
-                    $expected = ucfirst($this->variationResults[$campaignName][$userId]);
+                    $variationName = $this->vwotest->activate($campaignKey, $userId);
+                    $expected = ucfirst($this->variationResults[$campaignKey][$userId]);
                     $this->assertEquals($expected, $variationName);
                 } catch (Exception $e) {
                 }
@@ -173,12 +173,12 @@ class VWOTest extends TestCase
                     'isDevelopmentMode' => 1
                 ];
                 $this->vwotest = new VWO($config);
-                $campaignName = 'DEV_TEST_' . $devtest;
+                $campaignKey = 'DEV_TEST_' . $devtest;
                 $users = $this->getUsers();
                 for ($i = 0; $i < 26; $i++) {
                         $userId = $users[$i];
-                        $variationName = $this->vwotest->getVariationName($campaignName, $userId);
-                        $expected = ucfirst($this->variationResults[$campaignName][$userId]);
+                        $variationName = $this->vwotest->getVariationName($campaignKey, $userId);
+                        $expected = ucfirst($this->variationResults[$campaignKey][$userId]);
                         $this->assertEquals($expected, $variationName);
                         break;
                 }
@@ -210,14 +210,14 @@ class VWOTest extends TestCase
                 'isDevelopmentMode' => 0
             ];
             $this->vwotest = new VWO($config);
-            $campaignName = 'DEV_TEST_' . $devtest;
+            $campaignKey = 'DEV_TEST_' . $devtest;
             $users = $this->getUsers();
             for ($i = 0; $i < 26; $i++) {
                 try {
                     $userId = $users[$i];
                     $goalname = $config['settingsFile']['campaigns'][2]['goals'][0]['identifier'];
-                    $result = $this->vwotest->track($campaignName, $userId, $goalname);
-                    $expected = ucfirst($this->variationResults[$campaignName][$userId]);
+                    $result = $this->vwotest->track($campaignKey, $userId, $goalname);
+                    $expected = ucfirst($this->variationResults[$campaignKey][$userId]);
                     if ($expected == null) {
                         $expected = false;
                     } else {
@@ -241,12 +241,12 @@ class VWOTest extends TestCase
             'userStorageService' => new UserStorageTest()
         ];
         $this->vwotest = new VWO($config);
-        $campaignName = 'DEV_TEST_8';
+        $campaignKey = 'DEV_TEST_8';
         $users = $this->getUsers();
         $userId = $users[0];
         $goalname = 'dsa';
-        $result = $this->vwotest->track($campaignName, $userId, $goalname);
-        $expected = ucfirst($this->variationResults[$campaignName][$userId]);
+        $result = $this->vwotest->track($campaignKey, $userId, $goalname);
+        $expected = ucfirst($this->variationResults[$campaignKey][$userId]);
         if ($expected == null) {
             $expected = false;
         } else {

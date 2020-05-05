@@ -21,20 +21,20 @@ namespace vwo\Storage;
 /**
  * Interface UserStorageInterface
  *
- * user interface should be included and used to set and get
+ * user interface should be included and used to set and get user-campaign mapping
  */
 interface UserStorageInterface
 {
     /**
      * @param  $userId
-     * @param  $campaignName
+     * @param  $campaignKey
      * @return mixed
      */
-    public function get($userId, $campaignName);
+    public function get($userId, $campaignKey);
 
     /**
      * @param  $campaignInfo
-     * @return mixed
+     * @return array
      */
     public function set($campaignInfo);
 }
