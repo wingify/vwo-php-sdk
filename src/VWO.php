@@ -272,7 +272,7 @@ class VWO
         if ($campaign !== null) {
             //check for whitelisting if applied and get Variation Info
             $bucketInfo = Common::findVariationFromWhiteListing($campaign, $userId, $options);
-            // do murmur operations and get Variation for the customer
+            // do murmur operations and get Variation for the userId
             if ($bucketInfo == null) {
                 $bucketInfo = $this->userStorageGet($userId, $campaign);
                 if ($bucketInfo == null) {
@@ -285,7 +285,7 @@ class VWO
                             [
                                 '{userId}' => $userId,
                                 '{variationName}' => $bucketInfo['name'],
-                                '{campaignTestKey}' => $campaign['key']
+                                '{campaignKey}' => $campaign['key']
                             ]
                         );
 
@@ -303,7 +303,7 @@ class VWO
                         [
                             '{userId}' => $userId,
                             '{variationName}' => $bucketInfo['name'],
-                            '{campaignTestKey}' => $campaign['key']
+                            '{campaignKey}' => $campaign['key']
                         ]
                     );
                 }
@@ -374,10 +374,10 @@ class VWO
      * API to send add visitor hit to vwo
      *
      * @param  $campaign
-     * @param  $customerHash
-     * @return mixed
+     * @param  $userId
+     * @return boolean
      */
-    private function addVisitor($campaign, $userId, $varientId)
+    private function addVisitor($campaign, $userId, $variationId)
     {
         try {
             if ($this->development_mode) {
@@ -386,7 +386,7 @@ class VWO
             } else {
                 $params = array(
                     'experiment_id' => $campaign['id'],
-                    'combination' => $varientId, // variation id
+                    'combination' => $variationId, // variation id
                     'ed' => '{"p":"server"}',
                 );
                 $parameters = Common::mergeCommonQueryParams($this->settings['accountId'], $userId, $params);
@@ -407,7 +407,7 @@ class VWO
                         '{userId}' => $userId,
                         '{endPoint}' => 'track-user',
                         '{campaignId}' => $campaign['id'],
-                        '{variationId}' => $varientId,
+                        '{variationId}' => $variationId,
                         '{accountId}' => $this->settings['accountId']
                     ]
                 );
@@ -543,7 +543,7 @@ class VWO
                     self::addLog(
                         Logger::DEBUG,
                         Constants::DEBUG_MESSAGES['NO_STORED_VARIATION'],
-                        ['{userId}' => $userId, '{campaignTestKey}' => $campaignKey]
+                        ['{userId}' => $userId, '{campaignKey}' => $campaignKey]
                     );
                     $this->userStorageSet($userId, $campaignKey, $bucketInfo);
                 } else {
@@ -553,7 +553,7 @@ class VWO
                         [
                             '{userId}' => $userId,
                             '{variationName}' => $bucketInfo['name'],
-                            '{campaignTestKey}' => $campaignKey
+                            '{campaignKey}' => $campaignKey
                         ]
                     );
                 }
@@ -576,7 +576,7 @@ class VWO
                                 Constants::ERROR_MESSAGE['MISSING_GOAL_REVENUE'],
                                 [
                                     '{goalIdentifier}' => $goalName,
-                                    '{campaignTestKey}' => $campaignKey,
+                                    '{campaignKey}' => $campaignKey,
                                     '{userId}' => $userId
                                 ]
                             );
@@ -619,7 +619,7 @@ class VWO
                     self::addLog(
                         Logger::ERROR,
                         Constants::ERROR_MESSAGE['TRACK_API_GOAL_NOT_FOUND'],
-                        ['{campaignTestKey}' => $campaignKey, '{userId}' => $userId]
+                        ['{campaignKey}' => $campaignKey, '{userId}' => $userId]
                     );
                 }
             }
@@ -652,7 +652,7 @@ class VWO
      * fetch the variation name
      *
      * @param  $campaignKey
-     * @param  $customerHash
+     * @param  $userId
      * @param int $addVisitor
      * @return null| bucketname
      */
