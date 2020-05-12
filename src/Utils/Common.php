@@ -131,7 +131,14 @@ class Common
         }
     }
 
-
+    /**
+     * if the whitelisting condition get satisfied then this function
+     * will evaluate which variation is assigned as per conditions
+     * @param $campaign
+     * @param $userId
+     * @param $options
+     * @return array|null
+     */
     public static function findVariationFromWhiteListing($campaign, $userId, $options)
     {
         $bucketInfo = null;
@@ -146,6 +153,14 @@ class Common
         return $bucketInfo;
     }
 
+    /**
+     * this function will evaluate the bucket out of
+     * the campaign for whitelisted campaign
+     * @param $campaign
+     * @param $userId
+     * @param $variationTargetingVariables
+     * @return array|null
+     */
     public static function getForcedBucket($campaign, $userId, $variationTargetingVariables)
     {
         $variationTargetingVariables['_vwoUserId'] = $userId;
@@ -194,6 +209,13 @@ class Common
         return $variation;
     }
 
+    /**
+     * scale vartion of every varition used in case when
+     * multiple vartions satisfy whitelisting condition
+     * @param $variations
+     * @param $totalVariationTraffic
+     * @return mixed
+     */
     public static function scaleVariations($variations, $totalVariationTraffic)
     {
         $avgWeight = 0;
@@ -213,6 +235,8 @@ class Common
     }
 
     /**
+     * this is used to fetch the main variation of the campaign
+     * mostly used where default values need to assigned
      * @param  $variations
      * @return null
      */
@@ -231,6 +255,7 @@ class Common
     }
 
     /**
+     *
      * @param  $accountid
      * @param  $userId
      * @param  array     $params

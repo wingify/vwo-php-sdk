@@ -32,6 +32,7 @@ use vwo\VWO as VWO;
 class Campaign
 {
     /**
+     * to set the range on the setting level means to each and every campaign
      * @param  array $settings
      * @return array
      * @throws \Exception

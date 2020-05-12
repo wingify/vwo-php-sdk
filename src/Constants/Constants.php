@@ -29,7 +29,7 @@ class Constants
     /**
      * sdk version for api hit
      */
-    const SDK_VERSION = '1.7.2';
+    const SDK_VERSION = '1.7.3';
     /**
      * sdk langauge for api hit
      */
@@ -76,8 +76,6 @@ class Constants
         'NO_USER_STORAGE_SERVICE_SET' => '({file}): No UserStorageService to set data',
         'GETTING_STORED_VARIATION' => '({file}): Got stored variation for UserId:{userId} of Campaign:{campaignKey} as Variation: {variationName}, found in UserStorageService',
         'CHECK_USER_ELIGIBILITY_FOR_CAMPAIGN' => '({file}): campaign:{campaignKey} having traffic allocation:{trafficAllocation} assigned value:{trafficAllocation} to userId:{userId}',
-        'USER_HASH_BUCKET_VALUE' => '({file}): userId:{userId} having hash:{hashValue} got bucketValue:{bucketValue}',
-        'VARIATION_HASH_BUCKET_VALUE' => '({file}): userId:{userId} for campaign:{campaignKey} having percent traffic:{percentTraffic} got hash-value:{hashValue} and bucket value:{bucketValue}',
         'GOT_VARIATION_FOR_USER' => '({file}): userId:{userId} for campaign:{campaignKey} got variationName:{variationName} inside method:{method}',
         'USER_NOT_PART_OF_CAMPAIGN' => '({file}): userId:{userId} for campaign:{campaignKey} did not become part of campaign, method:{method}',
         'UUID_FOR_USER' => '({file}): Uuid generated for userId:{userid} and accountId:{accountId} is {desiredUuid}',
@@ -115,7 +113,6 @@ class Constants
         'WHITELISTING_ELIGIBILITY_STATUS' => '({file}): User ID:{userId} of campaign:{campaign_key} with variation_targeting_variables:{variation_targeting_variables} {status} whitelisting and hence {variation} variation is assigned',
         'VARIABLE_FOUND' => '({file}): Value for variable:{variableKey} of campaign:{campaignKey} is:{variableValue} for user:{userId}',
         'VARIABLE_NOT_FOUND' => '({file}): Value for variable:{variableKey} of campaign:{campaignKey} is not found for user:{userId}',
-        'SEGMENTATION_STATUS' => '({file}): UserId:{userId} of campaign:{campaignKey} with variables:{customVariables} {status} {segmentationType} {variation}',
         'WHITELISTING_SKIPPED' => '({file}): For userId:{userId} of campaign:{campaignKey},{reason} whitelisting was skipped {variation}',
         'SEGMENTATION_SKIPPED' => '({file}): For userId:{userId} of campaign:{campaignKey}, segment was missing, hence skipping segmentation{variation}',
         'SEGMENTATION_STATUS' => '({file}): For userId:{userId} of campaign:{campaignKey} with variables:{customVariables} {status} {segmentationType} {variation}',
@@ -133,7 +130,6 @@ class Constants
     const ERROR_MESSAGE = [
         'INVALID_CONFIGURATION' => '({file}): SDK configuration or account settings or both is/are not valid.',
         'SETTINGS_FILE_CORRUPTED' => '({file}): Settings file is corrupted. Please contact VWO Support for help.',
-        'ACTIVATE_API_MISSING_PARAMS' => '({file}): "activate" API got bad parameters. It expects campaignKey(String) as first and userId(String/Number) as second argument',
         'ACTIVATE_API_CONFIG_CORRUPTED' => '({file}): "activate" API has corrupted configuration',
         'GET_VARIATION_API_MISSING_PARAMS' => '({file}): "getVariation" API got bad parameters. It expects campaignKey(String) as first and userId(String/Number) as second argument',
         'GET_VARIATION_API_CONFIG_CORRUPTED' => '({file}): "getVariation" API has corrupted configuration',

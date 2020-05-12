@@ -155,6 +155,9 @@ class VWO
         return true;
     }
 
+    /**
+     * @return string
+     */
     static function name()
     {
         return 'vwo\VWO';
@@ -351,6 +354,12 @@ class VWO
         return null;
     }
 
+    /**
+     * this function will fetch the data from user-storage
+     * @param  string $userId
+     * @param string $campaignKey
+     * @param array $variation
+     */
     private function userStorageSet($userId, $campaignKey, $variation)
     {
         try {
@@ -373,8 +382,8 @@ class VWO
     /***
      * API to send add visitor hit to vwo
      *
-     * @param  $campaign
-     * @param  $userId
+     * @param  array $campaign
+     * @param  string $userId
      * @return boolean
      */
     private function addVisitor($campaign, $userId, $variationId)
@@ -502,7 +511,7 @@ class VWO
      * @param array $options
      * @return bool|null
      */
-    public function track($campaignKey = '', $userId = '', $goalName = '', $options = [])
+    public function track($campaignKey = '', $userId = '', $goalName = '', array $options = [])
     {
         try {
             self::$apiName = 'track';

@@ -73,9 +73,9 @@ class Validations
     /**
      * Validate the tags and userId for push api
      *
-     * @param  $tagKey
-     * @param  $tagValue
-     * @param  $userId
+     * @param  string $tagKey
+     * @param  string $tagValue
+     * @param  string $userId
      * @return bool
      */
     public static function pushApiParams($tagKey, $tagValue, $userId)
@@ -104,6 +104,13 @@ class Validations
         return true;
     }
 
+    /**
+     * this function check whether pre-segmentation is passed or not
+     * @param array $campaign
+     * @param string $userId
+     * @param array $options
+     * @return bool
+     */
     public static function checkPreSegmentation($campaign, $userId, $options)
     {
         $customVariables = Common::getValueFromOptions($options, 'customVariables');
@@ -152,6 +159,12 @@ class Validations
         return $response;
     }
 
+    /**
+     * campaignkey and userid validation for feature enable
+     * @param string $campaignKey
+     * @param string $userId
+     * @return bool
+     */
     public static function validateIsFeatureEnabledParams($campaignKey, $userId)
     {
         if (self::validateCampaignKey($campaignKey) && self::validateUserId($userId)) {
@@ -160,6 +173,11 @@ class Validations
         return false;
     }
 
+    /**
+     * check whether campaignKey provided by end user is present in settings on VWO or not
+     * @param $campaignKey string
+     * @return bool
+     */
     public static function validateCampaignKey($campaignKey)
     {
         if (is_string($campaignKey)) {
@@ -169,6 +187,11 @@ class Validations
         return false;
     }
 
+    /**
+     * user id should be string type
+     * @param string $userId
+     * @return bool
+     */
     public static function validateUserId($userId)
     {
         if (is_string($userId)) {
@@ -181,8 +204,8 @@ class Validations
     /**
      * function to check if the campaignkey exists in campign array from settings
      *
-     * @param  $campaignKey
-     * @param  $settings
+     * @param  string $campaignKey
+     * @param  array $settings
      * @return null
      */
     public static function getCampaignFromCampaignKey($campaignKey, $settings)

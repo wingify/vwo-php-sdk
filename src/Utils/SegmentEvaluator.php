@@ -30,8 +30,10 @@ use vwo\Constants\Segments as SegmentConstants;
 class SegmentEvaluator
 {
     /**
-     * @param  $dsl
-     * @param  $customVariables
+     * it will take variables provided by customer and setting file
+     * and check whether conditions satosfy or not
+     * @param  array $dsl
+     * @param  array $customVariables
      * @return bool
      */
     public function evaluate($dsl, $customVariables)

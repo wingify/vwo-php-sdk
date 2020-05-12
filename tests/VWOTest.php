@@ -23,6 +23,8 @@ use \Exception as Exception;
 use vwo\Storage\UserStorageInterface;
 use vwo\Logger\LoggerInterface;
 use vwo\Utils\SegmentEvaluator;
+use vwo\Utils\Validations;
+use vwo\Utils\Campaign;
 
 /**
  * Class CustomLogger
@@ -123,26 +125,34 @@ class VWOTest extends TestCase
             ];
             $this->vwotest = new VWO($config);
             $featureName1 = 'FEATURE_TEST';
-            $featureName2 = 'FEATURE_ROLLOUT_ONLY';
             $users = $this->getUsers();
             foreach ($users as $userId) {
-                try {
-                    $variationName = $this->vwotest->isFeatureEnabled($featureName1, $userId);
-                    $variableValue = $this->vwotest->getFeatureVariableValue($featureName1, 'V1', $userId);
-                    //$expected=ucfirst($this->variationResults[$featureName1][$userId]);
-                    $expected = $variableValue;
-                    $this->assertEquals($expected, $variationName);
-                    // running only one test case
-                    break;
-                } catch (Exception $e) {
+                $isFeatureEnabled = $this->vwotest->isFeatureEnabled($featureName1, $userId);
+                $variation = $this->vwotest->getVariationName($featureName1, $userId);
+                $featureVariableValue = $this->vwotest->getFeatureVariableValue($featureName1, 'V1', $userId);
+                switch ($variation) {
+                    case 'Control':
+                        $expectedIsFeatureEnabled = true;
+                        $expectedFeatureVariableValue = 10;
+                        break;
+                    case 'Variation-1':
+                        $expectedIsFeatureEnabled = false;
+                        $expectedFeatureVariableValue = 10;
+                        break;
+                    case 'Variation-2':
+                        $expectedIsFeatureEnabled = true;
+                        $expectedFeatureVariableValue = 20;
+                        break;
                 }
+                $this->assertEquals($expectedIsFeatureEnabled, $isFeatureEnabled);
+                $this->assertEquals($expectedFeatureVariableValue, $featureVariableValue);
             }
         }
     }
 
     public function testActivate()
     {
-        for ($devtest = 8; $devtest < 9; $devtest++) {
+        for ($devtest = 1; $devtest < 7; $devtest++) {
             $setting = 'settingsArr' . $devtest;
             $config = [
                 'settingsFile' => $this->$setting,
@@ -151,39 +161,32 @@ class VWOTest extends TestCase
             $this->vwotest = new VWO($config);
             $campaignKey = 'DEV_TEST_' . $devtest;
             $users = $this->getUsers();
-            for ($i = 0; $i < 1; $i++) {
-                try {
-                    $userId = $users[$i];
-                    $variationName = $this->vwotest->activate($campaignKey, $userId);
-                    $expected = ucfirst($this->variationResults[$campaignKey][$userId]);
-                    $this->assertEquals($expected, $variationName);
-                } catch (Exception $e) {
-                }
+            for ($i = 0; $i < count($users); $i++) {
+                $userId = $users[$i];
+                $variationName = $this->vwotest->activate($campaignKey, $userId);
+                $expected = ucfirst($this->variationResults[$campaignKey][$userId]);
+                $this->assertEquals($expected, $variationName);
             }
         }
     }
 
     public function testGetVariation()
     {
-        try {
-            for ($devtest = 8; $devtest < 9; $devtest++) {
-                $setting = 'settingsArr' . $devtest;
-                $config = [
-                    'settingsFile' => $this->$setting,
-                    'isDevelopmentMode' => 1
-                ];
-                $this->vwotest = new VWO($config);
-                $campaignKey = 'DEV_TEST_' . $devtest;
-                $users = $this->getUsers();
-                for ($i = 0; $i < 26; $i++) {
-                        $userId = $users[$i];
-                        $variationName = $this->vwotest->getVariationName($campaignKey, $userId);
-                        $expected = ucfirst($this->variationResults[$campaignKey][$userId]);
-                        $this->assertEquals($expected, $variationName);
-                        break;
-                }
+        for ($devtest = 1; $devtest < 7; $devtest++) {
+            $setting = 'settingsArr' . $devtest;
+            $config = [
+                'settingsFile' => $this->$setting,
+                'isDevelopmentMode' => 1
+            ];
+            $this->vwotest = new VWO($config);
+            $campaignKey = 'DEV_TEST_' . $devtest;
+            $users = $this->getUsers();
+            for ($i = 0; $i < count($users); $i++) {
+                $userId = $users[$i];
+                $variationName = $this->vwotest->getVariationName($campaignKey, $userId);
+                $expected = ucfirst($this->variationResults[$campaignKey][$userId]);
+                $this->assertEquals($expected, $variationName);
             }
-        } catch (Exception $e) {
         }
     }
 
@@ -192,6 +195,7 @@ class VWOTest extends TestCase
     {
         $whitlistingEvaluatorJson = new SegmentEvaluatorJson();
         $segmentData = json_decode(str_replace('\\', '\\\\', $whitlistingEvaluatorJson->setting), 1);
+
         foreach ($segmentData as $key => $segments) {
             foreach ($segments as $segment) {
                 $segmentObj = new SegmentEvaluator();
@@ -199,11 +203,14 @@ class VWOTest extends TestCase
                 $this->assertEquals($segment['expectation'], $res);
             }
         }
+        $segmentObj = new SegmentEvaluator();
+        $resForEmptyDSL = $segmentObj->evaluate([], []);
+        $this->assertEquals(true, $resForEmptyDSL);
     }
 
     public function testTrack()
     {
-        for ($devtest = 8; $devtest < 9; $devtest++) {
+        for ($devtest = 1; $devtest < 7; $devtest++) {
             $setting = 'settingsArr' . $devtest;
             $config = [
                 'settingsFile' => $this->$setting,
@@ -212,21 +219,26 @@ class VWOTest extends TestCase
             $this->vwotest = new VWO($config);
             $campaignKey = 'DEV_TEST_' . $devtest;
             $users = $this->getUsers();
+            $options = [];
             for ($i = 0; $i < 26; $i++) {
-                try {
-                    $userId = $users[$i];
-                    $goalname = $config['settingsFile']['campaigns'][2]['goals'][0]['identifier'];
-                    $result = $this->vwotest->track($campaignKey, $userId, $goalname);
-                    $expected = ucfirst($this->variationResults[$campaignKey][$userId]);
-                    if ($expected == null) {
-                        $expected = false;
-                    } else {
-                        $expected = true;
+                $userId = $users[$i];
+                foreach ($config['settingsFile']['campaigns'] as $campaign) {
+                    if ($campaign['key'] == $campaignKey) {
+                        $goalname = $campaign['goals'][0]['identifier'];
+                        if ($campaign['goals'][0]['type'] == 'REVENUE_TRACKING') {
+                            $options['revenueValue'] = 10;
+                        }
+                        break;
                     }
-                    $this->assertEquals($expected, $result);
-                    break;
-                } catch (Exception $e) {
                 }
+                $result = $this->vwotest->track($campaignKey, $userId, $goalname, $options);
+                $expected = ucfirst($this->variationResults[$campaignKey][$userId]);
+                if ($expected == null) {
+                    $expected = false;
+                } else {
+                    $expected = true;
+                }
+                $this->assertEquals($expected, $result);
             }
         }
     }
@@ -260,9 +272,9 @@ class VWOTest extends TestCase
         $data = ['camapaignKey' => 'DEV_TEST_6', 'userId' => 'user_1'];
         $whitelistingTags = [
             'chrome' => false,
-              'safari' => true,
-              'browser' => 'chrome 107.107'
-            ];
+            'safari' => true,
+            'browser' => 'chrome 107.107'
+        ];
         $falseWhiteListingTags = [
             'chrome' => true,
             'safari' => false,
@@ -276,10 +288,10 @@ class VWOTest extends TestCase
             'settingsFile' => $whitelistingSetting,
             'isDevelopmentMode' => 0
         ];
-        $customVariables = ['contains_vwo' => 'qqvwoqq','regex_for_all_letters' => 'abc','regex_for_small_letters' => 'www','regex_for_zeros' => 0,'regex_for_capital_letters' => 'ABC','regex_for_no_zeros' => 123,'regex_real_number' => 123,'starts_with' => 'vwo'];
+        $customVariables = ['contains_vwo' => 'qqvwoqq', 'regex_for_all_letters' => 'abc', 'regex_for_small_letters' => 'www', 'regex_for_zeros' => 0, 'regex_for_capital_letters' => 'ABC', 'regex_for_no_zeros' => 123, 'regex_real_number' => 123, 'starts_with' => 'vwo'];
         $this->vwotest = new VWO($config);
-        $variationName = $this->vwotest->getVariationName($data['camapaignKey'], $data['userId'], ['variationTargetingVariables' => $whitelistingTags,'customVariables' => $customVariables]);
-        $variationNameForFalse = $this->vwotest->getVariationName($data['camapaignKey'], $data['userId'], ['variationTargetingVariables' => $falseWhiteListingTags,'customVariables' => $customVariables]);
+        $variationName = $this->vwotest->getVariationName($data['camapaignKey'], $data['userId'], ['variationTargetingVariables' => $whitelistingTags, 'customVariables' => $customVariables]);
+        $variationNameForFalse = $this->vwotest->getVariationName($data['camapaignKey'], $data['userId'], ['variationTargetingVariables' => $falseWhiteListingTags, 'customVariables' => $customVariables]);
 
         $expected1 = 'Variation-2';
         $expected2 = 'Control';
@@ -311,11 +323,19 @@ class VWOTest extends TestCase
             'userStorageService' => new UserStorageTest()
         ];
         $this->vwotest = new VWO($config);
-
         foreach ($cases as $case) {
             $response = $this->vwotest->push($case['tagKey'], $case['tagValue'], $userId);
             $this->assertEquals($case['expected'], $response);
         }
+        $configWithdevMode = [
+            'settingsFile' => $this->$setting,
+            'isDevelopmentMode' => 1,
+            'logging' => new CustomLogger(),
+            'userStorageService' => new UserStorageTest()
+        ];
+        $this->vwotest = new VWO($configWithdevMode);
+        $response = $this->vwotest->push($cases[0]['tagKey'], $cases[0]['tagValue'], $userId);
+        $this->assertEquals($cases[0]['expected'], $response);
     }
 
     protected function setUp()
@@ -375,5 +395,69 @@ class VWOTest extends TestCase
         ];
 
         return $users;
+    }
+
+    public function testTrackValidation()
+    {
+        $setting = 'settingsArr8';
+        $config = [
+            'settingsFile' => $this->$setting,
+            'isDevelopmentMode' => 0,
+            'logging' => new CustomLogger(),
+            'userStorageService' => new UserStorageTest()
+        ];
+        $this->vwotest = new VWO($config);
+        $resultForInvalidParams = $this->vwotest->track();
+        $resultForRollout = $this->vwotest->track('FEATURE_ROLLOUT', 'Xin', 'CUSTOM_GOAL');
+        $this->assertEquals(false, $resultForInvalidParams);
+        $this->assertEquals(false, $resultForRollout);
+    }
+
+    public function testCampaignUtilError()
+    {
+        $x = 0;
+        try {
+            // used try catch as expection for this test case is
+            // execption and for phpunit exception is test case failure
+            Campaign::makeRanges('');
+        } catch (\Exception $e) {
+            $x = 1;
+        }
+        $this->assertEquals(1, $x);
+    }
+
+    public function testValidatePushApiParams()
+    {
+        $tagValue = 'qwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTest';
+        $tagValue .= 'qwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTest';
+        $tagValue .= 'qwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTest';
+        $useridError = Validations::pushApiParams('abc', '', '');
+        $tagValueEmpty = Validations::pushApiParams('abc', '', 'Xin');
+        $tagValueSizeError = Validations::pushApiParams('abc', $tagValue, 'Xin');
+        $this->assertEquals(false, $useridError);
+        $this->assertEquals(false, $tagValueEmpty);
+        $this->assertEquals(false, $tagValueSizeError);
+    }
+
+    public function testValidateCampaignKey()
+    {
+        $campaignKeyError = Validations::validateIsFeatureEnabledParams(1, 1);
+        $checkSettingSchema = Validations::checkSettingSchema('');
+        $invalidUserId = Validations::validateUserId(0);
+        $this->assertEquals(false, $invalidUserId);
+        $this->assertEquals(false, $campaignKeyError);
+        $this->assertEquals(false, $checkSettingSchema);
+    }
+
+    public function testCheckPreSegmentation()
+    {
+        $segment = json_decode('{"dsl":{"and":[{"custom_variable":{"eq":"eq_value"}}]},"expectation":true,"customVariables":{"eq":"eq_value"}}', 1);
+        $camapign = [
+            'key' => 'test',
+            'segments' => $segment['dsl']
+        ];
+        $options = ['customVariables' => $segment['customVariables']];
+        $res = Validations::checkPreSegmentation($camapign, 'Xin', $options);
+        $this->assertEquals(true, $res);
     }
 }

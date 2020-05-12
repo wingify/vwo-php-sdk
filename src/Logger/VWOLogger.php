@@ -95,7 +95,6 @@ class VWOLogger implements LoggerInterface
      */
     public function addLog($msg, $level = Logger::INFO)
     {
-
         $x = $this->logger->addRecord($level, $msg);
     }
 }

@@ -35,6 +35,7 @@ namespace vwo\Error;
 
 /**
  * Raised when a client error (400+) is returned from the API.
+ * @codeCoverageIgnore
  */
 class ClientError extends Error
 {

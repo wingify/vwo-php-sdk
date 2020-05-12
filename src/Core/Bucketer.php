@@ -118,7 +118,7 @@ class Bucketer
     * Copyright 2016-2019, Optimizely, used under Apache 2.0 License.
     * Source - https://github.com/optimizely/php-sdk/blob/master/src/Optimizely/Bucketer.php
     */
-    public static function getBucketVal($str, $maxPercent)
+    public static function getBucketVal($str)
     {
         $code = self::getmurmurHash_Int($str);
         $range = $code / self::$MAX_VALUE;
@@ -128,7 +128,7 @@ class Bucketer
         return $range;
     }
 
-    /***
+    /**
      * get murmurhash from the murmur file
      *
      * @param  $str
@@ -140,7 +140,7 @@ class Bucketer
         return $hash = Murmur::hash3_int($str, self::$SEED);
     }
 
-    /****
+    /**
      * check if the bucketvalue is part of campaign or not on basis of percent traffic
      *
      * @param  $bucketVal
@@ -173,15 +173,16 @@ class Bucketer
      * @param  $multiplier
      * @return int
      */
-
-
     public static function getRangeForVariations($range, $multiplier = 1)
     {
         return intval(floor(($range * self::$MAX_RANGE) + 1) * $multiplier);
     }
 
-
-
+    /**
+     * function to calculate range of every variation
+     * @param $variations
+     * @return array variation array
+     */
     public static function addRangesToVariations($variations)
     {
         $offset = 0;
