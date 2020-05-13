@@ -6,8 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.7.3] - 2020-05-12
 ### Changed
-- fixed and added new test cases for feature rollout and validation checks
-
+- Fixed and added new test cases for feature rollout and validation checks
+- Mock server-calls, thereby, test-cases execution time reduced from ~1.5 minutes to only ~500ms
 
 ## [1.7.2] - 2020-05-06
 ### Changed

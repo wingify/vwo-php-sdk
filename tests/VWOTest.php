@@ -22,9 +22,11 @@ use PHPUnit\Framework\TestCase;
 use \Exception as Exception;
 use vwo\Storage\UserStorageInterface;
 use vwo\Logger\LoggerInterface;
+use vwo\Utils\Common;
 use vwo\Utils\SegmentEvaluator;
 use vwo\Utils\Validations;
 use vwo\Utils\Campaign;
+use vwo\Handlers\Connection;
 
 /**
  * Class CustomLogger
@@ -92,26 +94,19 @@ class VWOTest extends TestCase
     private $variationResults = '';
     private $segmentEvaluatorJson = '';
 
-    public function testGetSettings()
+    public function testDevModeEnabled()
     {
-        $accountId = '12345';
-        $sdkKey = '1111111111111111111111';
-        $result = VWO::getSettingsFile($accountId, $sdkKey);
-        $expected = false;
-        $obj = new VWO('');
         $config = [
             'settingsFile' => $this->settingsArr8,
-            'isDevelopmentMode' => 0
+            'isDevelopmentMode' => 1
         ];
         $obj = new VWO($config);
+        $obj->connection = $this->connectionMocking();
         $obj->activate('FEATURE_TEST', 'Ian');
         $obj->isFeatureEnabled('FEATURE_TEST', 'Ian');
         $obj->isFeatureEnabled(1234, 2342);
         $variationName = $obj->getVariationName('FEATURE_TEST', 'Ian');
-
-        $this->assertEquals($expected, $result);
     }
-
 
     public function testIsFeatureEnabled()
     {
@@ -124,6 +119,7 @@ class VWOTest extends TestCase
 
             ];
             $this->vwotest = new VWO($config);
+            $this->vwotest->connection = $this->connectionMocking();
             $featureName1 = 'FEATURE_TEST';
             $users = $this->getUsers();
             foreach ($users as $userId) {
@@ -156,9 +152,10 @@ class VWOTest extends TestCase
             $setting = 'settingsArr' . $devtest;
             $config = [
                 'settingsFile' => $this->$setting,
-                'isDevelopmentMode' => 1
+                'isDevelopmentMode' => 0
             ];
             $this->vwotest = new VWO($config);
+            $this->vwotest->connection = $this->connectionMocking();
             $campaignKey = 'DEV_TEST_' . $devtest;
             $users = $this->getUsers();
             for ($i = 0; $i < count($users); $i++) {
@@ -176,9 +173,10 @@ class VWOTest extends TestCase
             $setting = 'settingsArr' . $devtest;
             $config = [
                 'settingsFile' => $this->$setting,
-                'isDevelopmentMode' => 1
+                'isDevelopmentMode' => 0
             ];
             $this->vwotest = new VWO($config);
+            $this->vwotest->connection = $this->connectionMocking();
             $campaignKey = 'DEV_TEST_' . $devtest;
             $users = $this->getUsers();
             for ($i = 0; $i < count($users); $i++) {
@@ -217,6 +215,7 @@ class VWOTest extends TestCase
                 'isDevelopmentMode' => 0
             ];
             $this->vwotest = new VWO($config);
+            $this->vwotest->connection = $this->connectionMocking();
             $campaignKey = 'DEV_TEST_' . $devtest;
             $users = $this->getUsers();
             $options = [];
@@ -231,7 +230,9 @@ class VWOTest extends TestCase
                         break;
                     }
                 }
+                $this->vwotest->connection = $this->connectionMocking();
                 $result = $this->vwotest->track($campaignKey, $userId, $goalname, $options);
+
                 $expected = ucfirst($this->variationResults[$campaignKey][$userId]);
                 if ($expected == null) {
                     $expected = false;
@@ -253,6 +254,7 @@ class VWOTest extends TestCase
             'userStorageService' => new UserStorageTest()
         ];
         $this->vwotest = new VWO($config);
+        $this->vwotest->connection = $this->connectionMocking();
         $campaignKey = 'DEV_TEST_8';
         $users = $this->getUsers();
         $userId = $users[0];
@@ -290,6 +292,7 @@ class VWOTest extends TestCase
         ];
         $customVariables = ['contains_vwo' => 'qqvwoqq', 'regex_for_all_letters' => 'abc', 'regex_for_small_letters' => 'www', 'regex_for_zeros' => 0, 'regex_for_capital_letters' => 'ABC', 'regex_for_no_zeros' => 123, 'regex_real_number' => 123, 'starts_with' => 'vwo'];
         $this->vwotest = new VWO($config);
+        $this->vwotest->connection = $this->connectionMocking();
         $variationName = $this->vwotest->getVariationName($data['camapaignKey'], $data['userId'], ['variationTargetingVariables' => $whitelistingTags, 'customVariables' => $customVariables]);
         $variationNameForFalse = $this->vwotest->getVariationName($data['camapaignKey'], $data['userId'], ['variationTargetingVariables' => $falseWhiteListingTags, 'customVariables' => $customVariables]);
 
@@ -323,17 +326,19 @@ class VWOTest extends TestCase
             'userStorageService' => new UserStorageTest()
         ];
         $this->vwotest = new VWO($config);
+        $this->vwotest->connection = $this->connectionMocking();
         foreach ($cases as $case) {
             $response = $this->vwotest->push($case['tagKey'], $case['tagValue'], $userId);
             $this->assertEquals($case['expected'], $response);
         }
         $configWithdevMode = [
             'settingsFile' => $this->$setting,
-            'isDevelopmentMode' => 1,
+            'isDevelopmentMode' => 0,
             'logging' => new CustomLogger(),
             'userStorageService' => new UserStorageTest()
         ];
         $this->vwotest = new VWO($configWithdevMode);
+        $this->vwotest->connection = $this->connectionMocking();
         $response = $this->vwotest->push($cases[0]['tagKey'], $cases[0]['tagValue'], $userId);
         $this->assertEquals($cases[0]['expected'], $response);
     }
@@ -407,6 +412,7 @@ class VWOTest extends TestCase
             'userStorageService' => new UserStorageTest()
         ];
         $this->vwotest = new VWO($config);
+        $this->vwotest->connection = $this->connectionMocking();
         $resultForInvalidParams = $this->vwotest->track();
         $resultForRollout = $this->vwotest->track('FEATURE_ROLLOUT', 'Xin', 'CUSTOM_GOAL');
         $this->assertEquals(false, $resultForInvalidParams);
@@ -459,5 +465,40 @@ class VWOTest extends TestCase
         $options = ['customVariables' => $segment['customVariables']];
         $res = Validations::checkPreSegmentation($camapign, 'Xin', $options);
         $this->assertEquals(true, $res);
+    }
+
+    public function testUuid()
+    {
+        $res = Common::getUUId5('Xin', 12345);
+        $this->assertEquals('8474AEC8B5D3528392606A265BB07F90', $res);
+    }
+
+    public function testMergeCommonQueryParams()
+    {
+        $res = Common::mergeCommonQueryParams(12345, 'Xin');
+        $this->assertEquals(true, is_array($res));
+        $this->assertEquals(12345, $res['account_id']);
+        $this->assertEquals('Xin', $res['uId']);
+    }
+
+    public function testTypeCast()
+    {
+        $stringResult = Common::typeCast(12345, 'string');
+        $floatResult = Common::typeCast(12345, 'double');
+        $boolResult = Common::typeCast(12345, 'boolean');
+        $intResult = Common::typeCast(123.45, 'integer');
+        $failResult = Common::typeCast(123.45, 'lorem');
+        $this->assertEquals('12345', $stringResult);
+        $this->assertEquals(12345.00, $floatResult);
+        $this->assertEquals(true, $boolResult);
+        $this->assertEquals(123, $intResult);
+        $this->assertEquals(null, $failResult);
+    }
+
+    public function connectionMocking()
+    {
+        $mockConnection = $this->getMockBuilder('Connection')->setMethods(['get'])->getMock();
+        $mockConnection->method('get')->will($this->returnValue(['httpStatus' => 200]));
+        return $mockConnection;
     }
 }
