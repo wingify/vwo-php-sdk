@@ -43,10 +43,8 @@ class Campaign
             foreach ($settings['campaigns'] as $key => $campaign) {
                 $settings['campaigns'][$key]['variations'] = Bucketer::addRangesToVariations($campaign['variations']);
             }
-        } else {
-            VWO::addLog(Logger::ERROR, 'unable to fetch campaign data from settings in makeRanges function');
-            throw new \Exception();
         }
+
         return $settings;
     }
 }

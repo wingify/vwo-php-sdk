@@ -19,7 +19,7 @@
 namespace vwo;
 
 use PHPUnit\Framework\TestCase;
-use \Exception as Exception;
+use Exception as Exception;
 use vwo\Storage\UserStorageInterface;
 use vwo\Logger\LoggerInterface;
 use vwo\Utils\Common;
@@ -121,9 +121,16 @@ class VWOTest extends TestCase
             $this->vwotest = new VWO($config);
             $this->vwotest->connection = $this->connectionMocking();
             $featureName1 = 'FEATURE_TEST';
+            $featureName2 = 'FEATURE_TEST_ALL_DISABLED';
+            $featureName3 = 'FEATURE_TEST_ZERO_TRAFFIC';
+            $featureName4 = 'FEATURE_ROLLOUT_ZERO_TRAFFIC';
             $users = $this->getUsers();
+            $isFeatureEnabledForWrongCampaign = $this->vwotest->isFeatureEnabled('loremIspum', 'Xin');
             foreach ($users as $userId) {
                 $isFeatureEnabled = $this->vwotest->isFeatureEnabled($featureName1, $userId);
+                $isFeatureEnabledForZero = $this->vwotest->isFeatureEnabled($featureName3, $userId);
+                $isAllfeaturesDisbled = $this->vwotest->isFeatureEnabled($featureName2, $userId);
+                $isFeatureRolloutForZeroTraffic = $this->vwotest->isFeatureEnabled($featureName4, $userId);
                 $variation = $this->vwotest->getVariationName($featureName1, $userId);
                 $featureVariableValue = $this->vwotest->getFeatureVariableValue($featureName1, 'V1', $userId);
                 switch ($variation) {
@@ -140,9 +147,20 @@ class VWOTest extends TestCase
                         $expectedFeatureVariableValue = 20;
                         break;
                 }
+
+                // false in case of feature rollout when traffic is zero
+                // as in php false == null gives true then we have $isFeatureRolloutForZeroTraffic= false every time in this case . so handlng this here
+                $this->assertEquals(true, is_null($isFeatureRolloutForZeroTraffic) == false && $isFeatureRolloutForZeroTraffic == false);
+                // null everytime as traffic is zero
+
+                $this->assertEquals(true, is_null($isFeatureEnabledForZero));
+                // false when all isFeatureEnabled is false
+                $this->assertEquals(true, is_null($isAllfeaturesDisbled) == false && $isAllfeaturesDisbled == false);
+                // true everytime as traffic is 100
                 $this->assertEquals($expectedIsFeatureEnabled, $isFeatureEnabled);
                 $this->assertEquals($expectedFeatureVariableValue, $featureVariableValue);
             }
+            $this->assertEquals(true, is_null($isFeatureEnabledForWrongCampaign));
         }
     }
 
@@ -417,19 +435,6 @@ class VWOTest extends TestCase
         $resultForRollout = $this->vwotest->track('FEATURE_ROLLOUT', 'Xin', 'CUSTOM_GOAL');
         $this->assertEquals(false, $resultForInvalidParams);
         $this->assertEquals(false, $resultForRollout);
-    }
-
-    public function testCampaignUtilError()
-    {
-        $x = 0;
-        try {
-            // used try catch as expection for this test case is
-            // execption and for phpunit exception is test case failure
-            Campaign::makeRanges('');
-        } catch (\Exception $e) {
-            $x = 1;
-        }
-        $this->assertEquals(1, $x);
     }
 
     public function testValidatePushApiParams()

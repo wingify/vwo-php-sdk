@@ -29,7 +29,7 @@ class Constants
     /**
      * sdk version for api hit
      */
-    const SDK_VERSION = '1.7.3';
+    const SDK_VERSION = '1.7.4';
     /**
      * sdk langauge for api hit
      */
@@ -82,6 +82,7 @@ class Constants
         'FEATURE_FLAG_NOT_LINKED' => '({file}): Feature:{featureKey} is not linked to any running campaigns',
         'USER_HASH_BUCKET_VALUE' => '({file}): User ID:{userId} having hash:{hashValue} got bucketValue:{bucketValue}',
         'VARIATION_HASH_BUCKET_VALUE' => '({file}): User ID:{userId} for campaign:{campaignKey} having percent traffic:{percentTraffic} got bucket value:{bucketValue}',
+        'DEVELOPMENT_MODE' => '({file}): Development mode is ON, no calls are made to the VWO server'
     ];
 
     /**
@@ -106,8 +107,7 @@ class Constants
         'IMPRESSION_FOR_TRACK_USER' => '({file}): impression built for track-user - {properties}',
         'IMPRESSION_FOR_TRACK_GOAL' => '({file}): impression built for track-goal - {properties}',
         'IMPRESSION_FOR_PUSH' => '({file}): impression built for push-api - {properties}',
-        'FEATURE_ENABLED_FOR_USER' => '({file}): Feature having feature-key:{featureKey} for user ID:{userId} is enabled',
-        'FEATURE_NOT_ENABLED_FOR_USER' => '({file}): Feature having feature-key:{featureKey} for user ID:{userId} is not enabled',
+        'FEATURE_ENABLED_FOR_USER' => '({file}): Feature having feature-key:{featureKey} for user ID:{userId} is {status}',
         'USER_IN_FEATURE_ROLLOUT' => '({file}): User ID:{userId} is in feature rollout:{featureKey}',
         'USER_NOT_IN_FEATURE_ROLLOUT' => '({file}): User ID:{userId} is NOT in feature rollout:{featureKey}',
         'WHITELISTING_ELIGIBILITY_STATUS' => '({file}): User ID:{userId} of campaign:{campaign_key} with variation_targeting_variables:{variation_targeting_variables} {status} whitelisting and hence {variation} variation is assigned',

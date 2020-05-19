@@ -18,7 +18,7 @@
 
 namespace vwo;
 
-use \Exception as Exception;
+use Exception as Exception;
 use vwo\Logger\LoggerInterface;
 use vwo\Handlers\Connection as Connection;
 use vwo\Storage\UserStorageInterface;
@@ -202,38 +202,41 @@ class VWO
             );
             // get campaigns
             $campaign = Validations::getCampaignFromCampaignKey($campaignKey, $this->settings);
-            if ($campaign['type'] == self::$AB) {
+            if ($campaign !== null && $campaign['type'] == self::$AB) {
                 self::addLog(
                     Logger::ERROR,
                     Constants::ERROR_MESSAGE['INVALID_CAMPAIGN_FOR_API'],
                     ['{api}' => 'isFeatureEnabled', '{campaignType}' => $campaign['type'], '{userId}' => $userId]
                 );
-                return false;
+                return null;
             }
             $result = $this->fetchFeatureEnabledData($campaignKey, $userId, $options);
+            if (isset($result['variationData']) && $result['response'] == false) {
+                self::addLog(
+                    Logger::INFO,
+                    Constants::INFO_MESSAGES['FEATURE_ENABLED_FOR_USER'],
+                    ['{featureKey}' => $campaignKey, '{userId}' => $userId, '{status}' => 'disabled']
+                );
+                return false;
+            }
             if ($result !== false && isset($result['response']) && $result['response'] == true && isset($result['variationData'])) {
                 $bucketInfo = $result['variationData'];
-                if ($bucketInfo !== null && $campaign['type'] != self::$FEATURE_ROLLOUT) {
+                self::addLog(
+                    Logger::INFO,
+                    Constants::INFO_MESSAGES['FEATURE_ENABLED_FOR_USER'],
+                    ['{featureKey}' => $campaignKey, '{userId}' => $userId, '{status}' => 'enabled']
+                );
+
+                if ($campaign['type'] != self::$FEATURE_ROLLOUT) {
                     $this->addVisitor($campaign, $userId, $bucketInfo['id']);
                 }
-                if ($bucketInfo !== null && $result['response']) {
-                    self::addLog(
-                        Logger::INFO,
-                        Constants::INFO_MESSAGES['FEATURE_ENABLED_FOR_USER'],
-                        ['{featureKey}' => $campaignKey, '{userId}' => $userId]
-                    );
-                    return true;
-                }
+                return true;
             }
+            return $campaign['type'] == self::$FEATURE_ROLLOUT ? false : null;
         } catch (Exception $e) {
             self::addLog(Logger::ERROR, $e->getMessage());
         }
-        self::addLog(
-            Logger::INFO,
-            Constants::INFO_MESSAGES['FEATURE_NOT_ENABLED_FOR_USER'],
-            ['{featureKey}' => $campaignKey, '{userId}' => $userId]
-        );
-        return false;
+        return isset($campaign['type']) && ($campaign['type'] == self::$FEATURE_ROLLOUT) ? false : null;
     }
 
     /**
@@ -260,6 +263,7 @@ class VWO
             // else return to false
             $result['response'] = ((isset($variationData) && !isset($variationData['isFeatureEnabled'])) || (isset($variationData['isFeatureEnabled']) && $variationData['isFeatureEnabled']) == true) ? true : false;
         }
+
         return $result;
     }
 
@@ -356,7 +360,7 @@ class VWO
 
     /**
      * this function will fetch the data from user-storage
-     * @param  string $userId
+     * @param string $userId
      * @param string $campaignKey
      * @param array $variation
      */
@@ -382,14 +386,19 @@ class VWO
     /***
      * API to send add visitor hit to vwo
      *
-     * @param  array $campaign
-     * @param  string $userId
+     * @param array $campaign
+     * @param string $userId
      * @return boolean
      */
     private function addVisitor($campaign, $userId, $variationId)
     {
         try {
             if ($this->development_mode) {
+                self::addLog(
+                    Logger::DEBUG,
+                    Constants::INFO_MESSAGES['DEVELOPMENT_MODE'],
+                    []
+                );
                 $response['status'] = 'success';
                 return true;
             } else {
@@ -452,7 +461,7 @@ class VWO
                         '{campaignType}' => 'SERVER AB'
                     ]
                 );
-                return false;
+                return null;
             }
             $value = null;
             $featureData = $this->fetchFeatureEnabledData($campaignKey, $userId, $options);
@@ -496,10 +505,13 @@ class VWO
                     ]
                 );
             }
+
             return $value;
         } catch (Exception $e) {
             self::addLog(Logger::ERROR, $e->getMessage());
         }
+
+        return null;
     }
 
     /**
@@ -519,8 +531,9 @@ class VWO
             $bucketInfo = null;
             if (empty($campaignKey) || empty($userId) || empty($goalName)) {
                 self::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['TRACK_API_MISSING_PARAMS']);
-                return false;
+                return null;
             }
+
             $campaign = Validations::getCampaignFromCampaignKey($campaignKey, $this->settings);
             if ($campaign !== null) {
                 if ($campaign['type'] == self::$FEATURE_ROLLOUT) {
@@ -534,7 +547,7 @@ class VWO
                             '{campaignType}' => $campaign['type']
                         ]
                     );
-                    return false;
+                    return null;
                 }
                 $bucketInfo = Common::findVariationFromWhiteListing($campaign, $userId, $options);
                 if ($bucketInfo == null) {
@@ -571,6 +584,12 @@ class VWO
                 $goalId = isset($goal['id']) ? $goal['id'] : 0;
                 if ($goalId && isset($bucketInfo['id']) && $bucketInfo['id'] > 0) {
                     if ($this->development_mode) {
+                        self::addLog(
+                            Logger::DEBUG,
+                            Constants::INFO_MESSAGES['DEVELOPMENT_MODE'],
+                            []
+                        );
+
                         return true;
                     } else {
                         $params = array(
@@ -635,7 +654,8 @@ class VWO
         } catch (Exception $e) {
             self::addLog(Logger::ERROR, $e->getMessage());
         }
-        return false;
+
+        return null;
     }
 
     /**
@@ -663,7 +683,7 @@ class VWO
      * @param  $campaignKey
      * @param  $userId
      * @param int $addVisitor
-     * @return null| bucketname
+     * @return null|string
      */
     private function getVariation($campaignKey, $userId, $options = [], $addVisitor = 0)
     {
@@ -682,7 +702,7 @@ class VWO
                             '{campaignType}' => $campaign['type']
                         ]
                     );
-                    return false;
+                    return null;
                 }
             }
             $bucketInfo = $this->fetchVariationData($campaign, $userId, $options);
@@ -707,12 +727,13 @@ class VWO
      */
     public function getVariationName($campaignKey, $userId, $options = [])
     {
-        self::$apiName = 'getVariation';
+        self::$apiName = 'getVariationName';
         self::addLog(
             Logger::INFO,
             Constants::INFO_MESSAGES['API_CALLED'],
             ['{api}' => 'getVariation', '{userId}' => $userId]
         );
+
         return $this->getVariation($campaignKey, $userId, $options, 0);
     }
 
@@ -734,6 +755,11 @@ class VWO
             //Send a call to VWO server
             try {
                 if ($this->development_mode) {
+                    self::addLog(
+                        Logger::DEBUG,
+                        Constants::INFO_MESSAGES['DEVELOPMENT_MODE'],
+                        []
+                    );
                     return true;
                 } else {
                     $params = array(
@@ -742,11 +768,13 @@ class VWO
                     $parameters = Common::mergeCommonQueryParams($this->settings['accountId'], $userId, $params);
                     $response = $this->connection->get(Constants::PUSH_URL, $parameters);
                 }
+
                 self::addLog(
                     Logger::INFO,
                     Constants::INFO_MESSAGES['IMPRESSION_FOR_PUSH'],
                     ['{properties}' => json_encode($parameters)]
                 );
+
                 if (isset($response['httpStatus']) && $response['httpStatus'] == 200) {
                     self::addLog(
                         Logger::INFO,
@@ -765,6 +793,7 @@ class VWO
                 self::addLog(Logger::ERROR, $e->getMessage());
             }
         }
-        return false;
+
+        return null;
     }
 }
