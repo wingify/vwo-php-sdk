@@ -18,13 +18,6 @@
 
 namespace vwo\Utils;
 
-use Monolog\Logger;
-use vwo\Core\Bucketer;
-use vwo\VWO as VWO;
-use vwo\Constants\Constants as Constants;
-use Ramsey\Uuid\Uuid;
-use vwo\Utils\SegmentEvaluator as SegmentEvaluator;
-
 /***
  * All the common function will be invoked from common  class
  *
@@ -46,7 +39,7 @@ class Common
      * @return mixed
      */
 
-    public static function makelogMessage($message, $params, $className = '', $apiName = '')
+    public static function buildLogMessage($message, $params, $className = '', $apiName = '')
     {
         $params['{file}'] = $className;
         $response = str_replace(array_keys($params), array_values($params), $message);
@@ -62,7 +55,7 @@ class Common
      * @return array
      */
 
-    public static function getUserData($campaignKey, $variation, $userId)
+    public static function getUserCampaignVariationMapping($campaignKey, $variation, $userId)
     {
         return [
             'userId' => $userId,
@@ -79,7 +72,7 @@ class Common
      * @param  $goalIdentifier
      * @return int
      */
-    public static function getGoal($goals, $goalIdentifier)
+    public static function getGoalFromGoals($goals, $goalIdentifier)
     {
         $goalData = 0;
         if (count($goals)) {
@@ -98,7 +91,7 @@ class Common
      * @param  $variableKey
      * @return bool|float|int|null|string
      */
-    public static function fetchVariableValueFromCampaign($variables, $variableKey)
+    public static function getVariableValue($variables, $variableKey)
     {
         $value = null;
         if (count($variables)) {
@@ -132,109 +125,6 @@ class Common
     }
 
     /**
-     * if the whitelisting condition get satisfied then this function
-     * will evaluate which variation is assigned as per conditions
-     * @param $campaign
-     * @param $userId
-     * @param $options
-     * @return array|null
-     */
-    public static function findVariationFromWhiteListing($campaign, $userId, $options)
-    {
-        $bucketInfo = null;
-        if (isset($campaign['isForcedVariationEnabled']) && $campaign['isForcedVariationEnabled'] == true) {
-            $variationTargetingVariables = Common::getValueFromOptions($options, 'variationTargetingVariables');
-            $bucketInfo = Common::getForcedBucket($campaign, $userId, $variationTargetingVariables);
-            $status = $bucketInfo != null ? 'satisfy' : "didn't satisfy";
-            \vwo\VWO::addLog(Logger::DEBUG, Constants::INFO_MESSAGES['WHITELISTING_ELIGIBILITY_STATUS'], ['{status}' => $status, '{userId}' => $userId, '{variation}' => $status == 'satisfy' ? $bucketInfo['name'] : 'no', '{campaign_key}' => $campaign['key'], '{variation_targeting_variables}' => json_encode($variationTargetingVariables)], self::$CLASSNAME);
-        } else {
-            \vwo\VWO::addLog(Logger::INFO, Constants::INFO_MESSAGES['WHITELISTING_SKIPPED'], [ '{reason}' => '','{userId}' => $userId, '{campaignKey}' => $campaign['key'],'{variation}' => ''], self::$CLASSNAME);
-        }
-        return $bucketInfo;
-    }
-
-    /**
-     * this function will evaluate the bucket out of
-     * the campaign for whitelisted campaign
-     * @param $campaign
-     * @param $userId
-     * @param $variationTargetingVariables
-     * @return array|null
-     */
-    public static function getForcedBucket($campaign, $userId, $variationTargetingVariables)
-    {
-        $variationTargetingVariables['_vwoUserId'] = $userId;
-        $validVariations = [];
-        $totalVariationTraffic = 0;
-        $segmentObj = new SegmentEvaluator();
-        foreach ($campaign['variations'] as $variation) {
-            if (isset($variation['segments']) && count($variation['segments'])) {
-                $result = $segmentObj->evaluate($variation['segments'], $variationTargetingVariables);
-                if ($result) {
-                    $totalVariationTraffic += $variation['weight'];
-                    $validVariations[] = $variation;
-                }
-                \vwo\VWO::addLog(Logger::INFO, Constants::INFO_MESSAGES['SEGMENTATION_STATUS'], [ '{userId}' => $userId, '{campaignKey}' => $campaign['key'],'{segmentationType}' => 'whitelisting','{variation}' => 'for variation:' . $variation['name'],'{status}' => $result === true ? 'passed' : 'failed','{customVariables}' => json_encode($variationTargetingVariables)], self::$CLASSNAME);
-            } else {
-                \vwo\VWO::addLog(Logger::INFO, Constants::INFO_MESSAGES['WHITELISTING_SKIPPED'], [ '{reason}' => 'segment was missing, hence','{userId}' => $userId, '{campaignKey}' => $campaign['key'],'{variation}' => 'for variation:' . $variation['name']], self::$CLASSNAME);
-            }
-        }
-        $totalValidVariations = count($validVariations);
-        if ($totalValidVariations == 1) {
-            return $validVariations[0];
-        } elseif ($totalValidVariations > 1) {
-            return self::evaluateBestVariation($validVariations, $totalVariationTraffic, $userId);
-        }
-        return null;
-    }
-
-    /**
-     * @param  $validVariations
-     * @param  $totalVariationTraffic
-     * @param  $userId
-     * @return null| array of variation
-     */
-    public static function evaluateBestVariation($validVariations, $totalVariationTraffic, $userId)
-    {
-        //scale and assign ranges to the variations
-        $validVariations = self::scaleVariations($validVariations, $totalVariationTraffic);
-        $validVariations = Bucketer::addRangesToVariations($validVariations);
-        //find murmur
-        $bucketVal = Bucketer::getBucketVal($userId, Bucketer::$MAX_CAMPAIGN_TRAFFIC);
-        //get range according to murmur
-        $rangeForVariation = Bucketer::getRangeForVariations($bucketVal);
-        //get variation
-        $variation = Bucketer::variationUsingRange($rangeForVariation, $validVariations);
-        //return final variation assigned to the user
-        return $variation;
-    }
-
-    /**
-     * scale vartion of every varition used in case when
-     * multiple vartions satisfy whitelisting condition
-     * @param $variations
-     * @param $totalVariationTraffic
-     * @return mixed
-     */
-    public static function scaleVariations($variations, $totalVariationTraffic)
-    {
-        $avgWeight = 0;
-        if ($totalVariationTraffic == 0) {
-            $variationCount = count($variations);
-            $avgWeight = 100 / $variationCount;
-        }
-        foreach ($variations as $key => $variation) {
-            if ($avgWeight > 0) {
-                $newWeight = $avgWeight;
-            } else {
-                $newWeight = ($variation['weight'] / $totalVariationTraffic) * 100;
-            }
-            $variations[$key]['weight'] = $newWeight;
-        }
-        return $variations;
-    }
-
-    /**
      * this is used to fetch the main variation of the campaign
      * mostly used where default values need to assigned
      * @param  $variations
@@ -252,47 +142,6 @@ class Common
             }
         }
         return $returnVariation;
-    }
-
-    /**
-     *
-     * @param  $accountid
-     * @param  $userId
-     * @param  array     $params
-     * @return array
-     */
-    public static function mergeCommonQueryParams($accountid, $userId, $params = [])
-    {
-        $params['account_id'] = $accountid;
-        $params['ap'] = 'server';
-        $params['uId'] = $userId;
-        $params['sId'] = time();
-        $params['u'] = self::getUUId5($userId, $accountid);
-        $params['sdk-v'] = Constants::SDK_VERSION;
-        $params['sdk'] = Constants::SDK_LANGUAGE;
-        return $params;
-    }
-
-    /**
-     * @param  $userId
-     * @param  $accountId
-     * @return string
-     */
-    public static function getUUId5($userId, $accountId)
-    {
-        $uuid = '';
-        try {
-            $uuid5_seed = Uuid::uuid5(Uuid::NAMESPACE_URL, Constants::UUID_SEED);
-            $uuid5_seed_accountId = Uuid::uuid5($uuid5_seed, $accountId);
-            $uuid5 = Uuid::uuid5($uuid5_seed_accountId, $userId);
-            $uuid = strtoupper(str_replace('-', '', $uuid5->toString()));
-            VWO::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['UUID_FOR_USER'], ['{userid}' => $userId, '{accountId}' => $accountId, '{desiredUuid}' => $uuid], self::$CLASSNAME);
-        } catch (UnsatisfiedDependencyException $e) {
-            self::addLog(Logger::ERROR, 'UnsatisfiedDependencyException : ' . $e->getMessage());
-        } catch (Exception $e) {
-            self::addLog(Logger::ERROR, $e->getMessage());
-        }
-        return $uuid;
     }
 
     /**
@@ -325,5 +174,10 @@ class Common
                 return [];
         }
         return null;
+    }
+
+    public static function getRandomNumber()
+    {
+        return (time() / 10);
     }
 }

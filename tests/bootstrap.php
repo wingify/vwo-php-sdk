@@ -24,6 +24,8 @@ require 'assets/Settings5.php';
 require 'assets/Settings6.php';
 require 'assets/Settings7.php';
 require 'assets/Settings8.php';
+require 'assets/SettingsWithPreSegmentation.php';
 require 'assets/SegmentEvaluatorJson.php';
 require 'assets/WhitelistingJson.php';
 require 'assets/VariationResults.php';
+require 'TestUtil.php';

@@ -21,44 +21,47 @@ namespace vwo;
 class Settings2
 {
 
-    var $setting = [
-    'sdkKey' => 'loremipsum1234567',
-    'campaigns' => [
-    [
-      'goals' => [
-        [
-          'identifier' => 'abcd',
-          'id' => 1,
-          'type' => 'REVENUE_TRACKING'
-        ],
-        [
-        'identifier' => 'CUSTOM',
-          'id' => 214,
-          'type' => 'CUSTOM_GOAL'
-        ]
-      ],
-      'variations' => [
-        [
-            'id' => 1,
-          'name' => 'Control',
-          'changes' => [],
-          'weight' => 50
-        ],
-        [
-            'id' => 2,
-          'name' => 'Variation-1',
-          'changes' => [],
-          'weight' => 50
-        ]
-      ],
-      'id' => 231,
-      'percentTraffic' => 100,
-      'key' => 'DEV_TEST_2',
-      'status' => 'RUNNING',
-      'type' => 'VISUAL_AB'
-    ]
-    ],
-    'accountId' => 123456,
-    'version' => 1
-    ];
+    public static function use()
+    {
+        return [
+            'sdkKey' => 'loremipsum1234567',
+            'campaigns' => [
+            [
+            'goals' => [
+                [
+                'identifier' => 'REVENUE',
+                'id' => 1,
+                'type' => 'REVENUE_TRACKING'
+                ],
+                [
+                'identifier' => 'CUSTOM',
+                'id' => 214,
+                'type' => 'CUSTOM_GOAL'
+                ]
+            ],
+            'variations' => [
+                [
+                    'id' => 1,
+                'name' => 'Control',
+                'changes' => [],
+                'weight' => 50
+                ],
+                [
+                    'id' => 2,
+                'name' => 'Variation-1',
+                'changes' => [],
+                'weight' => 50
+                ]
+            ],
+            'id' => 231,
+            'percentTraffic' => 100,
+            'key' => 'DEV_TEST_2',
+            'status' => 'RUNNING',
+            'type' => 'VISUAL_AB'
+            ]
+            ],
+            'accountId' => 123456,
+            'version' => 1
+        ];
+    }
 }

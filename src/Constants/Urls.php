@@ -16,20 +16,28 @@
  * limitations under the License.
  */
 
-namespace vwo\Logger;
+namespace vwo\Constants;
 
-/***
- * Interface LoggerInterface
- *
- * @package vwo\Logger
- */
-interface LoggerInterface
+class Urls
 {
     /**
-     * logger function which helps in adding log to the third party
-     * @param  $msg
-     * @param  $level
-     * @return mixed
+     * base url for api hit
      */
-    public function log($msg, $level);
+    const BASE_URL = 'https://dev.visualwebsiteoptimizer.com/server-side/';
+    /**
+     * query string to fetch settings
+     */
+    const SETTINGS_URL = self::BASE_URL . 'settings';
+    /**
+     * query string to track goal
+     */
+    const TRACK_GOAL_URL = self::BASE_URL . 'track-goal';
+    /**
+     * query string to track user
+     */
+    const TRACK_USER_URL = self::BASE_URL . 'track-user';
+    /**
+     * query string to push api
+     */
+    const PUSH_URL = self::BASE_URL . 'push';
 }

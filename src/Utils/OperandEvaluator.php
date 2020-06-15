@@ -18,7 +18,7 @@
 
 namespace vwo\Utils;
 
-use vwo\Utils\Common as Common;
+use vwo\Utils\Common as CommonUtil;
 use vwo\Constants\Segments as SegmentConstants;
 use vwo\Constants\Constants;
 use Monolog\Logger as Logger;
@@ -39,7 +39,7 @@ class OperandEvaluator
      */
     public static function evaluateCustomVariableOperand($operand, $customVariables)
     {
-        list($operandKey, $operand) = Common::getKeyValue($operand);
+        list($operandKey, $operand) = CommonUtil::getKeyValue($operand);
         if (array_key_exists($operandKey, $customVariables)) {
             $customVariable = $customVariables[$operandKey];
         } else {

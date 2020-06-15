@@ -4,3 +4,5 @@ build/
 vendor/
 composer.phar
 composer.lock
+coverage/
+.vscode/

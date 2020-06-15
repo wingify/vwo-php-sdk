@@ -7,7 +7,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,24 +16,11 @@
  * limitations under the License.
  */
 
-require_once 'vendor/autoload.php';
-use vwo\Logger\LoggerInterface;
+namespace vwo\Constants;
 
-/**
- * Class CustomLogger
- */
-class CustomLogger implements LoggerInterface
+class CampaignTypes
 {
-
-    /**
-     * @param  $message
-     * @param  $level
-     * @return string
-     */
-    public function addLog($message, $level)
-    {
-        //do code for writing logs to your files/databases
-        //throw new Exception('my test');
-        //return $x;
-    }
+    const FEATURE_ROLLOUT = 'FEATURE_ROLLOUT';
+    const FEATURE_TEST = 'FEATURE_TEST';
+    const AB = 'VISUAL_AB';
 }

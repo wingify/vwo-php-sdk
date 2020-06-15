@@ -18,7 +18,7 @@
 
 namespace vwo\Utils;
 
-use vwo\Utils\Common as Common;
+use vwo\Utils\Common as CommonUtil;
 use vwo\Utils\OperandEvaluator as OperandEvaluator;
 use vwo\Constants\Segments as SegmentConstants;
 
@@ -41,7 +41,7 @@ class SegmentEvaluator
         if (count($dsl) == 0) {
             return true;
         }
-        list($operator, $subDsl) = Common::getKeyValue($dsl);
+        list($operator, $subDsl) = CommonUtil::getKeyValue($dsl);
         if ($operator === SegmentConstants::OPERAND_NOT) {
             return !$this->evaluate($subDsl, $customVariables);
         } elseif ($operator === SegmentConstants::OPERAND_AND) {

@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2020-05-30
+### Changed
+- Refactor entire SDK - into modular and reusable components
+- Improve Test Cases - cleaner & structured code and reusable utitlity functions
+- Coverage increased from 83% to ~96% i.e. covering most of the source code via E2E and Unit Tests
+- Bugfixes
+  - pre-segmentation logging issue when evaluated to false
+  - sending call in case of feature-test when Control is the decision
+
 ## [1.7.4] - 2020-05-14
 ### Changed
 - Return `null` from APIs in case user is not part of campaign

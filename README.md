@@ -114,7 +114,7 @@ Class CustomLogger implements LoggerInterface{
     *
     * @return
     */
-  public function addLog($message, $level){
+  public function log($message, $level){
     // use $level and log $message to either print or store them for later use
   }
 

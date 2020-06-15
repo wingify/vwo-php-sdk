@@ -7,7 +7,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,20 +16,20 @@
  * limitations under the License.
  */
 
-namespace vwo\Logger;
+namespace vwo;
 
-/***
- * Interface LoggerInterface
- *
- * @package vwo\Logger
- */
-interface LoggerInterface
+use PHPUnit\Framework\TestCase;
+use vwo\Services\LoggerService;
+
+class LoggerServiceTest extends TestCase
 {
-    /**
-     * logger function which helps in adding log to the third party
-     * @param  $msg
-     * @param  $level
-     * @return mixed
-     */
-    public function log($msg, $level);
+    protected function setUp()
+    {
+    }
+
+    public function testLog()
+    {
+        $response = LoggerService::log(400, null, [], '');
+        $this->assertEquals(true, true);
+    }
 }

@@ -19,7 +19,8 @@
 namespace vwo\Core;
 
 use Monolog\Logger;
-use vwo\Constants\Constants;
+use vwo\Constants\LogMessages;
+use vwo\Services\LoggerService;
 use vwo\Utils\murmur as murmur;
 
 /***
@@ -79,7 +80,7 @@ class Bucketer
         // if bucketing to be done
         $bucketVal = self::getBucketVal($userId, self::$MAX_CAMPAIGN_TRAFFIC);
         if (!self::isUserPartofCampaign($bucketVal, $campaign['percentTraffic'])) {
-            \vwo\VWO::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['USER_NOT_PART_OF_CAMPAIGN'], ['{userId}' => $userId, '{method}' => 'getBucket', '{campaignKey}' => $campaign['key']], self::$CLASSNAME);
+            LoggerService::log(Logger::DEBUG, LogMessages::DEBUG_MESSAGES['USER_NOT_PART_OF_CAMPAIGN'], ['{userId}' => $userId, '{method}' => 'getBucket', '{campaignKey}' => $campaign['key']], self::$CLASSNAME);
             return null;
         }
         $multiplier = self::getMultiplier($campaign['percentTraffic']);
@@ -87,19 +88,19 @@ class Bucketer
         $rangeForVariations = self::getRangeForVariations($bucketVal, $multiplier);
 
         $variation = self::variationUsingRange($rangeForVariations, $campaign['variations']);
-        \vwo\VWO::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['VARIATION_HASH_BUCKET_VALUE'], ['{userId}' => $userId,'{bucketValue}' => $rangeForVariations, '{percentTraffic}' => $campaign['percentTraffic'], '{campaignKey}' => $campaign['key']], self::$CLASSNAME);
+        LoggerService::log(Logger::DEBUG, LogMessages::DEBUG_MESSAGES['VARIATION_HASH_BUCKET_VALUE'], ['{userId}' => $userId,'{bucketValue}' => $rangeForVariations, '{percentTraffic}' => $campaign['percentTraffic'], '{campaignKey}' => $campaign['key']], self::$CLASSNAME);
         if ($variation !== null) {
-            \vwo\VWO::addLog(Logger::INFO, Constants::INFO_MESSAGES['GOT_VARIATION_FOR_USER'], ['{variationName}' => $variation['name'], '{userId}' => $userId, '{method}' => 'getBucket', '{campaignKey}' => $campaign['key']], self::$CLASSNAME);
+            LoggerService::log(Logger::INFO, LogMessages::INFO_MESSAGES['GOT_VARIATION_FOR_USER'], ['{variationName}' => $variation['name'], '{userId}' => $userId, '{method}' => 'getBucket', '{campaignKey}' => $campaign['key']], self::$CLASSNAME);
             return $variation;
         }
-        \vwo\VWO::addLog(Logger::INFO, Constants::INFO_MESSAGES['NO_VARIATION_ALLOCATED'], ['{userId}' => $userId, '{campaignKey}' => $campaign['key']], self::$CLASSNAME);
+        LoggerService::log(Logger::INFO, LogMessages::INFO_MESSAGES['NO_VARIATION_ALLOCATED'], ['{userId}' => $userId, '{campaignKey}' => $campaign['key']], self::$CLASSNAME);
         return null;
     }
 
     public static function variationUsingRange($rangeForVariations, $variations)
     {
         foreach ($variations as $variation) {
-            if ($variation['max_range'] >= $rangeForVariations && $rangeForVariations >= $variation['min_range']) {
+            if (isset($variation['max_range']) && $variation['max_range'] >= $rangeForVariations && $rangeForVariations >= $variation['min_range']) {
                 return $variation;
             }
         }

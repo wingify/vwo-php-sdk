@@ -19,48 +19,13 @@
 namespace vwo\Constants;
 
 /***
- * Class Constants
- * All the constant variables are used from constant class
+ * Class LogMessages
+ * All the constant log messages
  *
- * @package vwo\Constants
+ * @package vwo\Constants\LogMessages
  */
-class Constants
+class LogMessages
 {
-    /**
-     * sdk version for api hit
-     */
-    const SDK_VERSION = '1.7.4';
-    /**
-     * sdk langauge for api hit
-     */
-    const SDK_LANGUAGE = 'php';
-    /**
-     * base url for api hit
-     */
-    const BASE_URL = 'https://dev.visualwebsiteoptimizer.com/server-side/';
-    /**
-     * query string to fetch settings
-     */
-    const SETTINGS_URL = self::BASE_URL . 'settings';
-    /**
-     * query string to track goal
-     */
-    const GOAL_URL = self::BASE_URL . 'track-goal';
-    /**
-     * query string to track user
-     */
-    const TRACK_URL = self::BASE_URL . 'track-user';
-    /**
-     * query string to push api
-     */
-    const PUSH_URL = self::BASE_URL . 'push';
-    /**
-     * base seed for uuid
-     */
-    const UUID_SEED = 'https://vwo.com';
-
-
-
     /**
      * messages used for dedug mode
      */
@@ -81,8 +46,7 @@ class Constants
         'UUID_FOR_USER' => '({file}): Uuid generated for userId:{userid} and accountId:{accountId} is {desiredUuid}',
         'FEATURE_FLAG_NOT_LINKED' => '({file}): Feature:{featureKey} is not linked to any running campaigns',
         'USER_HASH_BUCKET_VALUE' => '({file}): User ID:{userId} having hash:{hashValue} got bucketValue:{bucketValue}',
-        'VARIATION_HASH_BUCKET_VALUE' => '({file}): User ID:{userId} for campaign:{campaignKey} having percent traffic:{percentTraffic} got bucket value:{bucketValue}',
-        'DEVELOPMENT_MODE' => '({file}): Development mode is ON, no calls are made to the VWO server'
+        'VARIATION_HASH_BUCKET_VALUE' => '({file}): User ID:{userId} for campaign:{campaignKey} having percent traffic:{percentTraffic} got bucket value:{bucketValue}'
     ];
 
     /**
@@ -117,8 +81,6 @@ class Constants
         'SEGMENTATION_SKIPPED' => '({file}): For userId:{userId} of campaign:{campaignKey}, segment was missing, hence skipping segmentation{variation}',
         'SEGMENTATION_STATUS' => '({file}): For userId:{userId} of campaign:{campaignKey} with variables:{customVariables} {status} {segmentationType} {variation}',
 
-
-
     ];
     /**
      * messages used for warning mode
@@ -127,7 +89,7 @@ class Constants
     /**
      * messages used for error mode
      */
-    const ERROR_MESSAGE = [
+    const ERROR_MESSAGES = [
         'INVALID_CONFIGURATION' => '({file}): SDK configuration or account settings or both is/are not valid.',
         'SETTINGS_FILE_CORRUPTED' => '({file}): Settings file is corrupted. Please contact VWO Support for help.',
         'ACTIVATE_API_CONFIG_CORRUPTED' => '({file}): "activate" API has corrupted configuration',
@@ -156,10 +118,4 @@ class Constants
         'ACTIVATE_API_MISSING_PARAMS' => '({file}): "activate" API got bad parameters. It expects campaignKey(String) as first, userId(String) as second and options(optional Object) as third argument',
         'SEGMENTATION_ERROR' => '({file}): Error while segmenting the userId:{userId} of campaignKey:{campaignKey}{variation} with customVariables:{customVariables}. Error message: {err}'
     ];
-
-
-    const VARIABLE_TYPE_BOOLEAN = 'boolean';
-    const VARIABLE_TYPE_INTEGER = 'integer';
-    const VARIABLE_TYPE_DOUBLE = 'double';
-    const VARIABLE_TYPE_STRING = 'string';
 }

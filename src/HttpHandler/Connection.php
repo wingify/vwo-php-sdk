@@ -31,7 +31,7 @@
  * THE SOFTWARE.
  */
 
-namespace vwo\Handlers;
+namespace vwo\HttpHandler;
 
 use vwo\Error\ClientError;
 use vwo\Error\ServerError;
@@ -150,36 +150,6 @@ class Connection
     }
 
     /**
-     * Controls whether requests and responses should be treated
-     * as XML. Defaults to FALSE (using JSON).
-     *
-     * @param bool $option the new state of this feature
-     */
-    public function useXml($option = true)
-    {
-        if ($option) {
-            $this->contentType = self::MEDIA_TYPE_XML;
-            $this->rawResponse = true;
-        } else {
-            $this->contentType = self::MEDIA_TYPE_JSON;
-            $this->rawResponse = false;
-        }
-    }
-
-    /**
-     * Controls whether requests or responses should be treated
-     * as urlencoded form data.
-     *
-     * @param bool $option the new state of this feature
-     */
-    public function useUrlEncoded($option = true)
-    {
-        if ($option) {
-            $this->contentType = self::MEDIA_TYPE_WWW;
-        }
-    }
-
-    /**
      * Throw an exception if the request encounters an HTTP error condition.
      *
      * <p>An error condition is considered to be:</p>
@@ -200,29 +170,6 @@ class Connection
     }
 
     /**
-     * Sets the HTTP basic authentication.
-     *
-     * @param string $username
-     * @param string $password
-     */
-    public function authenticateBasic($username, $password)
-    {
-        curl_setopt($this->curl, CURLOPT_USERPWD, "$username:$password");
-    }
-
-    /**
-     * Sets Oauth authentication headers
-     *
-     * @param string $clientId
-     * @param string $authToken
-     */
-    public function authenticateOauth($clientId, $authToken)
-    {
-        $this->addHeader('X-Auth-Client', $clientId);
-        $this->addHeader('X-Auth-Token', $authToken);
-    }
-
-    /**
      * Add a custom header to the request.
      *
      * @param string $header
@@ -231,29 +178,6 @@ class Connection
     public function addHeader($header, $value)
     {
         $this->headers[$header] = "$header: $value";
-    }
-
-    /**
-     * Set a proxy server for outgoing requests to tunnel through.
-     *
-     * @param string   $server
-     * @param int|bool $port   optional port number
-     */
-    public function useProxy($server, $port = false)
-    {
-        curl_setopt($this->curl, CURLOPT_PROXY, $server);
-        if ($port) {
-            curl_setopt($this->curl, CURLOPT_PROXYPORT, $port);
-        }
-    }
-
-    /**
-     * @todo  may need to handle CURLOPT_SSL_VERIFYHOST and CURLOPT_CAINFO as well
-     * @param boolean
-     */
-    public function verifyPeer($option = false)
-    {
-        curl_setopt($this->curl, CURLOPT_SSL_VERIFYPEER, $option);
     }
 
     /**
@@ -450,73 +374,6 @@ class Connection
         curl_setopt($this->curl, CURLOPT_POST, false);
         curl_setopt($this->curl, CURLOPT_PUT, false);
         curl_setopt($this->curl, CURLOPT_HTTPGET, true);
-        curl_exec($this->curl);
-        return $this->handleResponse();
-    }
-
-    /**
-     * Make an HTTP HEAD request to the specified endpoint.
-     *
-     * @param  string $url URL to which we send the request
-     * @return mixed
-     */
-    public function head($url)
-    {
-        $this->initializeRequest();
-        curl_setopt($this->curl, CURLOPT_CUSTOMREQUEST, 'HEAD');
-        curl_setopt($this->curl, CURLOPT_URL, $url);
-        curl_setopt($this->curl, CURLOPT_NOBODY, true);
-        curl_exec($this->curl);
-        return $this->handleResponse();
-    }
-
-    /**
-     * Make an HTTP PUT request to the specified endpoint.
-     *
-     * Requires a tmpfile() handle to be opened on the system, as the cURL
-     * API requires it to send data.
-     *
-     * @param  string $url  URL to which we send the request
-     * @param  mixed  $body Data payload (JSON string or raw data)
-     * @return mixed
-     */
-    public function put($url, $body)
-    {
-        $this->addHeader('Content-Type', $this->getContentType());
-        if (!is_string($body)) {
-            $body = json_encode($body);
-        }
-        $this->initializeRequest();
-        $handle = tmpfile();
-        fwrite($handle, $body);
-        fseek($handle, 0);
-        curl_setopt($this->curl, CURLOPT_INFILE, $handle);
-        curl_setopt($this->curl, CURLOPT_INFILESIZE, strlen($body));
-        curl_setopt($this->curl, CURLOPT_CUSTOMREQUEST, 'PUT');
-        curl_setopt($this->curl, CURLOPT_URL, $url);
-        curl_setopt($this->curl, CURLOPT_HTTPGET, false);
-        curl_setopt($this->curl, CURLOPT_POST, false);
-        curl_setopt($this->curl, CURLOPT_PUT, true);
-        curl_exec($this->curl);
-        fclose($handle);
-        curl_setopt($this->curl, CURLOPT_INFILE, STDIN);
-        return $this->handleResponse();
-    }
-
-    /**
-     * Make an HTTP DELETE request to the specified endpoint.
-     *
-     * @param  string $url URL to which we send the request
-     * @return mixed
-     */
-    public function delete($url)
-    {
-        $this->initializeRequest();
-        curl_setopt($this->curl, CURLOPT_PUT, false);
-        curl_setopt($this->curl, CURLOPT_HTTPGET, false);
-        curl_setopt($this->curl, CURLOPT_POST, false);
-        curl_setopt($this->curl, CURLOPT_CUSTOMREQUEST, 'DELETE');
-        curl_setopt($this->curl, CURLOPT_URL, $url);
         curl_exec($this->curl);
         return $this->handleResponse();
     }

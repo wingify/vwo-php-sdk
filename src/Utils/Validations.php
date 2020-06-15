@@ -18,14 +18,16 @@
 
 namespace vwo\Utils;
 
+use vwo\VWO;
+use Monolog\Logger;
+use JsonSchema\Constraints\Factory;
 use JsonSchema\SchemaStorage;
 use JsonSchema\Validator as Validator;
-use JsonSchema\Constraints\Factory;
 use JsonSchema\Constraints\Constraint;
-use Monolog\Logger;
+use vwo\Utils\COmmon as CommonUtil;
 use vwo\Utils\SegmentEvaluator as SegmentEvaluator;
-use vwo\VWO;
-use vwo\Constants\Constants as Constants;
+use vwo\Services\LoggerService;
+use vwo\Constants\LogMessages as LogMessages;
 
 /***
  * Class Validations
@@ -81,23 +83,23 @@ class Validations
     public static function pushApiParams($tagKey, $tagValue, $userId)
     {
         if (!is_string($userId)  || empty($userId)) {
-            VWO::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['INVALID_USER_ID'], ['{userId}' => $userId,'{method}' => 'pushApiParams'], self::$CLASSNAME);
+            LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['INVALID_USER_ID'], ['{userId}' => $userId,'{method}' => 'pushApiParams'], self::$CLASSNAME);
             return false;
         }
         if (!is_string($tagKey) || empty($tagKey)) {
-            VWO::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['TAG_KEY_CORRUPTED'], ['{tagKey}' => $tagKey,'{method}' => 'pushApiParams'], self::$CLASSNAME);
+            LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['TAG_KEY_CORRUPTED'], ['{tagKey}' => $tagKey,'{method}' => 'pushApiParams'], self::$CLASSNAME);
             return false;
         }
         if (strlen($tagKey) > 255) {
-            VWO::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['TAG_KEY_LENGTH_ERROR'], ['{tagKey}' => $tagKey,'{userId}' => $userId,'{method}' => 'pushApiParams'], self::$CLASSNAME);
+            LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['TAG_KEY_LENGTH_ERROR'], ['{tagKey}' => $tagKey,'{userId}' => $userId,'{method}' => 'pushApiParams'], self::$CLASSNAME);
             return false;
         }
         if (!is_string($tagValue)  || empty($tagValue)) {
-            VWO::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['TAG_VALUE_CORRUPTED'], ['{tagValue}' => $tagValue,'{method}' => 'pushApiParams'], self::$CLASSNAME);
+            LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['TAG_VALUE_CORRUPTED'], ['{tagValue}' => $tagValue,'{method}' => 'pushApiParams'], self::$CLASSNAME);
             return false;
         }
         if (strlen($tagValue) > 255) {
-            VWO::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['TAG_VALUE_LENGTH_ERROR'], ['{tagValue}' => $tagValue,'{userId}' => $userId,'{method}' => 'pushApiParams'], self::$CLASSNAME);
+            LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['TAG_VALUE_LENGTH_ERROR'], ['{tagValue}' => $tagValue,'{userId}' => $userId,'{method}' => 'pushApiParams'], self::$CLASSNAME);
             return false;
         }
 
@@ -113,13 +115,13 @@ class Validations
      */
     public static function checkPreSegmentation($campaign, $userId, $options)
     {
-        $customVariables = Common::getValueFromOptions($options, 'customVariables');
+        $customVariables = CommonUtil::getValueFromOptions($options, 'customVariables');
         $segment = new SegmentEvaluator();
         if (array_key_exists('segments', $campaign) && count($campaign['segments'])) {
             $response = $segment->evaluate($campaign['segments'], $customVariables);
-             VWO::addLog(
+             LoggerService::log(
                  Logger::INFO,
-                 Constants::INFO_MESSAGES['SEGMENTATION_STATUS'],
+                 LogMessages::INFO_MESSAGES['SEGMENTATION_STATUS'],
                  [
                              '{status}' => $response === true ? 'passed' : 'failed',
                              '{campaignKey}' => $campaign['key'],
@@ -132,7 +134,7 @@ class Validations
              );
             return $response;
         } else {
-            VWO::addLog(Logger::INFO, Constants::INFO_MESSAGES['SEGMENTATION_SKIPPED'], ['{campaignKey}' => $campaign['key'],'{userId}' => $userId,'{variation}' => '']);
+            LoggerService::log(Logger::INFO, LogMessages::INFO_MESSAGES['SEGMENTATION_SKIPPED'], ['{campaignKey}' => $campaign['key'],'{userId}' => $userId,'{variation}' => '']);
             return true;
         }
     }
@@ -152,9 +154,9 @@ class Validations
         $jsonValidator->validate($request, self::$jsonSchemaObject, Constraint::CHECK_MODE_VALIDATE_SCHEMA);
         if ($jsonValidator->isValid()) {
             $response = true;
-            VWO::addLog(Logger::DEBUG, Constants::DEBUG_MESSAGES['VALID_CONFIGURATION']);
+            LoggerService::log(Logger::DEBUG, LogMessages::DEBUG_MESSAGES['VALID_CONFIGURATION']);
         } else {
-            VWO::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['SETTINGS_FILE_CORRUPTED']);
+            LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['SETTINGS_FILE_CORRUPTED']);
         }
         return $response;
     }
@@ -183,7 +185,7 @@ class Validations
         if (is_string($campaignKey)) {
             return true;
         }
-        VWO::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['FEATURE_KEY_CORRUPTED'], ['{campaignKey}' => $campaignKey], self::$CLASSNAME);
+        LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['FEATURE_KEY_CORRUPTED'], ['{campaignKey}' => $campaignKey], self::$CLASSNAME);
         return false;
     }
 
@@ -197,7 +199,7 @@ class Validations
         if (is_string($userId)) {
             return true;
         }
-        VWO::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['USERID_KEY_CORRUPTED'], ['{userId}' => $userId], self::$CLASSNAME);
+        LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['USERID_KEY_CORRUPTED'], ['{userId}' => $userId], self::$CLASSNAME);
         return false;
     }
 
@@ -210,7 +212,7 @@ class Validations
      */
     public static function getCampaignFromCampaignKey($campaignKey, $settings)
     {
-        if (isset($settings['campaigns']) and count($settings['campaigns'])) {
+        if (isset($settings) && isset($settings['campaigns'])) {
             foreach ($settings['campaigns'] as $campaign) {
                 if (isset($campaign['status']) && $campaign['status'] !== 'RUNNING') {
                     continue;
@@ -220,7 +222,7 @@ class Validations
                 }
             }
         }
-        VWO::addLog(Logger::ERROR, Constants::ERROR_MESSAGE['CAMPAIGN_NOT_RUNNING'], ['{campaignKey}' => $campaignKey], self::$CLASSNAME);
+        LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['CAMPAIGN_NOT_RUNNING'], ['{campaignKey}' => $campaignKey], self::$CLASSNAME);
         return null;
     }
 }

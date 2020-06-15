@@ -216,7 +216,7 @@ const isSuccess = checkLicenseUtil.checkLicenseAndCopyright({
   author: 'Wingify Software Pvt. Ltd.',
   paths: 'src,tests',
   stoppingCriteria: '\\*\\/',
-  excludes: ['src/Error', 'src/Handlers/Connection.php', 'src/Utils/murmur.php'],
+  excludes: ['src/Error', 'src/HttpHandler/Connection.php', 'src/Utils/murmur.php'],
   extension: 'php'
 });
 console.timeEnd('Execution time for License and Copyright');
