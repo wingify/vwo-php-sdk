@@ -38,14 +38,14 @@ class VWOTest extends TestCase
     {
         $this->users = TestUtil::getUsers();
 
-        $this->settings1 = Settings1::use();
-        $this->settings2 = Settings2::use();
-        $this->settings3 = Settings3::use();
-        $this->settings4 = Settings4::use();
-        $this->settings5 = Settings5::use();
-        $this->settings6 = Settings6::use();
-        $this->settings7 = Settings7::use();
-        $this->settings8 = Settings8::use();
+        $this->settings1 = Settings1::setup();
+        $this->settings2 = Settings2::setup();
+        $this->settings3 = Settings3::setup();
+        $this->settings4 = Settings4::setup();
+        $this->settings5 = Settings5::setup();
+        $this->settings6 = Settings6::setup();
+        $this->settings7 = Settings7::setup();
+        $this->settings8 = Settings8::setup();
         $segmentEvaluatorJson = new SegmentEvaluatorJson();
         $results = new VariationResults();
 

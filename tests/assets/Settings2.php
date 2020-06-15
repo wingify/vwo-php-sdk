@@ -21,7 +21,7 @@ namespace vwo;
 class Settings2
 {
 
-    public static function use()
+    public static function setup()
     {
         return [
             'sdkKey' => 'loremipsum1234567',

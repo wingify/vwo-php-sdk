@@ -29,7 +29,7 @@ class ValidationsTest extends TestCase
     }
     public function testTrackValidation()
     {
-        $this->settings8 = Settings8::use();
+        $this->settings8 = Settings8::setup();
 
         $userId = $this->users[rand(0, count($this->users) - 1)];
         $this->vwoInstance = TestUtil::instantiateSdk($this->settings8, ['isUserStorage' => 1]);

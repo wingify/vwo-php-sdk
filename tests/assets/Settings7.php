@@ -20,7 +20,7 @@ namespace vwo;
 
 class Settings7
 {
-    public static function use()
+    public static function setup()
     {
         return [
             "featureFlags" => [[
