@@ -123,7 +123,7 @@ Class CustomLogger implements LoggerInterface{
 
 ## Documentation
 
-Refer [Official VWO Documentation](https://developers.vwo.com/reference#server-side-introduction)
+Refer [Official VWO Documentation](https://developers.vwo.com/reference#fullstack-introduction)
 
 ## Third-party Resources and Credits
 
