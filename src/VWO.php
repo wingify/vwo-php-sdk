@@ -131,16 +131,25 @@ class VWO
     /**
      * @param  $accountId
      * @param  $sdkKey
+     * @param  $isTriggeredByWebhook
      * @return bool|mixed
      */
-    public static function getSettingsFile($accountId, $sdkKey)
+    public static function getSettingsFile($accountId, $sdkKey, $isTriggeredByWebhook = false)
     {
         self::$apiName = 'getSettingsFile';
         LoggerService::setApiName(self::$apiName);
         try {
             $parameters = ImpressionBuilder::getSettingsFileQueryParams($accountId, $sdkKey);
             $eventDispatcher = new EventDispatcher(false);
-            $response = $eventDispatcher->send(UrlConstants::SETTINGS_URL, $parameters);
+
+            $url = '';
+            if ($isTriggeredByWebhook) {
+                $url = UrlConstants::WEBHOOK_SETTINGS_URL;
+            } else {
+                $url = UrlConstants::SETTINGS_URL;
+            }
+
+            $response = $eventDispatcher->send($url, $parameters);
 
             return $response;
         } catch (Exception $e) {

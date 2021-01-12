@@ -29,6 +29,10 @@ class Urls
      */
     const SETTINGS_URL = self::BASE_URL . 'settings';
     /**
+     * query string to fetch settings once webhook is triggered
+     */
+    const WEBHOOK_SETTINGS_URL = self::BASE_URL . 'pull';
+    /**
      * query string to track goal
      */
     const TRACK_GOAL_URL = self::BASE_URL . 'track-goal';
