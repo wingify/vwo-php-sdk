@@ -108,6 +108,7 @@ class VWOTest extends TestCase
 
         $obj = TestUtil::instantiateSdk($this->settings1);
         $obj->eventDispatcher = TestUtil::mockMethodToThrowEception($this, 'EventDispatcher', 'send');
+        $obj->eventDispatcher = TestUtil::mockMethodToThrowEception($this, 'EventDispatcher', 'sendAsyncRequest');
 
         foreach ($this->users as $userId) {
             $value = $obj->push('tagKey', 'tagValue', $userId);

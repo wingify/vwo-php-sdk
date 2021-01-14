@@ -34,11 +34,12 @@ class EventDispatcher
         return $this;
     }
 
-    /***
-     * API to track visitor hit to vwo
+    /**
+     * API to track data
      *
-     * @param array $campaign
-     * @param string $userId
+     * @param string url
+     * @param array $parameters
+     *
      * @return boolean
      */
     public function send($url, $parameters)
@@ -57,8 +58,54 @@ class EventDispatcher
         } else {
             return false;
         }
-        LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['IMPRESSION_FAILED'], ['{endPoint}' => $url]);
+        LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['IMPRESSION_FAILED'], ['{endPoint}' => $url, '{reason}' => '']);
 
         return false;
+    }
+
+    /**
+     * Send async call to the destination i.e. VWO server
+     *
+     * @param string $url
+     * @param string $method
+     * @param array $params
+     *
+     * @return void
+     */
+    public function sendAsyncRequest($url, $method, $params = [])
+    {
+        // If in DEV mode, do not send any call
+        if (self::$isDevelopmentMode) {
+            return;
+        }
+
+        // Parse url and extract information
+        $parsedUrl = parse_url($url);
+        $host = $parsedUrl['host'];
+        $path = $parsedUrl['path'];
+
+        // Open socket connectio
+        $socketConnection = fsockopen('ssl://' . $host, 443, $errno, $errstr, 60);
+        if (!$socketConnection) {
+            LoggerService::log(
+                Logger::ERROR,
+                LogMessages::ERROR_MESSAGES['IMPRESSION_FAILED'],
+                [
+                    '{endPoint}' => $url,
+                    '{reason}' => 'Unable to connect to ' . $host . '. Error: ' . $errstr . ' ' . ($errno)]
+            );
+
+            return;
+        }
+
+        // Build request
+        $request  = $method . ' ' . $path . '?' . http_build_query($params);
+        $request .= ' HTTP/1.1' . "\r\n";
+        $request .= 'Host: ' . $host . "\r\n";
+        $request .= 'Connection: Close' . "\r\n\r\n";
+
+        // Send Request
+        fwrite($socketConnection, $request);
+        fclose($socketConnection);
     }
 }

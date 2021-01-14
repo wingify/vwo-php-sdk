@@ -184,6 +184,9 @@ class VWO
             }
             // get campaigns
             $campaign = ValidationsUtil::getCampaignFromCampaignKey($campaignKey, $this->settings);
+            if ($campaign == null) {
+                return null;
+            }
             if ($campaign !== null && $campaign['type'] == CampaignTypes::AB) {
                 LoggerService::log(
                     Logger::ERROR,
@@ -200,12 +203,14 @@ class VWO
             // else return to false
             $result['response'] = ((isset($variationData) && !isset($variationData['isFeatureEnabled'])) || (isset($variationData['isFeatureEnabled']) && $variationData['isFeatureEnabled']) == true) ? true : false;
 
-            $parameters = ImpressionBuilder::getVisitorQueryParams(
-                $this->settings['accountId'],
-                $campaign,
-                $userId,
-                $variationData['id']
-            );
+            if ($variationData) {
+                $parameters = ImpressionBuilder::getVisitorQueryParams(
+                    $this->settings['accountId'],
+                    $campaign,
+                    $userId,
+                    $variationData['id']
+                );
+            }
 
             if (isset($variationData) && $result['response'] == false) {
                 LoggerService::log(
@@ -215,7 +220,7 @@ class VWO
                 );
 
                 if ($campaign['type'] == CampaignTypes::FEATURE_TEST) {
-                    $this->eventDispatcher->send(UrlConstants::TRACK_USER_URL, $parameters);
+                    $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_USER_URL, 'GET', $parameters);
                     LoggerService::log(
                         Logger::INFO,
                         LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
@@ -233,12 +238,25 @@ class VWO
                 );
 
                 if ($campaign['type'] != CampaignTypes::FEATURE_ROLLOUT) {
-                    $this->eventDispatcher->send(UrlConstants::TRACK_USER_URL, $parameters);
+                    $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_USER_URL, 'GET', $parameters);
                     LoggerService::log(
                         Logger::INFO,
                         LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
                         ['{properties}' => json_encode($parameters)]
                     );
+
+                    if (!$this->isDevelopmentMode) {
+                        LoggerService::log(
+                            Logger::INFO,
+                            LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS_FOR_FEATURE'],
+                            [
+                                '{userId}' => $userId,
+                                '{endPoint}' => 'track-user',
+                                '{campaignId}' => $campaign['id'],
+                                '{accountId}' => $this->settings['accountId']
+                            ]
+                        );
+                    }
                 }
                 return true;
             }
@@ -416,7 +434,7 @@ class VWO
                     $revenueValue
                 );
 
-                $response = $this->eventDispatcher->send(UrlConstants::TRACK_GOAL_URL, $parameters);
+                $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_GOAL_URL, 'GET', $parameters);
 
                 LoggerService::log(
                     Logger::INFO,
@@ -424,22 +442,24 @@ class VWO
                     array('{properties}' => json_encode($parameters))
                 );
 
-                if ($response) {
-                    LoggerService::log(
-                        Logger::INFO,
-                        LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS'],
-                        [
-                            '{userId}' => $userId,
-                            '{endPoint}' => 'track-goal',
-                            '{campaignId}' => $campaign['id'],
-                            '{variationId}' => $bucketInfo['id'],
-                            '{accountId}' => $this->settings['accountId']
-                        ]
-                    );
-                    return true;
-                } elseif ($this->isDevelopmentMode) {
+                if ($this->isDevelopmentMode) {
                     return true;
                 }
+
+                LoggerService::log(
+                    Logger::INFO,
+                    LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS_GOAL'],
+                    [
+                        '{userId}' => $userId,
+                        '{endPoint}' => 'track-goal',
+                        '{campaignId}' => $campaign['id'],
+                        '{variationId}' => $bucketInfo['id'],
+                        '{accountId}' => $this->settings['accountId'],
+                        '{goalId}' => $goal['id']
+                    ]
+                );
+
+                return true;
             } else {
                 LoggerService::log(
                     Logger::ERROR,
@@ -517,12 +537,27 @@ class VWO
                         $bucketInfo['id']
                     );
 
-                    $this->eventDispatcher->send(UrlConstants::TRACK_USER_URL, $parameters);
+                    $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_USER_URL, 'GET', $parameters);
+
                     LoggerService::log(
                         Logger::INFO,
                         LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
                         ['{properties}' => json_encode($parameters)]
                     );
+
+                    if (!$this->isDevelopmentMode) {
+                        LoggerService::log(
+                            Logger::INFO,
+                            LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS'],
+                            [
+                                '{userId}' => $userId,
+                                '{endPoint}' => 'track-user',
+                                '{campaignId}' => $campaign['id'],
+                                '{variationId}' => $bucketInfo['id'],
+                                '{accountId}' => $this->settings['accountId']
+                            ]
+                        );
+                    }
                 }
 
                 return $bucketInfo['name'];
@@ -574,7 +609,7 @@ class VWO
             }
 
             $parameters = ImpressionBuilder::getPushQueryParams($this->settings['accountId'], $userId, $tagKey, $tagValue);
-            $response = $this->eventDispatcher->send(UrlConstants::PUSH_URL, $parameters);
+            $this->eventDispatcher->sendAsyncRequest(UrlConstants::PUSH_URL, 'GET', $parameters);
 
             LoggerService::log(
                 Logger::INFO,
@@ -582,7 +617,9 @@ class VWO
                 ['{properties}' => json_encode($parameters)]
             );
 
-            if ($response) {
+            if ($this->isDevelopmentMode) {
+                return true;
+            } else {
                 LoggerService::log(
                     Logger::INFO,
                     LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS_PUSH'],
@@ -595,10 +632,8 @@ class VWO
                 );
 
                 return true;
-            } elseif ($this->isDevelopmentMode) {
-                return true;
             }
-            LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['IMPRESSION_FAILED'], ['{endPoint}' => 'push']);
+            LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['IMPRESSION_FAILED'], ['{endPoint}' => 'push', '{reason}' => '']);
         } catch (Exception $e) {
             LoggerService::log(Logger::ERROR, $e->getMessage());
         }

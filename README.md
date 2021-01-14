@@ -49,7 +49,7 @@ $vwoClient = new VWO($sdkConfig);
 // to get the variation name along with add a visitor hit to vwo app stats
 $variation = $vwoClient->activate($campaignKey, $userId, $options);
 // Or, to get the variation name
-$variation = $vwoClient->getVariation($campaignKey, $userId, $options);
+$variation = $vwoClient->getVariationName($campaignKey, $userId, $options);
 
 // add code here to use variation
 //...
