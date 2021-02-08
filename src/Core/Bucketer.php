@@ -21,7 +21,7 @@ namespace vwo\Core;
 use Monolog\Logger;
 use vwo\Constants\LogMessages;
 use vwo\Services\LoggerService;
-use vwo\Utils\murmur as murmur;
+use vwo\Utils\Murmur as murmur;
 
 /***
  * Class Bucketer

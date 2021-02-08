@@ -8,7 +8,7 @@ require_once 'src/Error/Error.php';
 require_once 'src/Error/ClientError.php';
 require_once 'src/Error/NetworkError.php';
 require_once 'src/Error/ServerError.php';
-require_once 'src//Utils/murmur.php';
+require_once 'src//Utils/Murmur.php';
 require_once 'src/BucketService.php';
 require_once 'src/Logger/LoggerInterface.php';
 require_once 'src/Logger/DefaultLogger.php';
