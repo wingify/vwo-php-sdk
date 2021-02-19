@@ -26,13 +26,13 @@ class ImpressionBuilder
     /**
      * sdk version for api hit
      */
-    const SDK_VERSION = '1.11.1';
+    const SDK_VERSION = '1.12.0';
     /**
      * sdk langauge for api hit
      */
     const SDK_LANGUAGE = 'php';
 
-    public static function getVisitorQueryParams($accountId, $campaign, $userId, $combination)
+    public static function getVisitorQueryParams($accountId, $campaign, $userId, $combination, $sdkKey)
     {
         $params = array(
             'ed' => '{"p":"server"}',
@@ -43,13 +43,14 @@ class ImpressionBuilder
             $campaign,
             $userId,
             $combination,
-            $params
+            $params,
+            $sdkKey
         );
 
         return $params;
     }
 
-    public static function getConversionQueryParams($accountId, $campaign, $userId, $combination, $goal, $revenueValue)
+    public static function getConversionQueryParams($accountId, $campaign, $userId, $combination, $goal, $revenueValue, $sdkKey)
     {
         $params = array(
             'goal_id' => $goal['id']
@@ -68,7 +69,8 @@ class ImpressionBuilder
             $campaign,
             $userId,
             $combination,
-            $params
+            $params,
+            $sdkKey
         );
 
         return $params;
@@ -85,18 +87,19 @@ class ImpressionBuilder
         );
 
         $params = self::mergeCommonQueryParams($params);
+        unset($params['env']);
 
         return $params;
     }
 
-    public static function getPushQueryParams($accountId, $userId, $tagKey, $tagValue)
+    public static function getPushQueryParams($accountId, $userId, $tagKey, $tagValue, $sdkKey)
     {
         $params = array(
             'tags' => '{"u":{"' . $tagKey . '":"' . $tagValue . '"}}'
         );
 
         $params = self::mergeTrackingCallParams($accountId, $userId, $params);
-        $params = self::mergeCommonQueryParams($params);
+        $params = self::mergeCommonQueryParams($params, $sdkKey);
 
         return $params;
     }
@@ -109,22 +112,25 @@ class ImpressionBuilder
      *
      * @return array
      */
-    public static function mergeCommonTrackingQueryParams($accountId, $campaign, $userId, $combination, $params = [])
+    public static function mergeCommonTrackingQueryParams($accountId, $campaign, $userId, $combination, $params = [], $sdkKey = '')
     {
         $params['experiment_id'] = $campaign['id'];
         $params['combination'] = $combination; // variation id
         $params['ap'] = 'server';
 
         $params = self::mergeTrackingCallParams($accountId, $userId, $params);
-        $params = self::mergeCommonQueryParams($params);
+        $params = self::mergeCommonQueryParams($params, $sdkKey);
 
         return $params;
     }
 
-    public static function mergeCommonQueryParams($params = [])
+    public static function mergeCommonQueryParams($params = [], $sdkKey = '')
     {
         $params['sdk-v'] = self::SDK_VERSION;
         $params['sdk'] = self::SDK_LANGUAGE;
+        if ($sdkKey) {
+            $params['env'] = $sdkKey;
+        }
 
         return $params;
     }

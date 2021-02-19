@@ -208,7 +208,8 @@ class VWO
                     $this->settings['accountId'],
                     $campaign,
                     $userId,
-                    $variationData['id']
+                    $variationData['id'],
+                    $this->getSDKKey()
                 );
             }
 
@@ -431,7 +432,8 @@ class VWO
                     $userId,
                     $bucketInfo['id'],
                     $goal,
-                    $revenueValue
+                    $revenueValue,
+                    $this->getSDKKey()
                 );
 
                 $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_GOAL_URL, 'GET', $parameters);
@@ -534,7 +536,8 @@ class VWO
                         $this->settings['accountId'],
                         $campaign,
                         $userId,
-                        $bucketInfo['id']
+                        $bucketInfo['id'],
+                        $this->getSDKKey()
                     );
 
                     $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_USER_URL, 'GET', $parameters);
@@ -608,7 +611,7 @@ class VWO
                 return false;
             }
 
-            $parameters = ImpressionBuilder::getPushQueryParams($this->settings['accountId'], $userId, $tagKey, $tagValue);
+            $parameters = ImpressionBuilder::getPushQueryParams($this->settings['accountId'], $userId, $tagKey, $tagValue, $this->getSDKKey());
             $this->eventDispatcher->sendAsyncRequest(UrlConstants::PUSH_URL, 'GET', $parameters);
 
             LoggerService::log(
@@ -639,5 +642,14 @@ class VWO
         }
 
         return false;
+    }
+
+    public function getSDKKey()
+    {
+        $sdkKey = '';
+        if (isset($this->settings["sdkKey"])) {
+            $sdkKey = $this->settings["sdkKey"];
+        }
+        return $sdkKey;
     }
 }
