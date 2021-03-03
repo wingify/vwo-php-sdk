@@ -204,7 +204,7 @@ class Validations
     }
 
     /**
-     * function to check if the campaignkey exists in campign array from settings
+     * function to check if the campaignkey exists in campaign array from settings
      *
      * @param  string $campaignKey
      * @param  array $settings
@@ -224,5 +224,80 @@ class Validations
         }
         LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['CAMPAIGN_NOT_RUNNING'], ['{campaignKey}' => $campaignKey], self::$CLASSNAME);
         return null;
+    }
+
+    /**
+     * fetch all running campaigns (with campaignKey in $campaignKeys array) from settings
+     *
+     * @param  array $campaignKeys
+     * @param  array $settings
+     * @return array
+     */
+    private static function getCampaignsFromCampaignKeys($campaignKeys, $settings)
+    {
+        $campaigns = [];
+        foreach ($campaignKeys as $campaignKey) {
+            $campaign = self::getCampaignFromCampaignKey($campaignKey, $settings);
+            if ($campaign) {
+                $campaigns[] = $campaign;
+            } else {
+                $campaigns[] = ['key' => $campaignKey];
+            }
+        }
+        return $campaigns;
+    }
+
+    /**
+     * fetch all running campaigns (having goal identifier $goalIdentifier and goal type CUSTOM|REVENUE|ALL) from settings
+     *
+     * @param  array $settings
+     * @param  string $goalIdentifier
+     * @param  string $goalTypeToTrack
+     * @return array
+     */
+    private static function getCampaignsForGoal($settings, $goalIdentifier, $goalTypeToTrack = 'ALL')
+    {
+        $campaigns = [];
+        if (isset($settings) && isset($settings['campaigns'])) {
+            foreach ($settings['campaigns'] as $campaign) {
+                if (isset($campaign['status']) && $campaign['status'] !== 'RUNNING') {
+                    continue;
+                }
+                $goal = CommonUtil::getGoalFromGoals($campaign['goals'], $goalIdentifier);
+                if ($goal && ($goalTypeToTrack === 'ALL' || $goal['type'] === $goalTypeToTrack)) {
+                    $campaigns[] = $campaign;
+                }
+            }
+        }
+        if (count($campaigns)) {
+            LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['NO_CAMPAIGN_FOUND'], ['{goalIdentifier}' => $goalIdentifier], self::$CLASSNAME);
+        }
+        return $campaigns;
+    }
+
+    /**
+     * fetch campaigns from settings
+     *
+     * @param  string|array|null $campaignKey
+     * @param  array $settings
+     * @param  string $goalIdentifier
+     * @param  string $goalTypeToTrack
+     * @return array
+     */
+    public static function getCampaigns($campaignKey, $settings, $goalIdentifier, $goalTypeToTrack = 'ALL')
+    {
+        $campaigns = [];
+        if (!$campaignKey) {
+            $campaigns = self::getCampaignsForGoal($settings, $goalIdentifier, $goalTypeToTrack);
+        } elseif (is_array($campaignKey)) {
+            $campaigns = self::getCampaignsFromCampaignKeys($campaignKey, $settings);
+        } elseif (is_string($campaignKey)) {
+            $campaign = self::getCampaignFromCampaignKey($campaignKey, $settings);
+            if (is_null($campaign)) {
+                $campaign['key'] = $campaignKey;
+            }
+            $campaigns[] = $campaign;
+        }
+        return $campaigns;
     }
 }

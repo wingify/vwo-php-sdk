@@ -49,19 +49,24 @@ class Common
     /**
      * method to create the input array for user-storage set function
      *
-     * @param  $campaignKey
-     * @param  $bucketInfo
-     * @param  $userId
+     * @param  string $campaignKey
+     * @param  array $variation
+     * @param  string $userId
+     * @param  string $goalIdentifier
      * @return array
      */
 
-    public static function getUserCampaignVariationMapping($campaignKey, $variation, $userId)
+    public static function getUserCampaignVariationMapping($campaignKey, $variation, $userId, $goalIdentifier)
     {
-        return [
+        $data =  [
             'userId' => $userId,
             'variationName' => $variation['name'],
             'campaignKey' => $campaignKey,
         ];
+        if ($goalIdentifier) {
+            $data['goalIdentifier'] = $goalIdentifier;
+        }
+        return $data;
     }
 
 
