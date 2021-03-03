@@ -72,6 +72,16 @@ class VWO
      */
     var $isDevelopmentMode;
 
+    private $shouldTrackReturningUser;
+
+    private $goalTypeToTrack;
+
+    const GOAL_TYPES = [
+        'REVENUE' => 'REVENUE_TRACKING',
+        'CUSTOM' => 'CUSTOM_GOAL',
+        'ALL' => 'ALL'
+    ];
+
     /**
      * VWO constructor.
      *
@@ -107,6 +117,26 @@ class VWO
             $this->_userStorageObj = $config['userStorageService'];
         } else {
             $this->_userStorageObj = '';
+        }
+
+        if (isset($config['shouldTrackReturningUser'])) {
+            if (is_bool($config['shouldTrackReturningUser'])) {
+                $this->shouldTrackReturningUser = $config['shouldTrackReturningUser'];
+            } else {
+                LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['INVALID_TRACK_RETURNING_USER_VALUE']);
+            }
+        } else {
+            $this->shouldTrackReturningUser = false;
+        }
+
+        if (isset($config['goalTypeToTrack'])) {
+            if (in_array($config['goalTypeToTrack'], self::GOAL_TYPES)) {
+                $this->goalTypeToTrack = $config['goalTypeToTrack'];
+            } else {
+                LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['INVALID_GOAL_TYPE']);
+            }
+        } else {
+            $this->goalTypeToTrack = self::GOAL_TYPES['ALL'];
         }
 
         // initial logging started for each new object
@@ -168,6 +198,7 @@ class VWO
     {
         self::$apiName = 'isFeatureEnabled';
         LoggerService::setApiName(self::$apiName);
+        $options['shouldTrackReturningUser'] = $this->getShouldTrackReturningUser($options);
 
         try {
             LoggerService::log(
@@ -221,12 +252,20 @@ class VWO
                 );
 
                 if ($campaign['type'] == CampaignTypes::FEATURE_TEST) {
-                    $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_USER_URL, 'GET', $parameters);
-                    LoggerService::log(
-                        Logger::INFO,
-                        LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
-                        ['{properties}' => json_encode($parameters)]
-                    );
+                    if ($this->isEligibleToSendImpressionToVWO($options)) {
+                        $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_USER_URL, 'GET', $parameters);
+                        LoggerService::log(
+                            Logger::INFO,
+                            LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
+                            ['{properties}' => json_encode($parameters)]
+                        );
+                    } else {
+                        LoggerService::log(
+                            Logger::INFO,
+                            LogMessages::INFO_MESSAGES['USER_ALREADY_TRACKED'],
+                            ['{userId}' => $userId, '{campaignKey}' => $campaignKey, '{api}' => self::$apiName]
+                        );
+                    }
                 }
 
                 return false;
@@ -239,23 +278,31 @@ class VWO
                 );
 
                 if ($campaign['type'] != CampaignTypes::FEATURE_ROLLOUT) {
-                    $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_USER_URL, 'GET', $parameters);
-                    LoggerService::log(
-                        Logger::INFO,
-                        LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
-                        ['{properties}' => json_encode($parameters)]
-                    );
-
-                    if (!$this->isDevelopmentMode) {
+                    if ($this->isEligibleToSendImpressionToVWO($options)) {
+                        $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_USER_URL, 'GET', $parameters);
                         LoggerService::log(
                             Logger::INFO,
-                            LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS_FOR_FEATURE'],
-                            [
+                            LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
+                            ['{properties}' => json_encode($parameters)]
+                        );
+
+                        if (!$this->isDevelopmentMode) {
+                            LoggerService::log(
+                                Logger::INFO,
+                                LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS_FOR_FEATURE'],
+                                [
                                 '{userId}' => $userId,
                                 '{endPoint}' => 'track-user',
                                 '{campaignId}' => $campaign['id'],
                                 '{accountId}' => $this->settings['accountId']
-                            ]
+                                ]
+                            );
+                        }
+                    } else {
+                        LoggerService::log(
+                            Logger::INFO,
+                            LogMessages::INFO_MESSAGES['USER_ALREADY_TRACKED'],
+                            ['{userId}' => $userId, '{campaignKey}' => $campaignKey, '{api}' => self::$apiName]
                         );
                     }
                 }
@@ -370,112 +417,160 @@ class VWO
      * @param string $userId
      * @param string $goalIdentifier
      * @param array $options
-     * @return bool|null
+     * @return array|bool|null
      */
     public function track($campaignKey = '', $userId = '', $goalIdentifier = '', array $options = [])
     {
         self::$apiName = 'track';
         LoggerService::setApiName(self::$apiName);
 
-        try {
-            $revenueValue = CommonUtil::getValueFromOptions($options, 'revenueValue');
-            $bucketInfo = null;
+        $revenueValue = CommonUtil::getValueFromOptions($options, 'revenueValue');
+        $bucketInfo = null;
 
-            if (empty($campaignKey) || empty($userId) || empty($goalIdentifier)) {
-                LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['TRACK_API_MISSING_PARAMS']);
-                return $bucketInfo;
-            }
+        $options['shouldTrackReturningUser'] = $this->getShouldTrackReturningUser($options);
 
-            $campaign = ValidationsUtil::getCampaignFromCampaignKey($campaignKey, $this->settings);
-            if ($campaign == null) {
-                return null;
-            }
-            if ($campaign['type'] == CampaignTypes::FEATURE_ROLLOUT) {
-                LoggerService::log(
-                    Logger::ERROR,
-                    LogMessages::ERROR_MESSAGES['INVALID_API_CALL'],
-                    [
-                        '{api}' => 'track',
-                        '{userId}' => $userId,
-                        '{campaignKey}' => $campaignKey,
-                        '{campaignType}' => $campaign['type']
-                    ]
-                );
-                return $bucketInfo;
-            }
-
-            $bucketInfo = $this->variationDecider->fetchVariationData($this->_userStorageObj, $campaign, $userId, $options, self::$apiName);
-
-            if ($bucketInfo == null) {
-                return $bucketInfo;
-            }
-
-            $goal = CommonUtil::getGoalFromGoals($campaign['goals'], $goalIdentifier);
-            $goalId = isset($goal['id']) ? $goal['id'] : 0;
-            if ($goalId && isset($bucketInfo['id']) && $bucketInfo['id'] > 0) {
-                if ($goal['type'] == "REVENUE_TRACKING" && is_null($revenueValue)) {
-                    LoggerService::log(
-                        Logger::ERROR,
-                        LogMessages::ERROR_MESSAGES['MISSING_GOAL_REVENUE'],
-                        [
-                            '{goalIdentifier}' => $goalIdentifier,
-                            '{campaignKey}' => $campaignKey,
-                            '{userId}' => $userId
-                        ]
-                    );
-                    return null;
-                }
-
-                $parameters = ImpressionBuilder::getConversionQueryParams(
-                    $this->settings['accountId'],
-                    $campaign,
-                    $userId,
-                    $bucketInfo['id'],
-                    $goal,
-                    $revenueValue,
-                    $this->getSDKKey()
-                );
-
-                $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_GOAL_URL, 'GET', $parameters);
-
-                LoggerService::log(
-                    Logger::INFO,
-                    LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_GOAL'],
-                    array('{properties}' => json_encode($parameters))
-                );
-
-                if ($this->isDevelopmentMode) {
-                    return true;
-                }
-
-                LoggerService::log(
-                    Logger::INFO,
-                    LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS_GOAL'],
-                    [
-                        '{userId}' => $userId,
-                        '{endPoint}' => 'track-goal',
-                        '{campaignId}' => $campaign['id'],
-                        '{variationId}' => $bucketInfo['id'],
-                        '{accountId}' => $this->settings['accountId'],
-                        '{goalId}' => $goal['id']
-                    ]
-                );
-
-                return true;
-            } else {
-                LoggerService::log(
-                    Logger::ERROR,
-                    LogMessages::ERROR_MESSAGES['TRACK_API_GOAL_NOT_FOUND'],
-                    ['{campaignKey}' => $campaignKey, '{userId}' => $userId]
-                );
-
-                return null;
-            }
-        } catch (Exception $e) {
-            LoggerService::log(Logger::ERROR, $e->getMessage());
+        if (
+            empty($userId) ||
+            empty($goalIdentifier) ||
+            !(is_null($campaignKey) || is_array($campaignKey) || is_string($campaignKey))
+        ) {
+            LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['TRACK_API_MISSING_PARAMS']);
+            return null;
         }
 
-        return null;
+        $goalTypeToTrack = $this->getGoalTypeToTrack($options);
+        $campaigns = ValidationsUtil::getCampaigns($campaignKey, $this->settings, $goalIdentifier, $goalTypeToTrack);
+
+        if (empty($campaigns)) {
+            return null;
+        }
+
+        $result = [];
+        foreach ($campaigns as $campaign) {
+            try {
+                if ($campaign['type'] == CampaignTypes::FEATURE_ROLLOUT) {
+                    LoggerService::log(
+                        Logger::ERROR,
+                        LogMessages::ERROR_MESSAGES['INVALID_API_CALL'],
+                        [
+                            '{api}' => 'track',
+                            '{userId}' => $userId,
+                            '{campaignKey}' => $campaign['key'],
+                            '{campaignType}' => $campaign['type']
+                        ]
+                    );
+                    $result[$campaign['key']] = null;
+                    continue;
+                }
+
+                $bucketInfo = $this->variationDecider->fetchVariationData($this->_userStorageObj, $campaign, $userId, $options, self::$apiName, $goalIdentifier);
+                if ($bucketInfo === null) {
+                    $result[$campaign['key']] = null;
+                    continue;
+                }
+
+                $goal = CommonUtil::getGoalFromGoals($campaign['goals'], $goalIdentifier);
+                $goalId = isset($goal['id']) ? $goal['id'] : 0;
+                if ($goalId && isset($bucketInfo['id']) && $bucketInfo['id'] > 0) {
+                    if ($goal['type'] == "REVENUE_TRACKING" && is_null($revenueValue)) {
+                        LoggerService::log(
+                            Logger::ERROR,
+                            LogMessages::ERROR_MESSAGES['MISSING_GOAL_REVENUE'],
+                            [
+                                '{goalIdentifier}' => $goalIdentifier,
+                                '{campaignKey}' => $campaign['key'],
+                                '{userId}' => $userId
+                            ]
+                        );
+                        $result[$campaign['key']] = null;
+                        continue;
+                    }
+
+                    if (isset($goalIdentifier)) {
+                        if (isset($bucketInfo['goalIdentifier'])) {
+                            $identifiers = explode("_vwo_", $bucketInfo['goalIdentifier']);
+                        } else {
+                            $bucketInfo['goalIdentifier'] = '';
+                            $identifiers = [];
+                        }
+
+
+                        if (!in_array($goalIdentifier, $identifiers)) {
+                            $bucketInfo['goalIdentifier'] .=  "_vwo_$goalIdentifier";
+                            $this->variationDecider->userStorageSet($this->_userStorageObj, $userId, $campaign['key'], $bucketInfo, $bucketInfo['goalIdentifier']);
+                        } elseif (!$options['shouldTrackReturningUser']) {
+                            LoggerService::log(
+                                Logger::INFO,
+                                LogMessages::INFO_MESSAGES['GOAL_ALREADY_TRACKED'],
+                                [
+                                    '{goalIdentifier}' => $goalIdentifier,
+                                    '{campaignKey}' => $campaign['key'],
+                                    '{userId}' => $userId
+                                ]
+                            );
+                            $result[$campaign['key']] = false;
+                            continue;
+                        }
+                    }
+
+                    $parameters = ImpressionBuilder::getConversionQueryParams(
+                        $this->settings['accountId'],
+                        $campaign,
+                        $userId,
+                        $bucketInfo['id'],
+                        $goal,
+                        $revenueValue,
+                        $this->getSDKKey()
+                    );
+
+                    $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_GOAL_URL, 'GET', $parameters);
+
+                    LoggerService::log(
+                        Logger::INFO,
+                        LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_GOAL'],
+                        array('{properties}' => json_encode($parameters))
+                    );
+
+                    if ($this->isDevelopmentMode) {
+                        $result[$campaign['key']] = true;
+                        continue;
+                    }
+
+                    LoggerService::log(
+                        Logger::INFO,
+                        LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS_GOAL'],
+                        [
+                            '{userId}' => $userId,
+                            '{endPoint}' => 'track-goal',
+                            '{campaignId}' => $campaign['id'],
+                            '{variationId}' => $bucketInfo['id'],
+                            '{accountId}' => $this->settings['accountId'],
+                            '{goalId}' => $goal['id']
+                        ]
+                    );
+
+                    $result[$campaign['key']] = true;
+                } else {
+                    LoggerService::log(
+                        Logger::ERROR,
+                        LogMessages::ERROR_MESSAGES['TRACK_API_GOAL_NOT_FOUND'],
+                        ['{campaignKey}' => $campaign['key'], '{userId}' => $userId]
+                    );
+
+                    $result[$campaign['key']] = null;
+                }
+            } catch (Exception $e) {
+                LoggerService::log(Logger::ERROR, $e->getMessage());
+            }
+        }
+
+        if (count($result) == 0) {
+            return null;
+        }
+        if (is_string($campaignKey)) {
+            return $result[$campaignKey];
+        }
+        return $result;
     }
 
     /**
@@ -491,6 +586,7 @@ class VWO
         self::$apiName = 'activate';
         LoggerService::setApiName(self::$apiName);
 
+        $options['shouldTrackReturningUser'] = $this->getShouldTrackReturningUser($options);
         LoggerService::log(
             Logger::INFO,
             LogMessages::INFO_MESSAGES['API_CALLED'],
@@ -532,33 +628,41 @@ class VWO
             $bucketInfo = $this->variationDecider->fetchVariationData($this->_userStorageObj, $campaign, $userId, $options, $trackVisitor ? 'activate' : 'getVariationName');
             if ($bucketInfo !== null) {
                 if ($trackVisitor) {
-                    $parameters = ImpressionBuilder::getVisitorQueryParams(
-                        $this->settings['accountId'],
-                        $campaign,
-                        $userId,
-                        $bucketInfo['id'],
-                        $this->getSDKKey()
-                    );
+                    if ($this->isEligibleToSendImpressionToVWO($options)) {
+                        $parameters = ImpressionBuilder::getVisitorQueryParams(
+                            $this->settings['accountId'],
+                            $campaign,
+                            $userId,
+                            $bucketInfo['id'],
+                            $this->getSDKKey()
+                        );
 
-                    $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_USER_URL, 'GET', $parameters);
+                        $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_USER_URL, 'GET', $parameters);
 
-                    LoggerService::log(
-                        Logger::INFO,
-                        LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
-                        ['{properties}' => json_encode($parameters)]
-                    );
-
-                    if (!$this->isDevelopmentMode) {
                         LoggerService::log(
                             Logger::INFO,
-                            LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS'],
-                            [
-                                '{userId}' => $userId,
-                                '{endPoint}' => 'track-user',
-                                '{campaignId}' => $campaign['id'],
-                                '{variationId}' => $bucketInfo['id'],
-                                '{accountId}' => $this->settings['accountId']
-                            ]
+                            LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
+                            ['{properties}' => json_encode($parameters)]
+                        );
+
+                        if (!$this->isDevelopmentMode) {
+                            LoggerService::log(
+                                Logger::INFO,
+                                LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS'],
+                                [
+                                    '{userId}' => $userId,
+                                    '{endPoint}' => 'track-user',
+                                    '{campaignId}' => $campaign['id'],
+                                    '{variationId}' => $bucketInfo['id'],
+                                    '{accountId}' => $this->settings['accountId']
+                                ]
+                            );
+                        }
+                    } else {
+                        LoggerService::log(
+                            Logger::ERROR,
+                            LogMessages::ERROR_MESSAGES['USER_ALREADY_TRACKED'],
+                            ['{userId}' => $userId, '{campaignKey}' => $campaignKey, '{api}' => self::$apiName]
                         );
                     }
                 }
@@ -651,5 +755,45 @@ class VWO
             $sdkKey = $this->settings["sdkKey"];
         }
         return $sdkKey;
+    }
+
+    public function getShouldTrackReturningUser($options)
+    {
+        if (!isset($options['shouldTrackReturningUser'])) {
+            if (isset($this->shouldTrackReturningUser)) {
+                $options['shouldTrackReturningUser'] = $this->shouldTrackReturningUser;
+            } else {
+                $options['shouldTrackReturningUser'] = false;
+            }
+        } elseif (!is_bool($options['shouldTrackReturningUser'])) {
+            LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['INVALID_TRACK_RETURNING_USER_VALUE']);
+        }
+        return $options['shouldTrackReturningUser'];
+    }
+
+    private function isEligibleToSendImpressionToVWO($options)
+    {
+        return (
+            empty($this->_userStorageObj) ||
+            !$this->variationDecider->hasStoredVariation ||
+            (isset($options['shouldTrackReturningUser']) && $options['shouldTrackReturningUser'])
+        );
+    }
+
+    private function getGoalTypeToTrack($options)
+    {
+        $goalTypeToTrack = null;
+        if (!isset($options['goalTypeToTrack'])) {
+            if (isset($this->shouldTrackReturningUser)) {
+                $goalTypeToTrack = $this->goalTypeToTrack;
+            } else {
+                $goalTypeToTrack = self::GOAL_TYPES['ALL'];
+            }
+        } elseif (array_key_exists($options['goalTypeToTrack'], self::GOAL_TYPES)) {
+            $goalTypeToTrack = $options['goalTypeToTrack'];
+        } else {
+            LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['INVALID_GOAL_TYPE']);
+        }
+        return $goalTypeToTrack;
     }
 }

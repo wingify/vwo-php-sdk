@@ -46,7 +46,8 @@ class LogMessages
         'UUID_FOR_USER' => '({file}): Uuid generated for userId:{userid} and accountId:{accountId} is {desiredUuid}',
         'FEATURE_FLAG_NOT_LINKED' => '({file}): Feature:{featureKey} is not linked to any running campaigns',
         'USER_HASH_BUCKET_VALUE' => '({file}): User ID:{userId} having hash:{hashValue} got bucketValue:{bucketValue}',
-        'VARIATION_HASH_BUCKET_VALUE' => '({file}): User ID:{userId} for campaign:{campaignKey} having percent traffic:{percentTraffic} got bucket value:{bucketValue}'
+        'VARIATION_HASH_BUCKET_VALUE' => '({file}): User ID:{userId} for campaign:{campaignKey} having percent traffic:{percentTraffic} got bucket value:{bucketValue}',
+        'CAMPAIGN_NOT_ACTIVATED' => '({file}): Campaign:{campaignKey} for User ID:{userId} is not yet activated for API:{api}. Use activate API to activate A/B test or isFeatureEnabled API to activate Feature Test.'
     ];
 
     /**
@@ -82,6 +83,8 @@ class LogMessages
         'WHITELISTING_SKIPPED' => '({file}): For userId:{userId} of campaign:{campaignKey},{reason} whitelisting was skipped {variation}',
         'SEGMENTATION_SKIPPED' => '({file}): For userId:{userId} of campaign:{campaignKey}, segment was missing, hence skipping segmentation{variation}',
         'SEGMENTATION_STATUS' => '({file}): For userId:{userId} of campaign:{campaignKey} with variables:{customVariables} {status} {segmentationType} {variation}',
+        'GOAL_ALREADY_TRACKED' => '({file}): "Goal:{goalIdentifer} of Campaign:{campaignKey} for User ID:{userId} has already been tracked earlier. Skipping now',
+        'CAMPAIGN_NOT_ACTIVATED' => '({file}): Activate the campaign:{campaignKey} for User ID:{userId} to {reason}.'
 
     ];
     /**
@@ -97,7 +100,7 @@ class LogMessages
         'ACTIVATE_API_CONFIG_CORRUPTED' => '({file}): "activate" API has corrupted configuration',
         'GET_VARIATION_API_MISSING_PARAMS' => '({file}): "getVariation" API got bad parameters. It expects campaignKey(String) as first and userId(String/Number) as second argument',
         'GET_VARIATION_API_CONFIG_CORRUPTED' => '({file}): "getVariation" API has corrupted configuration',
-        'TRACK_API_MISSING_PARAMS' => '({file}): "track" API got bad parameters. It expects campaignKey(String) as first, userId(String/Number) as second and goalIdentifier (string) as third argument. options is revenueValue(Float/Number/String) and is required for revenue goal only.',
+        'TRACK_API_MISSING_PARAMS' => '({file}): "track" API got bad parameters. It expects campaignKey(null/String/array) as first, userId(String/Number) as second and goalIdentifier (string) as third argument. options is revenueValue(Float/Number/String) and is required for revenue goal only.',
         'TRACK_API_CONFIG_CORRUPTED' => '({file}): "track" API has corrupted configuration',
         'TRACK_API_GOAL_NOT_FOUND' => '({file}): Goal not found for campaign:{campaignKey} and userId:{userId}',
         'TRACK_API_VARIATION_NOT_FOUND' => '({file}): Variation not found for campaign:{campaignKey} and userId:{userId}',
@@ -117,6 +120,10 @@ class LogMessages
         'TAG_VALUE_CORRUPTED' => '({file}): Invalid tagValue:{tagValue} passed to {method} of this file',
         'INVALID_API_CALL' => '({file}): {api} API is not valid for user ID: {userId} in Campaign Key: {campaignKey} having campaign type: {campaignType}',
         'ACTIVATE_API_MISSING_PARAMS' => '({file}): "activate" API got bad parameters. It expects campaignKey(String) as first, userId(String) as second and options(optional Object) as third argument',
-        'SEGMENTATION_ERROR' => '({file}): Error while segmenting the userId:{userId} of campaignKey:{campaignKey}{variation} with customVariables:{customVariables}. Error message: {err}'
+        'SEGMENTATION_ERROR' => '({file}): Error while segmenting the userId:{userId} of campaignKey:{campaignKey}{variation} with customVariables:{customVariables}. Error message: {err}',
+        'NO_CAMPAIGN_FOUND' => '({file}): No campaign found for goalIdentifier:{goalIdentifier}. Please verify from VWO app.',
+        'INVALID_TRACK_RETURNING_USER_VALUE' => '{{file}): shouldTrackReturningUser should be boolean',
+        'INVALID_GOAL_TYPE' => '({file}): goalTypeToTrack should be certain strings',
+        'USER_ALREADY_TRACKED' => '({file}): "User ID:{userId} for Campaign:{campaignKey} has already been tracked earlier for "{api}" API. Skipping now'
     ];
 }

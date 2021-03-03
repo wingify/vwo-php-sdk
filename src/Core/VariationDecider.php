@@ -20,6 +20,7 @@ namespace vwo\Core;
 
 use Exception as Exception;
 use Monolog\Logger as Logger;
+use vwo\Constants\CampaignTypes;
 use vwo\Utils\Common as CommonUtil;
 use vwo\Utils\Campaign as CampaignUtil;
 use vwo\Services\LoggerService;
@@ -29,13 +30,15 @@ use vwo\Utils\Validations as ValidationsUtil;
 
 class VariationDecider
 {
+    public $hasStoredVariation;
+
     /**
      * @param $campaign
      * @param $usesrId
      * @param array $options
      * @return array|mixed|null
      */
-    public function fetchVariationData($userStorageObj, $campaign, $userId, $options = [], $apiName = '')
+    public function fetchVariationData($userStorageObj, $campaign, $userId, $options = [], $apiName = '', $goalIdentifier = '')
     {
         LoggerService::setApiName($apiName);
         $bucketInfo = null;
@@ -57,6 +60,23 @@ class VariationDecider
                     LogMessages::DEBUG_MESSAGES['NO_STORED_VARIATION'],
                     ['{userId}' => $userId, '{campaignKey}' => $campaignKey]
                 );
+                if (
+                    in_array($apiName, ['track', 'getVariationName', 'getFeatureVariableValue']) &&
+                    !empty($userStorageObj) &&
+                    $campaign['type'] != CampaignTypes::FEATURE_ROLLOUT
+                ) {
+                    LoggerService::log(
+                        Logger::DEBUG,
+                        LogMessages::DEBUG_MESSAGES['CAMPAIGN_NOT_ACTIVATED'],
+                        ['{userId}' => $userId, '{campaignKey}' => $campaignKey, '{api}' => $apiName]
+                    );
+                    LoggerService::log(
+                        Logger::INFO,
+                        LogMessages::INFO_MESSAGES['CAMPAIGN_NOT_ACTIVATED'],
+                        ['{userId}' => $userId, '{campaignKey}' => $campaignKey, '{reason}' => $apiName === 'track' ? 'track it' : 'get the decision/value']
+                    );
+                    return $bucketInfo;
+                }
 
                 //check for pre-segmentation if applied
                 $result = ValidationsUtil::checkPreSegmentation($campaign, $userId, $options);
@@ -79,8 +99,9 @@ class VariationDecider
                     return $bucketInfo;
                 }
 
-                $this->userStorageSet($userStorageObj, $userId, $campaign['key'], $bucketInfo);
+                $this->userStorageSet($userStorageObj, $userId, $campaign['key'], $bucketInfo, $goalIdentifier);
             } else {
+                $this->hasStoredVariation = true;
                 LoggerService::log(
                     Logger::DEBUG,
                     LogMessages::DEBUG_MESSAGES['GETTING_STORED_VARIATION'],
@@ -118,10 +139,14 @@ class VariationDecider
                     ['{userId}' => $userId]
                 );
                 if ($campaign !== null) {
-                    return $bucketInfo = Bucketer::getBucketVariationId(
+                    $bucketInfo = Bucketer::getBucketVariationId(
                         $campaign,
                         $variationInfo['variationName']
                     );
+                    if (isset($variationInfo['goalIdentifier'])) {
+                        $bucketInfo['goalIdentifier'] = $variationInfo['goalIdentifier'];
+                    }
+                    return $bucketInfo;
                 }
             } else {
                 LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['GET_USER_STORAGE_SERVICE_FAILED'], ['{userId}' => $userId]);
@@ -134,16 +159,16 @@ class VariationDecider
     }
 
     /**
-     * this function will fetch the data from user-storage
+     * this function will save the data to user-storage
      * @param string $userId
      * @param string $campaignKey
      * @param array $variation
+     * @param string $goalIdentifier
      */
-    private function userStorageSet($userStorageObj, $userId, $campaignKey, $variation)
+    public function userStorageSet($userStorageObj, $userId, $campaignKey, $variation, $goalIdentifier = '')
     {
-
         if (!empty($userStorageObj)) {
-            $campaignInfo = CommonUtil::getUserCampaignVariationMapping($campaignKey, $variation, $userId);
+            $campaignInfo = CommonUtil::getUserCampaignVariationMapping($campaignKey, $variation, $userId, $goalIdentifier);
             $userStorageObj->set($campaignInfo);
             LoggerService::log(
                 Logger::INFO,

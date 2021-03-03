@@ -4,6 +4,67 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.0] - 2021-03-02
+
+### Changed
+
+- Update track API to support tracking a goal globally across campaigns with the same `goalIdentififer` and corresponding changes in `VWO` class constructor.
+
+```php
+// it will track goal having `goalIdentifier` of campaign having `campaignKey` for the user having `userId` as id.
+$vwoClientInstance->track("campaignKey", $goalIdentifier, $userId, $options);
+// it will track goal having `goalIdentifier` of campaigns having `campaignKey1` and `campaignKey2` for the user having `userId` as id.
+$vwoClientInstance->track(["campaignKey1", "campaignKey2"], $goalIdentifier, $userId, $options);
+// it will track goal having `goalIdentifier` of all the campaigns
+$vwoClientInstance->track(null, $goalIdentifier, $userId, $options);
+//Read more about configuration and usage - https://developers.vwo.com/reference#server-side-sdk-track
+```
+
+- If User Storage Service is provided, do not track same visitor multiple times.
+
+You can pass `shouldTrackReturningUser` as `true` in case you prefer to track duplicate visitors.
+
+```php
+$options = [
+  "shouldTrackReturningUser" => true
+];
+
+$vwoClientInstance->activate($campaignKey, $userId, $options);
+```
+
+Or, you can also pass `shouldTrackReturningUser` at the time of instantiating VWO SDK client. This will avoid passing the flag in different API calls.
+
+```php
+$config=[
+  'settingsFile' => $settingsFile,
+  'shouldTrackReturningUser' => true
+];
+
+$vwoClientInstance = new VWO($config);
+```
+
+If `shouldTrackReturningUser` param is passed at the time of instantiating the SDK as well as in the API options as mentioned above, then the API options value will be considered.
+
+- If User Storage Service is provided, campaign activation is mandatory before tracking any goal, getting variation of a campaign, and getting value of the feature's variable.
+
+**Correct Usage**
+
+```php
+$vwoClientInstance->activate($campaignKey, $userId, $options);
+$vwoClientInstance->track($campaignKey, $userId, $goalIdentifier, $options);
+```
+
+**Wrong Usage**
+
+```php
+// Calling track API before activate API
+// This will not track goal as campaign has not been activated yet.
+$vwoClientInstance->track($campaignKey, $userId, $goalIdentifier, $options);
+
+// After calling track APi
+$vwoClientInstance->activate($campaignKey, $userId, $options);
+```
+
 ## [1.12.0] - 2020-02-19
 
 ### Changed
