@@ -57,12 +57,15 @@ class Bucketer
      * @param  $variationName
      * @return array|null
      */
-
     public static function getBucketVariationId($campaign, $variationName)
     {
         foreach ($campaign['variations'] as $variation) {
             if ($variation['name'] == $variationName) {
-                return ['name' => $variation['name'], 'id' => $variation['id']];
+                $variationInfo = ['name' => $variation['name'], 'id' => $variation['id']];
+                if (isset($variation['isFeatureEnabled'])) {
+                    $variationInfo['isFeatureEnabled'] = $variation['isFeatureEnabled'];
+                }
+                return $variationInfo;
             }
         }
         return null;
