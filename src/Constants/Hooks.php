@@ -16,20 +16,11 @@
  * limitations under the License.
  */
 
-namespace vwo\Logger;
+namespace vwo\Constants;
 
-/***
- * Interface LoggerInterface
- *
- * @package vwo\Logger
- */
-interface LoggerInterface
+class Hooks
 {
-    /**
-     * logger function which helps in adding log to the third party
-     * @param  $msg
-     * @param  $level
-     * @return mixed
-     */
-    public function log($msg, $level);
+    const DECISION_TYPES = [
+        'CAMPAIGN_DECISION' => 'CAMPAIGN_DECISION'
+    ];
 }

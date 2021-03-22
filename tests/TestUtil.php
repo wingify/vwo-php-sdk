@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,6 +109,17 @@ class TestUtil
             $config['userStorageService'] =  new UserStorageTest();
         }
 
+        if (isset($options['goalTypeToTrack'])) {
+            $config['goalTypeToTrack'] =  $options['goalTypeToTrack'];
+        }
+
+        if (isset($options['shouldTrackReturningUser'])) {
+            $config['shouldTrackReturningUser'] =  $options['shouldTrackReturningUser'];
+        }
+
+        if (isset($options['integrations'])) {
+            $config['integrations'] = $options['integrations'];
+        }
         $sdkInstance = new VWO($config);
 
         return $sdkInstance;
@@ -135,6 +146,8 @@ class CustomLogger implements LoggerInterface
 class UserStorageTest implements UserStorageInterface
 {
 
+    private $goalIdentifier = '';
+
     /**
      * @param  $userId
      * @param  $campaignKey
@@ -142,11 +155,15 @@ class UserStorageTest implements UserStorageInterface
      */
     public function get($userId, $campaignKey)
     {
-        return [
+        $result = [
             'userId' => $userId,
             'variationName' => 'Control',
             'campaignKey' => $campaignKey
         ];
+        if ($this->goalIdentifier) {
+            $result['goalIdentifier'] = 'CUSTOM';
+        }
+        return $result;
     }
 
     /**
@@ -156,6 +173,14 @@ class UserStorageTest implements UserStorageInterface
     public function set($campaignInfo)
     {
         return true;
+    }
+
+    /**
+     * @param  $goalIdentifier
+     */
+    public function setGoalIdentifier($goalIdentifier)
+    {
+        $this->goalIdentifier = $goalIdentifier;
     }
 }
 

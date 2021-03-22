@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
  * Description - Check Python source files for Apache License headers
  * Author - Andrew Crozier https://github.com/acroz
  * License - Apache 2.0
- * Copyright 2019-2020 Faculty Science Limited
+ * Copyright 2019-2021 Faculty Science Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -212,7 +212,7 @@ let checkLicenseUtil = {
 console.time('Execution time for License and Copyright');
 console.log(`${AnsiColorEnum.CYAN}\nVerifying License and Copyright${AnsiColorEnum.RESET}\n`);
 const isSuccess = checkLicenseUtil.checkLicenseAndCopyright({
-  year: '2019-2020',
+  year: '2019-2021',
   author: 'Wingify Software Pvt. Ltd.',
   paths: 'src,tests',
   stoppingCriteria: '\\*\\/',

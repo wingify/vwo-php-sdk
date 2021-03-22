@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ use vwo\Constants\Constants as Constants;
 use vwo\Constants\Urls as UrlConstants;
 use vwo\Constants\CampaignTypes;
 use vwo\Constants\LogMessages as LogMessages;
+use vwo\Services\HooksManager;
 use vwo\Storage\UserStorageInterface;
 use vwo\Utils\Campaign as CampaignUtil;
 use vwo\Utils\Common as CommonUtil;
@@ -130,13 +131,13 @@ class VWO
         }
 
         if (isset($config['goalTypeToTrack'])) {
-            if (in_array($config['goalTypeToTrack'], self::GOAL_TYPES)) {
+            if (array_key_exists($config['goalTypeToTrack'], self::GOAL_TYPES)) {
                 $this->goalTypeToTrack = $config['goalTypeToTrack'];
             } else {
                 LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['INVALID_GOAL_TYPE']);
             }
         } else {
-            $this->goalTypeToTrack = self::GOAL_TYPES['ALL'];
+            $this->goalTypeToTrack = 'ALL';
         }
 
         // initial logging started for each new object
@@ -155,6 +156,11 @@ class VWO
         LoggerService::log(Logger::DEBUG, LogMessages::DEBUG_MESSAGES['SDK_INITIALIZED']);
 
         $this->variationDecider = new VariationDecider();
+        if (isset($this->settings['accountId'])) {
+            $this->variationDecider->setAccountId($this->settings['accountId']);
+        }
+        // Initialize Hooks manager so that callbacks can be invoked
+        $this->variationDecider->setHooksManager(new HooksManager($config));
         return $this;
     }
 
@@ -660,8 +666,8 @@ class VWO
                         }
                     } else {
                         LoggerService::log(
-                            Logger::ERROR,
-                            LogMessages::ERROR_MESSAGES['USER_ALREADY_TRACKED'],
+                            Logger::INFO,
+                            LogMessages::INFO_MESSAGES['USER_ALREADY_TRACKED'],
                             ['{userId}' => $userId, '{campaignKey}' => $campaignKey, '{api}' => self::$apiName]
                         );
                     }

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,16 +21,42 @@ namespace vwo\Core;
 use Exception as Exception;
 use Monolog\Logger as Logger;
 use vwo\Constants\CampaignTypes;
+use vwo\Constants\Hooks;
 use vwo\Utils\Common as CommonUtil;
 use vwo\Utils\Campaign as CampaignUtil;
 use vwo\Services\LoggerService;
+use vwo\Services\HooksManager;
 use vwo\Core\Bucketer as Bucketer;
 use vwo\Constants\LogMessages as LogMessages;
+use vwo\Utils\ImpressionBuilder;
+use vwo\Utils\UuidUtil;
 use vwo\Utils\Validations as ValidationsUtil;
 
 class VariationDecider
 {
     public $hasStoredVariation;
+    private $accountId;
+    private $hooksManager;
+
+    public function getAccountId()
+    {
+        return $this->accountId;
+    }
+
+    public function setAccountId($accountId)
+    {
+        $this->accountId = $accountId;
+    }
+
+    public function setHooksManager($hooksManager)
+    {
+        $this->hooksManager = $hooksManager;
+    }
+
+    public function getHooksManager()
+    {
+        return $this->hooksManager;
+    }
 
     /**
      * @param $campaign
@@ -48,6 +74,8 @@ class VariationDecider
         }
 
         $campaignKey = $campaign['key'];
+        $decision['isUserWhitelisted'] = false;
+        $decision['fromUserStorageService'] = false;
 
         //check for whitelisting if applied and get Variation Info
         $bucketInfo = CampaignUtil::findVariationFromWhiteListing($campaign, $userId, $options);
@@ -102,6 +130,7 @@ class VariationDecider
                 $this->userStorageSet($userStorageObj, $userId, $campaign['key'], $bucketInfo, $goalIdentifier);
             } else {
                 $this->hasStoredVariation = true;
+                $decision['fromUserStorageService'] = !!$bucketInfo['name'];
                 LoggerService::log(
                     Logger::DEBUG,
                     LogMessages::DEBUG_MESSAGES['GETTING_STORED_VARIATION'],
@@ -112,6 +141,49 @@ class VariationDecider
                     ]
                 );
             }
+        } else {
+            if ($campaign['type'] === CampaignTypes::AB) {
+                $decision['isUserWhitelisted'] = !!$bucketInfo['name'];
+            } elseif ($campaign['type'] === CampaignTypes::FEATURE_TEST) {
+                $decision['isUserWhitelisted'] = $bucketInfo['isFeatureEnabled'];
+            }
+        }
+
+        if ($bucketInfo != null) {
+            $decision['campaignId'] = $campaign['id'];
+            $decision['campaignKey'] = $campaignKey;
+            $decision['campaignType'] = $campaign['type'];
+            // campaign segmentation conditions
+            $decision['customVariables'] = isset($options['customVariables']) ? $options['customVariables'] : [];
+            // event name
+            $decision['event'] = Hooks::DECISION_TYPES['CAMPAIGN_DECISION'];
+            // goal tracked in case of track API
+            $decision['goalIdentifier'] = $goalIdentifier;
+            // campaign whitelisting flag
+            $decision['isForcedVariationEnabled'] = isset($campaign['isForcedVariationEnabled']) ? $campaign['isForcedVariationEnabled'] : false;
+            $decision['sdkVersion'] = ImpressionBuilder::SDK_VERSION;
+            // API name which triggered the event
+            $decision['source'] = $apiName;
+            // Passed in API
+            $decision['userId'] = $userId;
+            // Campaign Whitelisting conditions
+            $decision['variationTargetingVariables'] = isset($options['variationTargetingVariables']) ? $options['variationTargetingVariables'] : [];
+            // VWO generated UUID based on passed UserId and Account ID
+            if (isset($this->accountId)) {
+                $decision['vwoUserId'] = UuidUtil::get($userId, $this->accountId);
+            }
+
+            $variationName = $bucketInfo['name'];
+            if ($campaign['type'] === CampaignTypes::FEATURE_ROLLOUT) {
+                $decision['isFeatureEnabled'] = true;
+            } else {
+                if ($campaign['type'] === CampaignTypes::FEATURE_TEST) {
+                    $decision['isFeatureEnabled'] = $bucketInfo['isFeatureEnabled'];
+                }
+                $decision['variationName'] = $variationName;
+                $decision['variationId'] = $bucketInfo['id'];
+            }
+            $this->hooksManager->execute($decision);
         }
 
         return $bucketInfo;

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -231,17 +231,17 @@ class Validations
      *
      * @param  array $campaignKeys
      * @param  array $settings
+     * @param  string $goalIdentifier
+     * @param  string $goalTypeToTrack
      * @return array
      */
-    private static function getCampaignsFromCampaignKeys($campaignKeys, $settings)
+    private static function getCampaignsFromCampaignKeys($campaignKeys, $settings, $goalIdentifier, $goalTypeToTrack = 'ALL')
     {
         $campaigns = [];
         foreach ($campaignKeys as $campaignKey) {
-            $campaign = self::getCampaignFromCampaignKey($campaignKey, $settings);
+            $campaign = self::getCampaignForCampaignKeyAndGoal($campaignKey, $settings, $goalIdentifier, $goalTypeToTrack);
             if ($campaign) {
                 $campaigns[] = $campaign;
-            } else {
-                $campaigns[] = ['key' => $campaignKey];
             }
         }
         return $campaigns;
@@ -264,13 +264,10 @@ class Validations
                     continue;
                 }
                 $goal = CommonUtil::getGoalFromGoals($campaign['goals'], $goalIdentifier);
-                if ($goal && ($goalTypeToTrack === 'ALL' || $goal['type'] === $goalTypeToTrack)) {
+                if (self::validateGoal($goal, $goalTypeToTrack)) {
                     $campaigns[] = $campaign;
                 }
             }
-        }
-        if (count($campaigns)) {
-            LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['NO_CAMPAIGN_FOUND'], ['{goalIdentifier}' => $goalIdentifier], self::$CLASSNAME);
         }
         return $campaigns;
     }
@@ -290,14 +287,52 @@ class Validations
         if (!$campaignKey) {
             $campaigns = self::getCampaignsForGoal($settings, $goalIdentifier, $goalTypeToTrack);
         } elseif (is_array($campaignKey)) {
-            $campaigns = self::getCampaignsFromCampaignKeys($campaignKey, $settings);
+            $campaigns = self::getCampaignsFromCampaignKeys($campaignKey, $settings, $goalIdentifier, $goalTypeToTrack);
         } elseif (is_string($campaignKey)) {
-            $campaign = self::getCampaignFromCampaignKey($campaignKey, $settings);
-            if (is_null($campaign)) {
-                $campaign['key'] = $campaignKey;
+            $campaign = self::getCampaignForCampaignKeyAndGoal($campaignKey, $settings, $goalIdentifier, $goalTypeToTrack);
+            if ($campaign) {
+                $campaigns[] = $campaign;
             }
-            $campaigns[] = $campaign;
+        }
+        if (count($campaigns) == 0) {
+            LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['NO_CAMPAIGN_FOUND'], ['{goalIdentifier}' => $goalIdentifier], self::$CLASSNAME);
         }
         return $campaigns;
+    }
+
+    /**
+     * fetch a campaign for given campaignKey (having goal identifier $goalIdentifier and goal type CUSTOM|REVENUE|ALL) from settings
+     *
+     * @param  string|array $campaignKey
+     * @param  array $settings
+     * @param  string $goalIdentifier
+     * @param  string $goalTypeToTrack
+     * @return array|null
+     */
+    public static function getCampaignForCampaignKeyAndGoal($campaignKey, $settings, $goalIdentifier, $goalTypeToTrack)
+    {
+        $campaign = self::getCampaignFromCampaignKey($campaignKey, $settings);
+        if ($campaign) {
+            $goal = CommonUtil::getGoalFromGoals($campaign['goals'], $goalIdentifier);
+            if (self::validateGoal($goal, $goalTypeToTrack)) {
+                return $campaign;
+            }
+        }
+        return null;
+    }
+
+    public static function validateGoal($goal, $goalTypeToTrack)
+    {
+        return (
+            $goal &&
+            (
+                $goalTypeToTrack === 'ALL' ||
+                (
+                    in_array($goal['type'], VWO::GOAL_TYPES) &&
+                    array_key_exists($goalTypeToTrack, VWO::GOAL_TYPES) &&
+                    $goal['type'] == VWO::GOAL_TYPES[$goalTypeToTrack]
+                )
+            )
+        );
     }
 }
