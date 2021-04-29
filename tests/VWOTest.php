@@ -642,4 +642,77 @@ class VWOTest extends TestCase
         $variationName = $this->vwoInstance->getVariationName($data['camapaignKey'], $data['userId'], ['variationTargetingVariables' => $whitelistingTags, 'customVariables' => $customVariables]);
         $this->assertEquals($expected1, $variationName);
     }
+
+    public function testAdditionalDataDuringVWOInstantiation()
+    {
+        $config = [
+            'settingsFile' => $this->settings1,
+            'logging' => new CustomLogger(),
+            'userStorageService' => new UserStorageTest(),
+            'shouldTrackReturningUser' => true,
+            'goalTypeToTrack' => 'CUSTOM',
+            'integrations' => [
+                'callback' => function ($properties) {
+                }
+            ]
+        ];
+        $obj = new VWO($config);
+        $additionalData = $obj->usageStats->getUsageStats();
+        $this->assertEquals(1, $additionalData['is_i']);
+        $this->assertEquals(1, $additionalData['is_cl']);
+        $this->assertEquals(1, $additionalData['is_ss']);
+        $this->assertEquals(1, $additionalData['tru']);
+        $this->assertEquals(1, $additionalData['gt']);
+    }
+
+    public function testAdditionalDataForLoggingAndIntegrations()
+    {
+        $config = [
+            'settingsFile' => $this->settings1,
+            'logging' => new CustomLogger(),
+            'integrations' => [
+                'callback' => function ($properties) {
+                }
+            ]
+        ];
+        $obj = new VWO($config);
+        $additionalData = $obj->usageStats->getUsageStats();
+        $this->assertEquals(1, $additionalData['is_i']);
+        $this->assertEquals(1, $additionalData['is_cl']);
+        $this->assertEquals(0, isset($additionalData['is_ss']));
+        $this->assertEquals(0, isset($additionalData['tru']));
+        $this->assertEquals(0, isset($additionalData['gt']));
+    }
+
+    public function testAdditionalDataForUserStorageAndGoalTypeToTrack()
+    {
+        $config = [
+            'settingsFile' => $this->settings1,
+            'userStorageService' => new UserStorageTest(),
+            'goalTypeToTrack' => 'CUSTOM'
+        ];
+        $obj = new VWO($config);
+        $additionalData = $obj->usageStats->getUsageStats();
+        $this->assertEquals(0, isset($additionalData['is_i']));
+        $this->assertEquals(0, isset($additionalData['is_cl']));
+        $this->assertEquals(1, $additionalData['is_ss']);
+        $this->assertEquals(0, isset($additionalData['tru']));
+        $this->assertEquals(1, $additionalData['gt']);
+    }
+
+    public function testAdditionalDataForLoggingAndShouldTrackReturningUser()
+    {
+        $config = [
+            'settingsFile' => $this->settings1,
+            'logging' => new CustomLogger(),
+            'shouldTrackReturningUser' => true
+        ];
+        $obj = new VWO($config);
+        $additionalData = $obj->usageStats->getUsageStats();
+        $this->assertEquals(0, isset($additionalData['is_i']));
+        $this->assertEquals(1, $additionalData['is_cl']);
+        $this->assertEquals(0, isset($additionalData['is_ss']));
+        $this->assertEquals(1, $additionalData['tru']);
+        $this->assertEquals(0, isset($additionalData['gt']));
+    }
 }

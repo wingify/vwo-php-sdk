@@ -24,6 +24,7 @@ use vwo\Constants\Urls as UrlConstants;
 use vwo\Constants\CampaignTypes;
 use vwo\Constants\LogMessages as LogMessages;
 use vwo\Services\HooksManager;
+use vwo\Services\UsageStats;
 use vwo\Storage\UserStorageInterface;
 use vwo\Utils\Campaign as CampaignUtil;
 use vwo\Utils\Common as CommonUtil;
@@ -95,6 +96,7 @@ class VWO
         if (!is_array($config)) {
             return (object)[];
         }
+        $usageStats = [];
         // is settings and logger files are provided then set the values to the object
         $settings = isset($config['settingsFile']) ? $config['settingsFile'] : '';
         $logger = isset($config['logging']) ? $config['logging'] : null;
@@ -111,11 +113,13 @@ class VWO
         } elseif ($logger instanceof LoggerInterface) {
             LoggerService::setLogger($logger);
             LoggerService::log(Logger::DEBUG, LogMessages::DEBUG_MESSAGES['CUSTOM_LOGGER_USED']);
+            $usageStats['is_cl'] = 1;
         }
 
         // user storage service
         if (isset($config['userStorageService']) && ($config['userStorageService'] instanceof UserStorageInterface)) {
             $this->_userStorageObj = $config['userStorageService'];
+            $usageStats['is_ss'] = 1;
         } else {
             $this->_userStorageObj = '';
         }
@@ -123,6 +127,9 @@ class VWO
         if (isset($config['shouldTrackReturningUser'])) {
             if (is_bool($config['shouldTrackReturningUser'])) {
                 $this->shouldTrackReturningUser = $config['shouldTrackReturningUser'];
+                if ($this->shouldTrackReturningUser) {
+                    $usageStats['tru'] = 1;
+                }
             } else {
                 LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['INVALID_TRACK_RETURNING_USER_VALUE']);
             }
@@ -133,6 +140,7 @@ class VWO
         if (isset($config['goalTypeToTrack'])) {
             if (array_key_exists($config['goalTypeToTrack'], self::GOAL_TYPES)) {
                 $this->goalTypeToTrack = $config['goalTypeToTrack'];
+                $usageStats['gt'] = 1;
             } else {
                 LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['INVALID_GOAL_TYPE']);
             }
@@ -161,6 +169,8 @@ class VWO
         }
         // Initialize Hooks manager so that callbacks can be invoked
         $this->variationDecider->setHooksManager(new HooksManager($config));
+
+        $this->usageStats = new UsageStats($usageStats, $config, $this->isDevelopmentMode);
         return $this;
     }
 
@@ -248,6 +258,7 @@ class VWO
                     $variationData['id'],
                     $this->getSDKKey()
                 );
+                $parameters = array_merge($parameters, $this->usageStats->getUsageStats());
             }
 
             if (isset($variationData) && $result['response'] == false) {
@@ -263,7 +274,7 @@ class VWO
                         LoggerService::log(
                             Logger::INFO,
                             LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
-                            ['{properties}' => json_encode($parameters)]
+                            ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)]
                         );
                     } else {
                         LoggerService::log(
@@ -289,7 +300,7 @@ class VWO
                         LoggerService::log(
                             Logger::INFO,
                             LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
-                            ['{properties}' => json_encode($parameters)]
+                            ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)]
                         );
 
                         if (!$this->isDevelopmentMode) {
@@ -297,7 +308,6 @@ class VWO
                                 Logger::INFO,
                                 LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS_FOR_FEATURE'],
                                 [
-                                '{userId}' => $userId,
                                 '{endPoint}' => 'track-user',
                                 '{campaignId}' => $campaign['id'],
                                 '{accountId}' => $this->settings['accountId']
@@ -528,13 +538,12 @@ class VWO
                         $revenueValue,
                         $this->getSDKKey()
                     );
-
                     $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_GOAL_URL, 'GET', $parameters);
 
                     LoggerService::log(
                         Logger::INFO,
                         LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_GOAL'],
-                        array('{properties}' => json_encode($parameters))
+                        array('{properties}' => $this->getAllowedToLogImpressionParams($parameters))
                     );
 
                     if ($this->isDevelopmentMode) {
@@ -546,7 +555,6 @@ class VWO
                         Logger::INFO,
                         LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS_GOAL'],
                         [
-                            '{userId}' => $userId,
                             '{endPoint}' => 'track-goal',
                             '{campaignId}' => $campaign['id'],
                             '{variationId}' => $bucketInfo['id'],
@@ -643,12 +651,13 @@ class VWO
                             $this->getSDKKey()
                         );
 
+                        $parameters =  array_merge($parameters, $this->usageStats->getUsageStats());
                         $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_USER_URL, 'GET', $parameters);
 
                         LoggerService::log(
                             Logger::INFO,
                             LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
-                            ['{properties}' => json_encode($parameters)]
+                            ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)]
                         );
 
                         if (!$this->isDevelopmentMode) {
@@ -656,7 +665,6 @@ class VWO
                                 Logger::INFO,
                                 LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS'],
                                 [
-                                    '{userId}' => $userId,
                                     '{endPoint}' => 'track-user',
                                     '{campaignId}' => $campaign['id'],
                                     '{variationId}' => $bucketInfo['id'],
@@ -727,7 +735,7 @@ class VWO
             LoggerService::log(
                 Logger::INFO,
                 LogMessages::INFO_MESSAGES['IMPRESSION_FOR_PUSH'],
-                ['{properties}' => json_encode($parameters)]
+                ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)]
             );
 
             if ($this->isDevelopmentMode) {
@@ -737,7 +745,6 @@ class VWO
                     Logger::INFO,
                     LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS_PUSH'],
                     [
-                        '{userId}' => $userId,
                         '{endPoint}' => 'push',
                         '{accountId}' => $this->settings['accountId'],
                         '{tags}' => $parameters['tags']
@@ -801,5 +808,11 @@ class VWO
             LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['INVALID_GOAL_TYPE']);
         }
         return $goalTypeToTrack;
+    }
+
+    private function getAllowedToLogImpressionParams($parameters)
+    {
+        unset($parameters['env']);
+        return json_encode($parameters);
     }
 }

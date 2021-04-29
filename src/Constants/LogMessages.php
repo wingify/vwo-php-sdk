@@ -65,10 +65,10 @@ class LogMessages
         'AUDIENCE_CONDITION_NOT_MET' => '({file}): userId:{userId} does not become part of campaign because of not meeting audience conditions',
         'GOT_VARIATION_FOR_USER' => '({file}): userId:{userId} for campaign:{campaignKey} got variationName:{variationName}',
         'USER_GOT_NO_VARIATION' => '({file}): userId:{userId} for campaign:{campaignKey} did not allot any variation',
-        'IMPRESSION_SUCCESS' => '({file}): Event sent to VWO - {endPoint} having main keys: accountId:{accountId}, userId:{userId}, campaignId:{campaignId} and variationId:{variationId}',
-        'IMPRESSION_SUCCESS_GOAL' => '({file}): Event sent to VWO - {endPoint} having main keys: accountId:{accountId}, userId:{userId}, campaignId:{campaignId}, variationId:{variationId}, and goalId:{goalId}',
-        'IMPRESSION_SUCCESS_FOR_FEATURE' => '({file}): Event sent to VWO - {endPoint} having main keys: accountId:{accountId}, userId:{userId}, and campaignId:{campaignId}',
-        'IMPRESSION_SUCCESS_PUSH' => '({file}): Event sent to VWO - {endPoint} having main keys: accountId:{accountId}, userId:{userId} and tags:{tags}',
+        'IMPRESSION_SUCCESS' => '({file}): Event sent to VWO - {endPoint} having main keys: accountId:{accountId}, campaignId:{campaignId} and variationId:{variationId}',
+        'IMPRESSION_SUCCESS_GOAL' => '({file}): Event sent to VWO - {endPoint} having main keys: accountId:{accountId}, campaignId:{campaignId}, variationId:{variationId} and goalId:{goalId}',
+        'IMPRESSION_SUCCESS_FOR_FEATURE' => '({file}): Event sent to VWO - {endPoint} having main keys: accountId:{accountId} and campaignId:{campaignId}',
+        'IMPRESSION_SUCCESS_PUSH' => '({file}): Event sent to VWO - {endPoint} having main keys: accountId:{accountId} and tags:{tags}',
         'INVALID_VARIATION_KEY' => '({file}): Variation was not assigned to userId:{userId} for campaign:{campaignKey}',
         'API_CALLED' => '({file}): API: {api} called for userid : {userId}',
         'IMPRESSION_FOR_TRACK_USER' => '({file}): impression built for track-user - {properties}',
@@ -86,7 +86,6 @@ class LogMessages
         'GOAL_ALREADY_TRACKED' => '({file}): "Goal:{goalIdentifer} of Campaign:{campaignKey} for User ID:{userId} has already been tracked earlier. Skipping now',
         'CAMPAIGN_NOT_ACTIVATED' => '({file}): Activate the campaign:{campaignKey} for User ID:{userId} to {reason}.',
         'USER_ALREADY_TRACKED' => '({file}): "User ID:{userId} for Campaign:{campaignKey} has already been tracked earlier for "{api}" API. Skipping now'
-
     ];
     /**
      * messages used for warning mode
