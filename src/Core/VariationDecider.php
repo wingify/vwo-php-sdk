@@ -173,6 +173,10 @@ class VariationDecider
                 $decision['vwoUserId'] = UuidUtil::get($userId, $this->accountId);
             }
 
+            if (isset($campaign['name'])) {
+                $decision["campaignName"] = $campaign["name"];
+            }
+
             $variationName = $bucketInfo['name'];
             if ($campaign['type'] === CampaignTypes::FEATURE_ROLLOUT) {
                 $decision['isFeatureEnabled'] = true;

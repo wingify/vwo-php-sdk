@@ -66,6 +66,7 @@ class Validations
                 "percentTraffic" => ["type" => "number"],
                 "key" => ["type" => "string"],
                 "status" => ["type" => "string"],
+                'name' => ["type" => "string"]
             ],
         ],
 

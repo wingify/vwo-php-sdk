@@ -29,6 +29,7 @@ class Settings8
                     0 =>
                         array(
                             'id' => 91,
+                            "name" => "Campaign-91",
                             'segments' =>
                                 array(),
                             'status' => 'RUNNING',
@@ -147,6 +148,7 @@ class Settings8
                                         ),
                                 ),
                             'id' => 92,
+                            "name" => "Campaign-92",
                             'segments' =>
                                 array(),
                             'key' => 'FEATURE_TEST',
@@ -195,6 +197,7 @@ class Settings8
                                 )
                             ),
                             'id' => 94,
+                            "name" => "Campaign-94",
                             'segments' =>
                                 array(),
                             'key' => 'DEV_TEST_8',
@@ -275,6 +278,7 @@ class Settings8
                                         ),
                                 ),
                             'id' => 92,
+                            "name" => "Campaign-92",
                             'segments' =>
                                 array(),
                             'key' => 'FEATURE_TEST_ALL_DISABLED',
@@ -355,6 +359,7 @@ class Settings8
                                         ),
                                 ),
                             'id' => 92,
+                            "name" => "Campaign-92",
                             'segments' =>
                                 array(),
                             'key' => 'FEATURE_TEST_ZERO_TRAFFIC',
@@ -364,6 +369,7 @@ class Settings8
                     5 =>
                         array(
                             'id' => 91,
+                            "name" => "Campaign-91",
                             'segments' =>
                                 array(),
                             'status' => 'RUNNING',

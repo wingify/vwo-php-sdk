@@ -25,6 +25,7 @@ class Settings7
         return [
             "featureFlags" => [[
                 "id" => 1,
+                "name" => "Campaign-1",
                 "key" => "FEATURE_TEST",
                 "status" => "RUNNING",
                 "percentTraffic" => 50,
@@ -57,6 +58,7 @@ class Settings7
                 ]]
             ], [
                 "id" => 2,
+                "name" => "Campaign-2",
                 "key" => "FEATURE_ROLLOUT_ONLY",
                 "status" => "RUNNING",
                 "percentTraffic" => 50,
@@ -129,6 +131,7 @@ class Settings7
                     ]
                     ],
                     "id" => 22,
+                    "name" => "Campaign-22",
                     "percentTraffic" => 50,
                     "key" => "FEATURE_TEST",
                     "status" => "RUNNING",
@@ -149,6 +152,7 @@ class Settings7
                         "weight" => 60
                     ]],
                     "id" => 22,
+                    "name" => "Campaign-22",
                     "percentTraffic" => 90,
                     "key" => "NEW_RECOMMENDATION_AB_CAMPAIGN",
                     "status" => "RUNNING",

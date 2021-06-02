@@ -54,6 +54,7 @@ class Settings6
                 ]
             ],
             'id' => 235,
+            'name' => "Campaign-235",
             'percentTraffic' => 100,
             'key' => 'DEV_TEST_6',
             'status' => 'RUNNING',
