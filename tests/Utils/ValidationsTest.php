@@ -77,4 +77,22 @@ class ValidationsTest extends TestCase
         $res = ValidationsUtil::checkPreSegmentation($camapign, $userId, $options);
         $this->assertEquals(true, $res);
     }
+
+    public function testValidateVariablesWithIncompleteData()
+    {
+        $checkSettingSchema = ValidationsUtil::checkSettingSchema(Settings7::setup());
+        $this->assertEquals(false, $checkSettingSchema);
+    }
+
+    public function testValidateVariablesWithCompleteData()
+    {
+        $checkSettingSchema = ValidationsUtil::checkSettingSchema(Settings8::setup());
+        $this->assertEquals(true, $checkSettingSchema);
+    }
+
+    public function testValidateVariablesForWrongJsonVariable()
+    {
+        $checkSettingSchema = ValidationsUtil::checkSettingSchema(Settings10::setup());
+        $this->assertEquals(false, $checkSettingSchema);
+    }
 }

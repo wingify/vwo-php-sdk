@@ -126,6 +126,8 @@ class Common
                 return (bool)$value;
             case 'integer':
                 return (int)$value;
+            case 'json':
+                return $value;
         }
     }
 

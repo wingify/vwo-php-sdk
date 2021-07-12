@@ -414,6 +414,50 @@ class Settings8
                                         ),
                                 ),
                         ),
+                    6 =>
+                        [
+                            'id' => 92,
+                            "name" => "Campaign-92",
+                            'segments' => [],
+                            'status' => 'RUNNING',
+                            'percentTraffic' => 0,
+                            'type' => 'FEATURE_ROLLOUT',
+                            'variables' => [
+                                        [
+                                            'value' => 10,
+                                            'type' => 'integer',
+                                            'key' => 'V1',
+                                            'id' => 1,
+                                        ],
+                                        [
+                                            'value' => json_encode(["a"=>3]),
+                                            'type' => 'json',
+                                            'key' => 'V1',
+                                            'id' => 1,
+                                        ]
+                                ],
+                            'key' => 'FEATURE_ROLLOUT_ZERO_TRAFFIC',
+                            'variations' => [
+                                    [
+                                        'id' => 1,
+                                        'name' => 'website',
+                                        'changes' => [],
+                                        'weight' => 100,
+                                    ],
+                                ],
+                            'goals' => [
+                                        [
+                                            'identifier' => 'h',
+                                            'id' => 209,
+                                            'type' => 'CUSTOM_GOAL',
+                                        ],
+                                        [
+                                            'identifier' => 'jk',
+                                            'id' => 210,
+                                            'type' => 'CUSTOM_GOAL',
+                                        ]
+                                ],
+                        ],
                 ),
             'accountId' => 0,
             'version' => 1,

@@ -18,6 +18,7 @@
 
 namespace vwo\Utils;
 
+use vwo\Constants\CampaignTypes;
 use vwo\VWO;
 use Monolog\Logger;
 use JsonSchema\Constraints\Factory;
@@ -109,9 +110,10 @@ class Validations
 
     /**
      * this function check whether pre-segmentation is passed or not
-     * @param array $campaign
-     * @param string $userId
-     * @param array $options
+     *
+     * @param  array  $campaign
+     * @param  string $userId
+     * @param  array  $options
      * @return bool
      */
     public static function checkPreSegmentation($campaign, $userId, $options)
@@ -120,10 +122,10 @@ class Validations
         $segment = new SegmentEvaluator();
         if (array_key_exists('segments', $campaign) && count($campaign['segments'])) {
             $response = $segment->evaluate($campaign['segments'], $customVariables);
-             LoggerService::log(
-                 Logger::INFO,
-                 LogMessages::INFO_MESSAGES['SEGMENTATION_STATUS'],
-                 [
+            LoggerService::log(
+                Logger::INFO,
+                LogMessages::INFO_MESSAGES['SEGMENTATION_STATUS'],
+                [
                              '{status}' => $response === true ? 'passed' : 'failed',
                              '{campaignKey}' => $campaign['key'],
                              '{userId}' => $userId,
@@ -131,8 +133,8 @@ class Validations
                              '{segmentationType}' => 'pre-segmentation',
                              '{variation}' => ''
                          ],
-                 self::$CLASSNAME
-             );
+                self::$CLASSNAME
+            );
             return $response;
         } else {
             LoggerService::log(Logger::INFO, LogMessages::INFO_MESSAGES['SEGMENTATION_SKIPPED'], ['{campaignKey}' => $campaign['key'],'{userId}' => $userId,'{variation}' => '']);
@@ -153,7 +155,7 @@ class Validations
         $schemaStorage->addSchema('file://mySchema', self::$jsonSchemaObject);
         $jsonValidator = new Validator(new Factory($schemaStorage));
         $jsonValidator->validate($request, self::$jsonSchemaObject, Constraint::CHECK_MODE_VALIDATE_SCHEMA);
-        if ($jsonValidator->isValid()) {
+        if ($jsonValidator->isValid() && self::validateVariablesInCampaigns($request["campaigns"])) {
             $response = true;
             LoggerService::log(Logger::DEBUG, LogMessages::DEBUG_MESSAGES['VALID_CONFIGURATION']);
         } else {
@@ -164,8 +166,9 @@ class Validations
 
     /**
      * campaignkey and userid validation for feature enable
-     * @param string $campaignKey
-     * @param string $userId
+     *
+     * @param  string $campaignKey
+     * @param  string $userId
      * @return bool
      */
     public static function validateIsFeatureEnabledParams($campaignKey, $userId)
@@ -177,8 +180,63 @@ class Validations
     }
 
     /**
+     * validate variables present in settings file
+     *
+     * @param  $campaigns array
+     * @return bool
+     */
+    private static function validateVariablesInCampaigns($campaigns)
+    {
+        foreach ($campaigns as $campaign) {
+            if($campaign["type"] == CampaignTypes::FEATURE_TEST) {
+                foreach ($campaign["variations"] as $variation) {
+                    if(!self::validateVariables($variation["variables"])) {
+                        return false;
+                    }
+                }
+            } elseif($campaign["type"] == CampaignTypes::FEATURE_ROLLOUT) {
+                if(!self::validateVariables($campaign["variables"])) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private static function validateVariables($variables)
+    {
+        if (isset($variables) && is_array($variables)) {
+            foreach ($variables as $variable) {
+
+                if (isset($variable["key"]) && isset($variable["id"]) && isset($variable["type"]) && isset($variable["value"])) {
+                    // validate variable key & type are string and id is integer
+                    if (!is_string($variable["key"]) || !is_int($variable["id"]) || !is_string($variable["type"])) {
+                        return false;
+                    }
+
+                    // validate variable type and type of variable value is same
+                    if ($variable["type"] != 'json' && $variable["type"] != gettype($variable["value"])) {
+                        return false;
+                    } elseif ($variable["type"] == 'json') {
+                        if (!is_object(json_decode($variable["value"])) && !is_array(json_decode($variable["value"]))) {
+                            return false;
+                        }
+                    }
+                } else {
+                    return false;
+                }
+            }
+        } else {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * check whether campaignKey provided by end user is present in settings on VWO or not
-     * @param $campaignKey string
+     *
+     * @param  $campaignKey string
      * @return bool
      */
     public static function validateCampaignKey($campaignKey)
@@ -192,7 +250,8 @@ class Validations
 
     /**
      * user id should be string type
-     * @param string $userId
+     *
+     * @param  string $userId
      * @return bool
      */
     public static function validateUserId($userId)
@@ -208,7 +267,7 @@ class Validations
      * function to check if the campaignkey exists in campaign array from settings
      *
      * @param  string $campaignKey
-     * @param  array $settings
+     * @param  array  $settings
      * @return null
      */
     public static function getCampaignFromCampaignKey($campaignKey, $settings)
@@ -230,8 +289,8 @@ class Validations
     /**
      * fetch all running campaigns (with campaignKey in $campaignKeys array) from settings
      *
-     * @param  array $campaignKeys
-     * @param  array $settings
+     * @param  array  $campaignKeys
+     * @param  array  $settings
      * @param  string $goalIdentifier
      * @param  string $goalTypeToTrack
      * @return array
@@ -251,7 +310,7 @@ class Validations
     /**
      * fetch all running campaigns (having goal identifier $goalIdentifier and goal type CUSTOM|REVENUE|ALL) from settings
      *
-     * @param  array $settings
+     * @param  array  $settings
      * @param  string $goalIdentifier
      * @param  string $goalTypeToTrack
      * @return array
@@ -277,9 +336,9 @@ class Validations
      * fetch campaigns from settings
      *
      * @param  string|array|null $campaignKey
-     * @param  array $settings
-     * @param  string $goalIdentifier
-     * @param  string $goalTypeToTrack
+     * @param  array             $settings
+     * @param  string            $goalIdentifier
+     * @param  string            $goalTypeToTrack
      * @return array
      */
     public static function getCampaigns($campaignKey, $settings, $goalIdentifier, $goalTypeToTrack = 'ALL')
@@ -305,9 +364,9 @@ class Validations
      * fetch a campaign for given campaignKey (having goal identifier $goalIdentifier and goal type CUSTOM|REVENUE|ALL) from settings
      *
      * @param  string|array $campaignKey
-     * @param  array $settings
-     * @param  string $goalIdentifier
-     * @param  string $goalTypeToTrack
+     * @param  array        $settings
+     * @param  string       $goalIdentifier
+     * @param  string       $goalTypeToTrack
      * @return array|null
      */
     public static function getCampaignForCampaignKeyAndGoal($campaignKey, $settings, $goalIdentifier, $goalTypeToTrack)
