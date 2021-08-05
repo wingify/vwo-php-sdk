@@ -53,7 +53,7 @@ class Bucketer
     /***
      * to fetch the variation id
      *
-     * @param  $campaign campaign array
+     * @param  $campaign      campaign array
      * @param  $variationName
      * @return array|null
      */
@@ -76,14 +76,15 @@ class Bucketer
      *
      * @param  $userid
      * @param  $campaign
+     * @param  bool $disableLogs optional: disable logs if True
      * @return array|null
      */
-    public static function getBucket($userId, $campaign)
+    public static function getBucket($userId, $campaign, $disableLogs = false)
     {
         // if bucketing to be done
         $bucketVal = self::getBucketVal($userId, self::$MAX_CAMPAIGN_TRAFFIC);
         if (!self::isUserPartofCampaign($bucketVal, $campaign['percentTraffic'])) {
-            LoggerService::log(Logger::DEBUG, LogMessages::DEBUG_MESSAGES['USER_NOT_PART_OF_CAMPAIGN'], ['{userId}' => $userId, '{method}' => 'getBucket', '{campaignKey}' => $campaign['key']], self::$CLASSNAME);
+            LoggerService::log(Logger::DEBUG, LogMessages::DEBUG_MESSAGES['USER_NOT_PART_OF_CAMPAIGN'], ['{userId}' => $userId, '{method}' => 'getBucket', '{campaignKey}' => $campaign['key']], self::$CLASSNAME, $disableLogs);
             return null;
         }
         $multiplier = self::getMultiplier($campaign['percentTraffic']);
@@ -105,6 +106,24 @@ class Bucketer
         foreach ($variations as $variation) {
             if (isset($variation['max_range']) && $variation['max_range'] >= $rangeForVariations && $rangeForVariations >= $variation['min_range']) {
                 return $variation;
+            }
+        }
+        return null;
+    }
+
+    /***
+     * Returns a campaign by checking the Start and End Bucket Allocations of each campaign.
+     *
+     * @param  $rangeForCampaigns int: the bucket value of the user
+     * @param  $campaigns         array of campaigns
+     * @return array|null
+     */
+    public static function getCampaignUsingRange($rangeForCampaigns, $campaigns)
+    {
+        $rangeForCampaigns = $rangeForCampaigns * self::$MAX_RANGE;
+        foreach ($campaigns as $campaign) {
+            if (isset($campaign['max_range']) && $campaign['max_range'] >= $rangeForCampaigns && $rangeForCampaigns >= $campaign['min_range']) {
+                return $campaign;
             }
         }
         return null;
@@ -184,19 +203,42 @@ class Bucketer
 
     /**
      * function to calculate range of every variation
-     * @param $variations
+     *
+     * @param  $variations
      * @return array variation array
      */
     public static function addRangesToVariations($variations)
     {
+        return self::addRanges($variations);
+    }
+
+    /**
+     * To allocate range to every campaign
+     *
+     * @param  array $campaigns array of campaigns
+     * @return array variation array
+     */
+    public static function addRangesToCampaigns($campaigns)
+    {
+        return self::addRanges($campaigns);
+    }
+
+    /**
+     * To allocate ranges to every entities (campaigns/variations)
+     *
+     * @param  array $entities array of campaigns or variations
+     * @return mixed
+     */
+    private static function addRanges($entities)
+    {
         $offset = 0;
-        foreach ($variations as $vkey => $variation) {
-            $limit = Bucketer::getLimit($variation['weight']);
+        foreach ($entities as $vkey => $entity) {
+            $limit = Bucketer::getLimit($entity['weight']);
             $max_range = $offset + $limit;
-            $variations[$vkey]['min_range'] = $offset + 1;
-            $variations[$vkey]['max_range'] = $max_range;
+            $entities[$vkey]['min_range'] = $offset + 1;
+            $entities[$vkey]['max_range'] = $max_range;
             $offset = $max_range;
         }
-        return $variations;
+        return $entities;
     }
 }

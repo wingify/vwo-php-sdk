@@ -41,6 +41,7 @@ class UsageStats
 
     /**
      * Get the collected usage stats.
+     *
      * @returns array usage stats data
      */
     public function getUsageStats()

@@ -69,10 +69,12 @@ class VWOTest extends TestCase
 
     function testWithCorruptedSettingsFile()
     {
-        $obj = TestUtil::instantiateSdk([
+        $obj = TestUtil::instantiateSdk(
+            [
             'sdkKey' => 123,
             'accountId' => 1.9
-        ]);
+            ]
+        );
 
         $variation = $obj->activate('DEV_TEST_1', 'random-user');
         $isFeatureEnabled = $obj->isFeatureEnabled('DEV_TEST_8', 'random-user');
@@ -522,18 +524,18 @@ class VWOTest extends TestCase
             $variation = $this->vwoInstance->getVariationName($featureTestKey, $userId);
 
             switch ($variation) {
-                case 'Control':
-                    $expectedIsFeatureEnabled = true;
-                    $expectedFeatureVariableValue = 10;
-                    break;
-                case 'Variation-1':
-                    $expectedIsFeatureEnabled = false;
-                    $expectedFeatureVariableValue = 10;
-                    break;
-                case 'Variation-2':
-                    $expectedIsFeatureEnabled = true;
-                    $expectedFeatureVariableValue = 20;
-                    break;
+            case 'Control':
+                $expectedIsFeatureEnabled = true;
+                $expectedFeatureVariableValue = 10;
+                break;
+            case 'Variation-1':
+                $expectedIsFeatureEnabled = false;
+                $expectedFeatureVariableValue = 10;
+                break;
+            case 'Variation-2':
+                $expectedIsFeatureEnabled = true;
+                $expectedFeatureVariableValue = 20;
+                break;
             }
 
             $campaignKeyWrong = $this->vwoInstance->getFeatureVariableValue(123, 'V!', $userId);

@@ -47,7 +47,8 @@ class LogMessages
         'FEATURE_FLAG_NOT_LINKED' => '({file}): Feature:{featureKey} is not linked to any running campaigns',
         'USER_HASH_BUCKET_VALUE' => '({file}): User ID:{userId} having hash:{hashValue} got bucketValue:{bucketValue}',
         'VARIATION_HASH_BUCKET_VALUE' => '({file}): User ID:{userId} for campaign:{campaignKey} having percent traffic:{percentTraffic} got bucket value:{bucketValue}',
-        'CAMPAIGN_NOT_ACTIVATED' => '({file}): Campaign:{campaignKey} for User ID:{userId} is not yet activated for API:{api}. Use activate API to activate A/B test or isFeatureEnabled API to activate Feature Test.'
+        'CAMPAIGN_NOT_ACTIVATED' => '({file}): Campaign:{campaignKey} for User ID:{userId} is not yet activated for API:{api}. Use activate API to activate A/B test or isFeatureEnabled API to activate Feature Test.',
+        'GOT_ELIGIBLE_CAMPAIGNS' => '({file}): Campaigns:{eligibleCampaignsKey} are eligible, campaigns: {ineligibleCampaignsLogText} are ineligible from the Group:{name} for the User ID:{userId}'
     ];
 
     /**
@@ -70,7 +71,7 @@ class LogMessages
         'IMPRESSION_SUCCESS_FOR_FEATURE' => '({file}): Event sent to VWO - {endPoint} having main keys: accountId:{accountId} and campaignId:{campaignId}',
         'IMPRESSION_SUCCESS_PUSH' => '({file}): Event sent to VWO - {endPoint} having main keys: accountId:{accountId} and tags:{tags}',
         'INVALID_VARIATION_KEY' => '({file}): Variation was not assigned to userId:{userId} for campaign:{campaignKey}',
-        'API_CALLED' => '({file}): API: {api} called for userid : {userId}',
+        'API_CALLED' => '({file}): API: {api} called for userId : {userId}',
         'IMPRESSION_FOR_TRACK_USER' => '({file}): impression built for track-user - {properties}',
         'IMPRESSION_FOR_TRACK_GOAL' => '({file}): impression built for track-goal - {properties}',
         'IMPRESSION_FOR_PUSH' => '({file}): impression built for push-api - {properties}',
@@ -85,7 +86,11 @@ class LogMessages
         'SEGMENTATION_STATUS' => '({file}): For userId:{userId} of campaign:{campaignKey} with variables:{customVariables} {status} {segmentationType} {variation}',
         'GOAL_ALREADY_TRACKED' => '({file}): "Goal:{goalIdentifer} of Campaign:{campaignKey} for User ID:{userId} has already been tracked earlier. Skipping now',
         'CAMPAIGN_NOT_ACTIVATED' => '({file}): Activate the campaign:{campaignKey} for User ID:{userId} to {reason}.',
-        'USER_ALREADY_TRACKED' => '({file}): "User ID:{userId} for Campaign:{campaignKey} has already been tracked earlier for "{api}" API. Skipping now'
+        'USER_ALREADY_TRACKED' => '({file}): "User ID:{userId} for Campaign:{campaignKey} has already been tracked earlier for "{api}" API. Skipping now',
+        'GOT_ELIGIBLE_CAMPAIGNS' => '({file}): Got {noOfEligibleCampaigns} eligible winners out of {noOfGroupCampaigns} from the Group:{name} and for User ID:{userId}',
+        'GOT_WINNER_CAMPAIGN' => '({file}): Campaign:{campaignKey} is selected from the mutually exclusive group:{name} for the User ID:{userId}',
+        'CALLED_CAMPAIGN_NOT_WINNER' => '({file}): Campaign:{campaignKey} does not qualify from the mutually exclusive group:{name} for User ID:{userId}',
+        'OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE' => '({file}): Campaign:{campaignKey} of Group:{name} satisfies {type} for User ID:{userId}'
     ];
     /**
      * messages used for warning mode

@@ -96,6 +96,15 @@ class TestUtil
         return $mock;
     }
 
+    public static function mockUserStorageInterface($obj, $variationInfo)
+    {
+        $mockUserStorage = $obj->getMockBuilder('UserStorageInterface')->setMethods(['get', 'set'])->getMock();
+        $mockUserStorage->method('get')->will($obj->returnValue($variationInfo));
+        $mockUserStorage->method('set')->will($obj->returnValue(true));
+
+        return $mockUserStorage;
+    }
+
     public static function instantiateSdk($settingsFile, $options = [])
     {
         $isDevelopmentMode = isset($options['isDevelopmentMode']) ? $options['isDevelopmentMode'] : 0;
@@ -151,7 +160,7 @@ class UserStorageTest implements UserStorageInterface
     /**
      * @param  $userId
      * @param  $campaignKey
-     * @return string
+     * @return array
      */
     public function get($userId, $campaignKey)
     {
@@ -176,7 +185,7 @@ class UserStorageTest implements UserStorageInterface
     }
 
     /**
-     * @param  $goalIdentifier
+     * @param $goalIdentifier
      */
     public function setGoalIdentifier($goalIdentifier)
     {
@@ -190,7 +199,7 @@ class UserStorageGetCorruptedTest implements UserStorageInterface
     /**
      * @param  $userId
      * @param  $campaignKey
-     * @return string
+     * @return array
      */
     public function get($userId, $campaignKey)
     {

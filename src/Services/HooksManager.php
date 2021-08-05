@@ -32,12 +32,12 @@ class HooksManager
 
     /**
      * Initializes with configuration from VWO Object.
+     *
      * @param array $config
      */
     public function init($config = [])
     {
-        if (
-            isset($config['integrations'])
+        if (isset($config['integrations'])
             && isset($config['integrations']['callback'])
             && is_callable($config['integrations']['callback'])
         ) {
@@ -47,6 +47,7 @@ class HooksManager
 
     /**
      * Executes the callback
+     *
      * @param array properties Properties from the callback
      */
     public function execute($properties)

@@ -163,7 +163,7 @@ class VWO
         // $this->connection = new Connection();
         LoggerService::log(Logger::DEBUG, LogMessages::DEBUG_MESSAGES['SDK_INITIALIZED']);
 
-        $this->variationDecider = new VariationDecider();
+        $this->variationDecider = new VariationDecider($this->settings);
         if (isset($this->settings['accountId'])) {
             $this->variationDecider->setAccountId($this->settings['accountId']);
         }
@@ -223,9 +223,8 @@ class VWO
                 ['{api}' => 'isFeatureEnabled', '{userId}' => $userId]
             );
 
-            if (
-                !ValidationsUtil::validateIsFeatureEnabledParams($campaignKey, $userId) ||
-                !ValidationsUtil::checkSettingSchema($this->settings)
+            if (!ValidationsUtil::validateIsFeatureEnabledParams($campaignKey, $userId)
+                || !ValidationsUtil::checkSettingSchema($this->settings)
             ) {
                 return null;
             }
@@ -344,9 +343,8 @@ class VWO
         LoggerService::setApiName(self::$apiName);
 
         try {
-            if (
-                !ValidationsUtil::validateIsFeatureEnabledParams($campaignKey, $userId) ||
-                !ValidationsUtil::checkSettingSchema(
+            if (!ValidationsUtil::validateIsFeatureEnabledParams($campaignKey, $userId)
+                || !ValidationsUtil::checkSettingSchema(
                     $this->settings
                 )
             ) {
@@ -429,10 +427,10 @@ class VWO
     /**
      * API for track the user goals and revenueValue
      *
-     * @param string $campaignKey
-     * @param string $userId
-     * @param string $goalIdentifier
-     * @param array $options
+     * @param  string $campaignKey
+     * @param  string $userId
+     * @param  string $goalIdentifier
+     * @param  array  $options
      * @return array|bool|null
      */
     public function track($campaignKey = '', $userId = '', $goalIdentifier = '', array $options = [])
@@ -445,10 +443,9 @@ class VWO
 
         $options['shouldTrackReturningUser'] = $this->getShouldTrackReturningUser($options);
 
-        if (
-            empty($userId) ||
-            empty($goalIdentifier) ||
-            !(is_null($campaignKey) || is_array($campaignKey) || is_string($campaignKey))
+        if (empty($userId)
+            || empty($goalIdentifier)
+            || !(is_null($campaignKey) || is_array($campaignKey) || is_string($campaignKey))
         ) {
             LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['TRACK_API_MISSING_PARAMS']);
             return null;
@@ -614,7 +611,7 @@ class VWO
      *
      * @param  $campaignKey
      * @param  $userId
-     * @param int $trackVisitor
+     * @param  int $trackVisitor
      * @return null|string
      */
     private function getVariation($campaignKey, $userId, $options = [], $trackVisitor = 0)
@@ -722,9 +719,8 @@ class VWO
         LoggerService::setApiName(self::$apiName);
 
         try {
-            if (
-                !ValidationsUtil::pushApiParams($tagKey, $tagValue, $userId) ||
-                !ValidationsUtil::checkSettingSchema($this->settings)
+            if (!ValidationsUtil::pushApiParams($tagKey, $tagValue, $userId)
+                || !ValidationsUtil::checkSettingSchema($this->settings)
             ) {
                 return false;
             }

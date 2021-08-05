@@ -114,9 +114,10 @@ class Validations
      * @param  array  $campaign
      * @param  string $userId
      * @param  array  $options
+     * @param  bool   $disableLogs optional: disable logs if True
      * @return bool
      */
-    public static function checkPreSegmentation($campaign, $userId, $options)
+    public static function checkPreSegmentation($campaign, $userId, $options, $disableLogs = false)
     {
         $customVariables = CommonUtil::getValueFromOptions($options, 'customVariables');
         $segment = new SegmentEvaluator();
@@ -126,18 +127,19 @@ class Validations
                 Logger::INFO,
                 LogMessages::INFO_MESSAGES['SEGMENTATION_STATUS'],
                 [
-                             '{status}' => $response === true ? 'passed' : 'failed',
-                             '{campaignKey}' => $campaign['key'],
-                             '{userId}' => $userId,
-                             '{customVariables}' => json_encode($customVariables),
-                             '{segmentationType}' => 'pre-segmentation',
-                             '{variation}' => ''
-                         ],
-                self::$CLASSNAME
+                     '{status}' => $response === true ? 'passed' : 'failed',
+                     '{campaignKey}' => $campaign['key'],
+                     '{userId}' => $userId,
+                     '{customVariables}' => json_encode($customVariables),
+                     '{segmentationType}' => 'pre-segmentation',
+                     '{variation}' => ''
+                ],
+                self::$CLASSNAME,
+                $disableLogs
             );
             return $response;
         } else {
-            LoggerService::log(Logger::INFO, LogMessages::INFO_MESSAGES['SEGMENTATION_SKIPPED'], ['{campaignKey}' => $campaign['key'],'{userId}' => $userId,'{variation}' => '']);
+            LoggerService::log(Logger::INFO, LogMessages::INFO_MESSAGES['SEGMENTATION_SKIPPED'], ['{campaignKey}' => $campaign['key'],'{userId}' => $userId,'{variation}' => ''], self::$CLASSNAME, $disableLogs);
             return true;
         }
     }

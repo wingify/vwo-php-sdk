@@ -27,6 +27,7 @@ interface LoggerInterface
 {
     /**
      * logger function which helps in adding log to the third party
+     *
      * @param  $msg
      * @param  $level
      * @return mixed

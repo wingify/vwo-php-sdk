@@ -39,6 +39,7 @@ class Campaign
     private static $CLASSNAME = 'vwo\Utils\Campaign';
     /**
      * to set the range on the setting level means to each and every campaign
+     *
      * @param  array $settings
      * @return array
      * @throws \Exception
@@ -57,35 +58,39 @@ class Campaign
     /**
      * if the whitelisting condition get satisfied then this function
      * will evaluate which variation is assigned as per conditions
-     * @param $campaign
-     * @param $userId
-     * @param $options
+     *
+     * @param  $campaign
+     * @param  $userId
+     * @param  $options
+     * @param  bool $disableLogs disable logs if True
      * @return array|null
      */
-    public static function findVariationFromWhiteListing($campaign, $userId, $options)
+    public static function findVariationFromWhiteListing($campaign, $userId, $options, $disableLogs = false)
     {
         $bucketInfo = null;
         if (isset($campaign['isForcedVariationEnabled']) && $campaign['isForcedVariationEnabled'] == true) {
             $variationTargetingVariables = CommonUtil::getValueFromOptions($options, 'variationTargetingVariables');
-            $bucketInfo = self::getForcedBucket($campaign, $userId, $variationTargetingVariables);
+            $bucketInfo = self::getForcedBucket($campaign, $userId, $variationTargetingVariables, $disableLogs);
             $status = $bucketInfo != null ? 'satisfy' : "didn't satisfy";
 
-            LoggerService::log(Logger::DEBUG, LogMessages::INFO_MESSAGES['WHITELISTING_ELIGIBILITY_STATUS'], ['{status}' => $status, '{userId}' => $userId, '{variation}' => $status == 'satisfy' ? $bucketInfo['name'] : 'no', '{campaign_key}' => $campaign['key'], '{variation_targeting_variables}' => json_encode($variationTargetingVariables)], self::$CLASSNAME);
+            LoggerService::log(Logger::DEBUG, LogMessages::INFO_MESSAGES['WHITELISTING_ELIGIBILITY_STATUS'], ['{status}' => $status, '{userId}' => $userId, '{variation}' => $status == 'satisfy' ? $bucketInfo['name'] : 'no', '{campaign_key}' => $campaign['key'], '{variation_targeting_variables}' => json_encode($variationTargetingVariables)], self::$CLASSNAME, $disableLogs);
         } else {
-            LoggerService::log(Logger::INFO, LogMessages::INFO_MESSAGES['WHITELISTING_SKIPPED'], [ '{reason}' => '','{userId}' => $userId, '{campaignKey}' => $campaign['key'],'{variation}' => ''], self::$CLASSNAME);
+            LoggerService::log(Logger::INFO, LogMessages::INFO_MESSAGES['WHITELISTING_SKIPPED'], [ '{reason}' => '','{userId}' => $userId, '{campaignKey}' => $campaign['key'],'{variation}' => ''], self::$CLASSNAME, $disableLogs);
         }
         return $bucketInfo;
     }
 
     /**
      * this function will evaluate the bucket out of
-     * the campaign for whitelisted campaign
-     * @param $campaign
-     * @param $userId
-     * @param $variationTargetingVariables
+     * the campaign for whitelisted variation
+     *
+     * @param  $campaign
+     * @param  $userId
+     * @param  $variationTargetingVariables
+     * @param  bool $disableLogs                 disable logs if True
      * @return array|null
      */
-    private static function getForcedBucket($campaign, $userId, $variationTargetingVariables)
+    private static function getForcedBucket($campaign, $userId, $variationTargetingVariables, $disableLogs = false)
     {
         $variationTargetingVariables['_vwoUserId'] = $userId;
         $validVariations = [];
@@ -98,9 +103,9 @@ class Campaign
                     $totalVariationTraffic += $variation['weight'];
                     $validVariations[] = $variation;
                 }
-                LoggerService::log(Logger::INFO, LogMessages::INFO_MESSAGES['SEGMENTATION_STATUS'], [ '{userId}' => $userId, '{campaignKey}' => $campaign['key'],'{segmentationType}' => 'whitelisting','{variation}' => 'for variation:' . $variation['name'],'{status}' => $result === true ? 'passed' : 'failed','{customVariables}' => json_encode($variationTargetingVariables)], self::$CLASSNAME);
+                LoggerService::log(Logger::INFO, LogMessages::INFO_MESSAGES['SEGMENTATION_STATUS'], [ '{userId}' => $userId, '{campaignKey}' => $campaign['key'],'{segmentationType}' => 'whitelisting','{variation}' => 'for variation:' . $variation['name'],'{status}' => $result === true ? 'passed' : 'failed','{customVariables}' => json_encode($variationTargetingVariables)], self::$CLASSNAME, $disableLogs);
             } else {
-                LoggerService::log(Logger::INFO, LogMessages::INFO_MESSAGES['WHITELISTING_SKIPPED'], [ '{reason}' => 'segment was missing, hence','{userId}' => $userId, '{campaignKey}' => $campaign['key'],'{variation}' => 'for variation:' . $variation['name']], self::$CLASSNAME);
+                LoggerService::log(Logger::INFO, LogMessages::INFO_MESSAGES['WHITELISTING_SKIPPED'], [ '{reason}' => 'segment was missing, hence','{userId}' => $userId, '{campaignKey}' => $campaign['key'],'{variation}' => 'for variation:' . $variation['name']], self::$CLASSNAME, $disableLogs);
             }
         }
         $totalValidVariations = count($validVariations);
@@ -136,8 +141,9 @@ class Campaign
     /**
      * scale vartion of every varition used in case when
      * multiple vartions satisfy whitelisting condition
-     * @param $variations
-     * @param $totalVariationTraffic
+     *
+     * @param  $variations
+     * @param  $totalVariationTraffic
      * @return mixed
      */
     private static function scaleVariations($variations, $totalVariationTraffic)
@@ -156,5 +162,65 @@ class Campaign
             $variations[$key]['weight'] = $newWeight;
         }
         return $variations;
+    }
+
+    /**
+     * It extracts the weights from all the campaigns and scales them so that
+     * the total sum of eligible campaigns' weights become 100%.
+     *
+     * @param  array $campaigns campaigns part of group which were eligible to be winner
+     * @return array
+     */
+    public static function scaleCampaigns($campaigns)
+    {
+        $normalizedWeight = 100 / count($campaigns);
+        foreach ($campaigns as $index => $campaign) {
+            $campaigns[$index]["weight"] = $normalizedWeight;
+        }
+        return $campaigns;
+    }
+
+    /**
+     * Checks whether a campaign is part of a group.
+     *
+     * @param  array $settings   Settings file for the project
+     * @param  int   $campaignId Id of campaign which is to be checked
+     * @return bool
+     */
+    public static function isPartOfGroup($settings, $campaignId)
+    {
+        if (isset($settings["campaignGroups"]) && $settings["campaignGroups"] && array_key_exists($campaignId, $settings["campaignGroups"])) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns campaigns which are part of given group using group_id.
+     *
+     * @param  array $settings Settings file for the project
+     * @param  int   $groupId  id of group whose campaigns are to be return
+     * @return array
+     */
+    public static function getGroupCampaigns($settings, $groupId)
+    {
+        $groupCampaignIds = [];
+        $groupCampaigns = [];
+        $groups = $settings["groups"];
+
+        if($groups && array_key_exists($groupId, $groups)) {
+            $groupCampaignIds = $groups[$groupId]["campaigns"];
+        }
+
+        if($groupCampaignIds) {
+            foreach ($groupCampaignIds as $campaignId) {
+                foreach ($settings["campaigns"] as $campaign) {
+                    if($campaign["id"] == $campaignId && $campaign["status"] == 'RUNNING') {
+                        $groupCampaigns[] = $campaign;
+                    }
+                }
+            }
+        }
+        return $groupCampaigns;
     }
 }

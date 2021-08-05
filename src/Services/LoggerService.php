@@ -46,15 +46,16 @@ class LoggerService
         self::$apiName = $apiName;
     }
      /**
-     * function to log to the default/ custom logger
-     *
-     * @param  $level
-     * @param  $message
-     * @param array $params
-     * @param string $classname
-     * @return bool
-     */
-    public static function log($level, $message, $params = [], $classname = '')
+      * function to log to the default/ custom logger
+      *
+      * @param  $level
+      * @param  $message
+      * @param  array  $params
+      * @param  string $classname
+      * @param  bool   $disableLogs disable logs if True
+      * @return bool
+      */
+    public static function log($level, $message, $params = [], $classname = '', $disableLogs = false)
     {
         if (self::$_logger == null) {
             self::$_logger = new VWOLogger(Logger::DEBUG, 'php://stdout');
@@ -63,7 +64,9 @@ class LoggerService
             $classname = self::name();
         }
         $message = CommonUtil::buildLogMessage($message, $params, $classname, self::$apiName);
-        self::$_logger->log($message, $level);
+        if(!$disableLogs) {
+            self::$_logger->log($message, $level);
+        }
 
         return false;
     }
