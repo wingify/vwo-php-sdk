@@ -187,8 +187,16 @@ class VWOTest extends TestCase
                         'shouldTrackReturningUser' => $shouldTrackReturningUser
                     ]
                 );
-                $this->vwoInstance->eventDispatcher = TestUtil::mockEventDispatcher($this);
                 $userId = $this->users[1];
+                if($campaignKey == 'FEATURE_ROLLOUT_ONLY') {
+                    $variationInfo = [
+                        'userId' => $userId,
+                        'variationName' => 'website',
+                        'campaignKey' => $campaignKey
+                    ];
+                    $this->vwoInstance->_userStorageObj = TestUtil::mockUserStorageInterface($this, $variationInfo);
+                }
+                $this->vwoInstance->eventDispatcher = TestUtil::mockEventDispatcher($this);
                 $value1 = $this->vwoInstance->isFeatureEnabled($campaignKey, $userId);
                 $value2 = $this->vwoInstance->getFeatureVariableValue($campaignKey, 'V1', $userId);
                 $variationName = $this->vwoInstance->getVariationName($campaignKey, $userId);
@@ -215,8 +223,18 @@ class VWOTest extends TestCase
                     $this->settings8,
                     ['isDevelopmentMode' => 1, 'isUserStorage' => 1]
                 );
-                $this->vwoInstance->eventDispatcher = TestUtil::mockEventDispatcher($this);
+
                 $userId = $this->users[1];
+                if($campaignKey == 'FEATURE_ROLLOUT_ONLY') {
+                    $variationInfo = [
+                        'userId' => $userId,
+                        'variationName' => 'website',
+                        'campaignKey' => $campaignKey
+                    ];
+                    $this->vwoInstance->_userStorageObj = TestUtil::mockUserStorageInterface($this, $variationInfo);
+                }
+
+                $this->vwoInstance->eventDispatcher = TestUtil::mockEventDispatcher($this);
                 $options = ['shouldTrackReturningUser' => $shouldTrackReturningUser];
                 $value1 = $this->vwoInstance->isFeatureEnabled($campaignKey, $userId, $options);
                 $value2 = $this->vwoInstance->getFeatureVariableValue($campaignKey, 'V1', $userId, $options);
@@ -716,5 +734,43 @@ class VWOTest extends TestCase
         $this->assertEquals(0, isset($additionalData['is_ss']));
         $this->assertEquals(1, $additionalData['tru']);
         $this->assertEquals(0, isset($additionalData['gt']));
+    }
+
+    public function testGetFeatureVariableValueFailPriorCampaignActivationForFeatureRollout()
+    {
+        $this->vwoInstance = TestUtil::instantiateSdk(
+            $this->settings8,
+            [
+                'isDevelopmentMode' => 1,
+                'isUserStorage' => 1
+            ]
+        );
+        $userId = $this->users[1];
+        $campaignKey = 'FEATURE_ROLLOUT_ONLY';
+        $value = $this->vwoInstance->getFeatureVariableValue($campaignKey, 'V1', $userId);
+        $this->assertEquals(null, $value);
+    }
+
+    public function testGetFeatureVariableValuePassAfterCampaignActivationForFeatureRollout()
+    {
+        $this->vwoInstance = TestUtil::instantiateSdk(
+            $this->settings8,
+            [
+                'isDevelopmentMode' => 1,
+                'isUserStorage' => 1
+            ]
+        );
+        $this->vwoInstance->eventDispatcher = TestUtil::mockEventDispatcher($this);
+        $userId = $this->users[1];
+        $campaignKey = 'FEATURE_ROLLOUT_ONLY';
+
+        $variationInfo = [
+            'userId' => $userId,
+            'variationName' => 'website',
+            'campaignKey' => $campaignKey
+        ];
+        $this->vwoInstance->_userStorageObj = TestUtil::mockUserStorageInterface($this, $variationInfo);
+        $value = $this->vwoInstance->getFeatureVariableValue($campaignKey, 'V1', $userId);
+        $this->assertEquals(10, $value);
     }
 }
