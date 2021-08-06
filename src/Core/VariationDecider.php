@@ -129,7 +129,6 @@ class VariationDecider
                 );
                 if (in_array($apiName, ['track', 'getVariationName', 'getFeatureVariableValue'])
                     && !empty($userStorageObj)
-                    && $campaign['type'] != CampaignTypes::FEATURE_ROLLOUT
                 ) {
                     LoggerService::log(
                         Logger::DEBUG,

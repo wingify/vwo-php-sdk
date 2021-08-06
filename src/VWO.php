@@ -267,21 +267,19 @@ class VWO
                     ['{featureKey}' => $campaignKey, '{userId}' => $userId, '{status}' => 'disabled']
                 );
 
-                if ($campaign['type'] == CampaignTypes::FEATURE_TEST) {
-                    if ($this->isEligibleToSendImpressionToVWO($options)) {
-                        $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_USER_URL, 'GET', $parameters);
-                        LoggerService::log(
-                            Logger::INFO,
-                            LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
-                            ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)]
-                        );
-                    } else {
-                        LoggerService::log(
-                            Logger::INFO,
-                            LogMessages::INFO_MESSAGES['USER_ALREADY_TRACKED'],
-                            ['{userId}' => $userId, '{campaignKey}' => $campaignKey, '{api}' => self::$apiName]
-                        );
-                    }
+                if ($this->isEligibleToSendImpressionToVWO($options)) {
+                    $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_USER_URL, 'GET', $parameters);
+                    LoggerService::log(
+                        Logger::INFO,
+                        LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
+                        ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)]
+                    );
+                } else {
+                    LoggerService::log(
+                        Logger::INFO,
+                        LogMessages::INFO_MESSAGES['USER_ALREADY_TRACKED'],
+                        ['{userId}' => $userId, '{campaignKey}' => $campaignKey, '{api}' => self::$apiName]
+                    );
                 }
 
                 return false;
@@ -293,33 +291,31 @@ class VWO
                     ['{featureKey}' => $campaignKey, '{userId}' => $userId, '{status}' => 'enabled']
                 );
 
-                if ($campaign['type'] != CampaignTypes::FEATURE_ROLLOUT) {
-                    if ($this->isEligibleToSendImpressionToVWO($options)) {
-                        $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_USER_URL, 'GET', $parameters);
-                        LoggerService::log(
-                            Logger::INFO,
-                            LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
-                            ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)]
-                        );
+                if ($this->isEligibleToSendImpressionToVWO($options)) {
+                    $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_USER_URL, 'GET', $parameters);
+                    LoggerService::log(
+                        Logger::INFO,
+                        LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
+                        ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)]
+                    );
 
-                        if (!$this->isDevelopmentMode) {
-                            LoggerService::log(
-                                Logger::INFO,
-                                LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS_FOR_FEATURE'],
-                                [
-                                '{endPoint}' => 'track-user',
-                                '{campaignId}' => $campaign['id'],
-                                '{accountId}' => $this->settings['accountId']
-                                ]
-                            );
-                        }
-                    } else {
+                    if (!$this->isDevelopmentMode) {
                         LoggerService::log(
                             Logger::INFO,
-                            LogMessages::INFO_MESSAGES['USER_ALREADY_TRACKED'],
-                            ['{userId}' => $userId, '{campaignKey}' => $campaignKey, '{api}' => self::$apiName]
+                            LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS_FOR_FEATURE'],
+                            [
+                            '{endPoint}' => 'track-user',
+                            '{campaignId}' => $campaign['id'],
+                            '{accountId}' => $this->settings['accountId']
+                            ]
                         );
                     }
+                } else {
+                    LoggerService::log(
+                        Logger::INFO,
+                        LogMessages::INFO_MESSAGES['USER_ALREADY_TRACKED'],
+                        ['{userId}' => $userId, '{campaignKey}' => $campaignKey, '{api}' => self::$apiName]
+                    );
                 }
                 return true;
             }
