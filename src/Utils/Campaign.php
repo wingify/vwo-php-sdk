@@ -112,7 +112,7 @@ class Campaign
         if ($totalValidVariations == 1) {
             return $validVariations[0];
         } elseif ($totalValidVariations > 1) {
-            return self::evaluateBestVariation($validVariations, $totalVariationTraffic, $userId);
+            return self::evaluateBestVariation($validVariations, $totalVariationTraffic, $userId, $campaign);
         }
         return null;
     }
@@ -121,15 +121,16 @@ class Campaign
      * @param  $validVariations
      * @param  $totalVariationTraffic
      * @param  $userId
+     * @param  $campaign
      * @return null| array of variation
      */
-    private static function evaluateBestVariation($validVariations, $totalVariationTraffic, $userId)
+    private static function evaluateBestVariation($validVariations, $totalVariationTraffic, $userId, $campaign)
     {
         //scale and assign ranges to the variations
         $validVariations = self::scaleVariations($validVariations, $totalVariationTraffic);
         $validVariations = Bucketer::addRangesToVariations($validVariations);
         //find murmur
-        $bucketVal = Bucketer::getBucketVal($userId, Bucketer::$MAX_CAMPAIGN_TRAFFIC);
+        $bucketVal = Bucketer::getBucketVal($userId, $campaign);
         //get range according to murmur
         $rangeForVariation = Bucketer::getRangeForVariations($bucketVal);
         //get variation

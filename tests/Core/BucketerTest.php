@@ -60,4 +60,31 @@ class BucketerTest extends TestCase
             $this->assertEquals(true, is_null($result));
         }
     }
+
+    public function testGetBucketValue()
+    {
+        $campaign = ["id" => 1, "isBucketingSeedEnabled" => true];
+        $bucketValue = Bucketer::getBucketVal("someone@mail.com", $campaign);
+        $bucketValue = Bucketer::getRangeForVariations($bucketValue);
+        $this->assertEquals($bucketValue, 2444);
+
+        $campaign["isBucketingSeedEnabled"] = false;
+        $bucketValue = Bucketer::getBucketVal("someone@mail.com", $campaign);
+        $bucketValue = Bucketer::getRangeForVariations($bucketValue);
+        $this->assertEquals($bucketValue, 6361);
+    }
+
+    public function testGetBucketValueForUser1111111111111111()
+    {
+        $campaign = ["id" => 1, "isBucketingSeedEnabled" => true];
+        $bucketValue = Bucketer::getBucketVal("1111111111111111", $campaign);
+        $bucketValue = Bucketer::getRangeForVariations($bucketValue);
+        $this->assertEquals($bucketValue, 8177);
+
+        $campaign["isBucketingSeedEnabled"] = false;
+        $bucketValue = Bucketer::getBucketVal("1111111111111111", $campaign);
+        $bucketValue = Bucketer::getRangeForVariations($bucketValue);
+        $this->assertEquals($bucketValue, 4987);
+    }
+
 }

@@ -82,7 +82,7 @@ class Bucketer
     public static function getBucket($userId, $campaign, $disableLogs = false)
     {
         // if bucketing to be done
-        $bucketVal = self::getBucketVal($userId, self::$MAX_CAMPAIGN_TRAFFIC);
+        $bucketVal = self::getBucketVal($userId, $campaign);
         if (!self::isUserPartofCampaign($bucketVal, $campaign['percentTraffic'])) {
             LoggerService::log(Logger::DEBUG, LogMessages::DEBUG_MESSAGES['USER_NOT_PART_OF_CAMPAIGN'], ['{userId}' => $userId, '{method}' => 'getBucket', '{campaignKey}' => $campaign['key']], self::$CLASSNAME, $disableLogs);
             return null;
@@ -141,8 +141,11 @@ class Bucketer
     * Copyright 2016-2019, Optimizely, used under Apache 2.0 License.
     * Source - https://github.com/optimizely/php-sdk/blob/master/src/Optimizely/Bucketer.php
     */
-    public static function getBucketVal($str)
+    public static function getBucketVal($str, $campaign)
     {
+        if(isset($campaign["isBucketingSeedEnabled"]) && $campaign["isBucketingSeedEnabled"]) {
+            $str = $campaign["id"] . '_' . $str;
+        }
         $code = self::getmurmurHash_Int($str);
         $range = $code / self::$MAX_VALUE;
         if ($range < 0) {
