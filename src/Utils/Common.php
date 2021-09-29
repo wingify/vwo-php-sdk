@@ -50,7 +50,7 @@ class Common
      * method to create the input array for user-storage set function
      *
      * @param  string $campaignKey
-     * @param  array $variation
+     * @param  array  $variation
      * @param  string $userId
      * @param  string $goalIdentifier
      * @return array
@@ -118,22 +118,23 @@ class Common
     public static function typeCast($value, $type)
     {
         switch ($type) {
-            case 'double':
-                return (float)$value;
-            case 'string':
-                return (string)$value;
-            case 'boolean':
-                return (bool)$value;
-            case 'integer':
-                return (int)$value;
-            case 'json':
-                return $value;
+        case 'double':
+            return (float)$value;
+        case 'string':
+            return (string)$value;
+        case 'boolean':
+            return (bool)$value;
+        case 'integer':
+            return (int)$value;
+        case 'json':
+            return $value;
         }
     }
 
     /**
      * this is used to fetch the main variation of the campaign
      * mostly used where default values need to assigned
+     *
      * @param  $variations
      * @return null
      */
@@ -175,10 +176,10 @@ class Common
             return $options[$optionName];
         }
         switch ($optionName) {
-            case 'customVariables':
-                return [];
-            case 'variationTargetingVariables':
-                return [];
+        case 'customVariables':
+            return [];
+        case 'variationTargetingVariables':
+            return [];
         }
         return null;
     }

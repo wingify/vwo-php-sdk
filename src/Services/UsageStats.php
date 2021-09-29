@@ -33,9 +33,12 @@ class UsageStats
         $this->usageStats = [];
         if (!$isDevelopmentMode) {
             if (isset($config['integrations'])) {
-                $stats['is_i'] = 1;
+                $stats['ig'] = 1;
             }
             $this->usageStats = $stats;
+            if (count($this->usageStats)) {
+                $this->usageStats['_l'] = 1;
+            }
         }
     }
 

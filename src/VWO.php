@@ -74,8 +74,6 @@ class VWO
      */
     var $isDevelopmentMode;
 
-    private $shouldTrackReturningUser;
-
     private $goalTypeToTrack;
 
     const GOAL_TYPES = [
@@ -113,28 +111,15 @@ class VWO
         } elseif ($logger instanceof LoggerInterface) {
             LoggerService::setLogger($logger);
             LoggerService::log(Logger::DEBUG, LogMessages::DEBUG_MESSAGES['CUSTOM_LOGGER_USED']);
-            $usageStats['is_cl'] = 1;
+            $usageStats['cl'] = 1;
         }
 
         // user storage service
         if (isset($config['userStorageService']) && ($config['userStorageService'] instanceof UserStorageInterface)) {
             $this->_userStorageObj = $config['userStorageService'];
-            $usageStats['is_ss'] = 1;
+            $usageStats['ss'] = 1;
         } else {
             $this->_userStorageObj = '';
-        }
-
-        if (isset($config['shouldTrackReturningUser'])) {
-            if (is_bool($config['shouldTrackReturningUser'])) {
-                $this->shouldTrackReturningUser = $config['shouldTrackReturningUser'];
-                if ($this->shouldTrackReturningUser) {
-                    $usageStats['tru'] = 1;
-                }
-            } else {
-                LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['INVALID_TRACK_RETURNING_USER_VALUE']);
-            }
-        } else {
-            $this->shouldTrackReturningUser = false;
         }
 
         if (isset($config['goalTypeToTrack'])) {
@@ -214,7 +199,6 @@ class VWO
     {
         self::$apiName = 'isFeatureEnabled';
         LoggerService::setApiName(self::$apiName);
-        $options['shouldTrackReturningUser'] = $this->getShouldTrackReturningUser($options);
 
         try {
             LoggerService::log(
@@ -267,7 +251,7 @@ class VWO
                     ['{featureKey}' => $campaignKey, '{userId}' => $userId, '{status}' => 'disabled']
                 );
 
-                if ($this->isEligibleToSendImpressionToVWO($options)) {
+                if ($this->isEligibleToSendImpressionToVWO()) {
                     $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_USER_URL, 'GET', $parameters);
                     LoggerService::log(
                         Logger::INFO,
@@ -280,6 +264,7 @@ class VWO
                         LogMessages::INFO_MESSAGES['USER_ALREADY_TRACKED'],
                         ['{userId}' => $userId, '{campaignKey}' => $campaignKey, '{api}' => self::$apiName]
                     );
+
                 }
 
                 return false;
@@ -291,7 +276,7 @@ class VWO
                     ['{featureKey}' => $campaignKey, '{userId}' => $userId, '{status}' => 'enabled']
                 );
 
-                if ($this->isEligibleToSendImpressionToVWO($options)) {
+                if ($this->isEligibleToSendImpressionToVWO()) {
                     $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_USER_URL, 'GET', $parameters);
                     LoggerService::log(
                         Logger::INFO,
@@ -437,7 +422,6 @@ class VWO
         $revenueValue = CommonUtil::getValueFromOptions($options, 'revenueValue');
         $bucketInfo = null;
 
-        $options['shouldTrackReturningUser'] = $this->getShouldTrackReturningUser($options);
 
         if (empty($userId)
             || empty($goalIdentifier)
@@ -507,7 +491,7 @@ class VWO
                         if (!in_array($goalIdentifier, $identifiers)) {
                             $bucketInfo['goalIdentifier'] .=  "_vwo_$goalIdentifier";
                             $this->variationDecider->userStorageSet($this->_userStorageObj, $userId, $campaign['key'], $bucketInfo, $bucketInfo['goalIdentifier']);
-                        } elseif (!$options['shouldTrackReturningUser']) {
+                        } else {
                             LoggerService::log(
                                 Logger::INFO,
                                 LogMessages::INFO_MESSAGES['GOAL_ALREADY_TRACKED'],
@@ -593,7 +577,6 @@ class VWO
         self::$apiName = 'activate';
         LoggerService::setApiName(self::$apiName);
 
-        $options['shouldTrackReturningUser'] = $this->getShouldTrackReturningUser($options);
         LoggerService::log(
             Logger::INFO,
             LogMessages::INFO_MESSAGES['API_CALLED'],
@@ -635,7 +618,7 @@ class VWO
             $bucketInfo = $this->variationDecider->fetchVariationData($this->_userStorageObj, $campaign, $userId, $options, $trackVisitor ? 'activate' : 'getVariationName');
             if ($bucketInfo !== null) {
                 if ($trackVisitor) {
-                    if ($this->isEligibleToSendImpressionToVWO($options)) {
+                    if ($this->isEligibleToSendImpressionToVWO()) {
                         $parameters = ImpressionBuilder::getVisitorQueryParams(
                             $this->settings['accountId'],
                             $campaign,
@@ -762,26 +745,11 @@ class VWO
         return $sdkKey;
     }
 
-    public function getShouldTrackReturningUser($options)
-    {
-        if (!isset($options['shouldTrackReturningUser'])) {
-            if (isset($this->shouldTrackReturningUser)) {
-                $options['shouldTrackReturningUser'] = $this->shouldTrackReturningUser;
-            } else {
-                $options['shouldTrackReturningUser'] = false;
-            }
-        } elseif (!is_bool($options['shouldTrackReturningUser'])) {
-            LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['INVALID_TRACK_RETURNING_USER_VALUE']);
-        }
-        return $options['shouldTrackReturningUser'];
-    }
-
-    private function isEligibleToSendImpressionToVWO($options)
+    private function isEligibleToSendImpressionToVWO()
     {
         return (
             empty($this->_userStorageObj) ||
-            !$this->variationDecider->hasStoredVariation ||
-            (isset($options['shouldTrackReturningUser']) && $options['shouldTrackReturningUser'])
+            !$this->variationDecider->hasStoredVariation
         );
     }
 
@@ -789,7 +757,7 @@ class VWO
     {
         $goalTypeToTrack = null;
         if (!isset($options['goalTypeToTrack'])) {
-            if (isset($this->shouldTrackReturningUser)) {
+            if ($this->goalTypeToTrack) {
                 $goalTypeToTrack = $this->goalTypeToTrack;
             } else {
                 $goalTypeToTrack = self::GOAL_TYPES['ALL'];

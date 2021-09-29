@@ -32,6 +32,7 @@ class SegmentEvaluator
     /**
      * it will take variables provided by customer and setting file
      * and check whether conditions satosfy or not
+     *
      * @param  array $dsl
      * @param  array $customVariables
      * @return bool

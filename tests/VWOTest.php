@@ -169,85 +169,6 @@ class VWOTest extends TestCase
         }
     }
 
-    public function testForUser()//test for shouldTrackReturningUser flag(passing in config array) on 'isFeatureEnabled','getFeatureVariableValue','getVariationName','activate' APIs
-    {
-        $shouldTrackReturningUserArray = [true, false, null];
-        $campaignKeys = ['DEV_TEST_8','FEATURE_ROLLOUT_ONLY','FEATURE_TEST'];
-        $expectedForIsFeatureEnabled = [[null, null, null], [1, 1, 1], [1, 1, 1]];
-        $expectedForGetFeatureVariableValue = [null, 10, 10];
-        $expectedForGetVariationName = ['Control', null, 'Control'];
-        $expectedForActivate = ['Control', null, null];
-        foreach ($shouldTrackReturningUserArray as $item => $shouldTrackReturningUser) {
-            foreach ($campaignKeys as $index => $campaignKey) {
-                $this->vwoInstance = TestUtil::instantiateSdk(
-                    $this->settings8,
-                    [
-                        'isDevelopmentMode' => 1,
-                        'isUserStorage' => 1,
-                        'shouldTrackReturningUser' => $shouldTrackReturningUser
-                    ]
-                );
-                $userId = $this->users[1];
-                if($campaignKey == 'FEATURE_ROLLOUT_ONLY') {
-                    $variationInfo = [
-                        'userId' => $userId,
-                        'variationName' => 'website',
-                        'campaignKey' => $campaignKey
-                    ];
-                    $this->vwoInstance->_userStorageObj = TestUtil::mockUserStorageInterface($this, $variationInfo);
-                }
-                $this->vwoInstance->eventDispatcher = TestUtil::mockEventDispatcher($this);
-                $value1 = $this->vwoInstance->isFeatureEnabled($campaignKey, $userId);
-                $value2 = $this->vwoInstance->getFeatureVariableValue($campaignKey, 'V1', $userId);
-                $variationName = $this->vwoInstance->getVariationName($campaignKey, $userId);
-                $this->assertEquals($expectedForIsFeatureEnabled[$index][$item], $value1);
-                $this->assertEquals($expectedForGetFeatureVariableValue[$index], $value2);
-                $this->assertEquals($expectedForGetVariationName[$index], $variationName);
-                $variationName = $this->vwoInstance->activate($campaignKey, $userId);
-                $this->assertEquals($expectedForActivate[$index], $variationName);
-            }
-        }
-    }
-
-    public function testForUser1()//test for shouldTrackReturningUser flag(passing in options array) on 'isFeatureEnabled','getFeatureVariableValue','getVariationName','activate' APIs
-    {
-        $shouldTrackReturningUserArray = [true, false, null];
-        $campaignKeys = ['DEV_TEST_8','FEATURE_ROLLOUT_ONLY','FEATURE_TEST'];
-        $expectedForIsFeatureEnabled = [[null, null, null], [1, 1, 1], [1, 1, 1]];
-        $expectedForGetFeatureVariableValue = [null, 10, 10];
-        $expectedForGetVariationName = ['Control', null, 'Control'];
-        $expectedForActivate = ['Control', null, null];
-        foreach ($shouldTrackReturningUserArray as $item => $shouldTrackReturningUser) {
-            foreach ($campaignKeys as $index => $campaignKey) {
-                $this->vwoInstance = TestUtil::instantiateSdk(
-                    $this->settings8,
-                    ['isDevelopmentMode' => 1, 'isUserStorage' => 1]
-                );
-
-                $userId = $this->users[1];
-                if($campaignKey == 'FEATURE_ROLLOUT_ONLY') {
-                    $variationInfo = [
-                        'userId' => $userId,
-                        'variationName' => 'website',
-                        'campaignKey' => $campaignKey
-                    ];
-                    $this->vwoInstance->_userStorageObj = TestUtil::mockUserStorageInterface($this, $variationInfo);
-                }
-
-                $this->vwoInstance->eventDispatcher = TestUtil::mockEventDispatcher($this);
-                $options = ['shouldTrackReturningUser' => $shouldTrackReturningUser];
-                $value1 = $this->vwoInstance->isFeatureEnabled($campaignKey, $userId, $options);
-                $value2 = $this->vwoInstance->getFeatureVariableValue($campaignKey, 'V1', $userId, $options);
-                $variationName = $this->vwoInstance->getVariationName($campaignKey, $userId, $options);
-                $this->assertEquals($expectedForIsFeatureEnabled[$index][$item], $value1);
-                $this->assertEquals($expectedForGetFeatureVariableValue[$index], $value2);
-                $this->assertEquals($expectedForGetVariationName[$index], $variationName);
-                $variationName = $this->vwoInstance->activate($campaignKey, $userId, $options);
-                $this->assertEquals($expectedForActivate[$index], $variationName);
-            }
-        }
-    }
-
     public function testGetVariationName()
     {
         for ($devtest = 1; $devtest < 7; $devtest++) {
@@ -275,14 +196,7 @@ class VWOTest extends TestCase
         ];
         $sdkInstance = new VWO($config);
         $result = $sdkInstance->track("DEV_TEST_1", $this->users[0], $goalIdentifier, []);
-        $this->assertEquals(null, $result);
-    }
-
-    public function testShouldTrackReturningUserNotBoolean()
-    {
-        $this->vwoInstance = TestUtil::instantiateSdk($this->settings1, ['isUserStorage' => 1]);
-        $result = $this->vwoInstance->track("DEV_TEST_1", $this->users[0], 'CUSTOM', ['shouldTrackReturningUser' => 3]);
-        $this->assertEquals(true, $result);
+        $this->assertEquals(false, $result);
     }
 
     public function testGoalTypeToTrackInvalid()
@@ -358,12 +272,12 @@ class VWOTest extends TestCase
         }
     }
 
-    public function testTrackGoalTypeToTrackAndShouldTrackReturningUser()// passed 'shouldTrackReturningUser' is true in config
+    public function testTrackGoalTypeToTrackInConfig()// passing 'goalTypeToTrack' in config
     {
         $campaignKeys = ['DEV_TEST_1', 'DEV_TEST_3', 'DEV_TEST_4'];
         $settingsFile = $this->settings9;
         foreach (self::GOAL_TYPES as $goalType) {
-            $this->vwoInstance = TestUtil::instantiateSdk($settingsFile, ['isDevelopmentMode' => 1, 'goalTypeToTrack' => $goalType, 'shouldTrackReturningUser' => true]);
+            $this->vwoInstance = TestUtil::instantiateSdk($settingsFile, ['isDevelopmentMode' => 1, 'goalTypeToTrack' => $goalType]);
             $this->vwoInstance->eventDispatcher = TestUtil::mockEventDispatcher($this);
             $options = [];
             if ($goalType == 'REVENUE') {
@@ -391,12 +305,12 @@ class VWOTest extends TestCase
         }
     }
 
-    public function testTrackCampaignKeyNull()// campaignKey is null and goalTypeToTrack and shouldTrackReturningUser(false) in Config
+    public function testTrackCampaignKeyNull()// campaignKey is null and goalTypeToTrack in Config
     {
         $goalType = 'CUSTOM';
         $campaignKeys = null;
         $settingsFile = $this->settings9;
-        $this->vwoInstance = TestUtil::instantiateSdk($settingsFile, ['isDevelopmentMode' => 1, 'shouldTrackReturningUser' => false, 'goalTypeToTrack' => $goalType]);
+        $this->vwoInstance = TestUtil::instantiateSdk($settingsFile, ['isDevelopmentMode' => 1, 'goalTypeToTrack' => $goalType]);
         $this->vwoInstance->eventDispatcher = TestUtil::mockEventDispatcher($this);
         $options = [];
         $goalname = 'CUSTOM';
@@ -446,29 +360,6 @@ class VWOTest extends TestCase
             $this->assertEquals(true, is_null($goalNotPresentResponse));
             $this->assertEquals(false, $revenueGoalButNoValue);
             $this->assertEquals(true, is_null($revenueGoalWithValueResponse) == false && $revenueGoalWithValueResponse == true);
-        }
-    }
-
-    public function testTrackForUser()
-    {
-        $shouldTrackReturningUserArray = [true, false, null];
-        foreach ($shouldTrackReturningUserArray as $shouldTrackReturningUser) {
-            $this->vwoInstance = TestUtil::instantiateSdk(
-                $this->settings8,
-                ['isUserStorage' => 1, 'shouldTrackReturningUser' => $shouldTrackReturningUser]
-            );
-            $this->vwoInstance->eventDispatcher = TestUtil::mockEventDispatcher($this);
-            $campaignKey = $this->settings8['campaigns'][2]['key'];
-            $userId = $this->users[0];
-            $goalName = 'dsa';
-            $result = $this->vwoInstance->track($campaignKey, $userId, $goalName);
-            $expected = $this->variationResults[$campaignKey][$userId];
-            if ($expected == null) {
-                $expected = false;
-            } else {
-                $expected = true;
-            }
-            $this->assertEquals($expected, $result);
         }
     }
 
@@ -669,7 +560,6 @@ class VWOTest extends TestCase
             'settingsFile' => $this->settings1,
             'logging' => new CustomLogger(),
             'userStorageService' => new UserStorageTest(),
-            'shouldTrackReturningUser' => true,
             'goalTypeToTrack' => 'CUSTOM',
             'integrations' => [
                 'callback' => function ($properties) {
@@ -678,11 +568,12 @@ class VWOTest extends TestCase
         ];
         $obj = new VWO($config);
         $additionalData = $obj->usageStats->getUsageStats();
-        $this->assertEquals(1, $additionalData['is_i']);
-        $this->assertEquals(1, $additionalData['is_cl']);
-        $this->assertEquals(1, $additionalData['is_ss']);
-        $this->assertEquals(1, $additionalData['tru']);
-        $this->assertEquals(1, $additionalData['gt']);
+
+        $this->assertEquals(true, $additionalData['ig']);
+        $this->assertEquals(true, $additionalData['cl']);
+        $this->assertEquals(true, $additionalData['ss']);
+        $this->assertEquals(true, $additionalData['gt']);
+        $this->assertEquals(true, isset($additionalData['_l']));
     }
 
     public function testAdditionalDataForLoggingAndIntegrations()
@@ -697,11 +588,11 @@ class VWOTest extends TestCase
         ];
         $obj = new VWO($config);
         $additionalData = $obj->usageStats->getUsageStats();
-        $this->assertEquals(1, $additionalData['is_i']);
-        $this->assertEquals(1, $additionalData['is_cl']);
-        $this->assertEquals(0, isset($additionalData['is_ss']));
-        $this->assertEquals(0, isset($additionalData['tru']));
-        $this->assertEquals(0, isset($additionalData['gt']));
+        $this->assertEquals(true, $additionalData['ig']);
+        $this->assertEquals(true, $additionalData['cl']);
+        $this->assertEquals(false, isset($additionalData['ss']));
+        $this->assertEquals(false, isset($additionalData['gt']));
+        $this->assertEquals(true, isset($additionalData['_l']));
     }
 
     public function testAdditionalDataForUserStorageAndGoalTypeToTrack()
@@ -713,27 +604,57 @@ class VWOTest extends TestCase
         ];
         $obj = new VWO($config);
         $additionalData = $obj->usageStats->getUsageStats();
-        $this->assertEquals(0, isset($additionalData['is_i']));
-        $this->assertEquals(0, isset($additionalData['is_cl']));
-        $this->assertEquals(1, $additionalData['is_ss']);
-        $this->assertEquals(0, isset($additionalData['tru']));
-        $this->assertEquals(1, $additionalData['gt']);
+        $this->assertEquals(false, isset($additionalData['ig']));
+        $this->assertEquals(false, isset($additionalData['cl']));
+        $this->assertEquals(true, $additionalData['ss']);
+        $this->assertEquals(true, $additionalData['gt']);
+        $this->assertEquals(true, isset($additionalData['_l']));
     }
 
-    public function testAdditionalDataForLoggingAndShouldTrackReturningUser()
+    public function testAdditionalDataForLogging()
+    {
+        $config = [
+            'settingsFile' => $this->settings1,
+            'logging' => new CustomLogger()
+        ];
+        $obj = new VWO($config);
+        $additionalData = $obj->usageStats->getUsageStats();
+        $this->assertEquals(false, isset($additionalData['ig']));
+        $this->assertEquals(true, $additionalData['cl']);
+        $this->assertEquals(false, isset($additionalData['ss']));
+        $this->assertEquals(false, isset($additionalData['gt']));
+        $this->assertEquals(true, isset($additionalData['_l']));
+    }
+
+    public function testAdditionalDataForDevelopmentMode()
     {
         $config = [
             'settingsFile' => $this->settings1,
             'logging' => new CustomLogger(),
-            'shouldTrackReturningUser' => true
+            'shouldTrackReturningUser' => true,
+            'isDevelopmentMode' => true
         ];
         $obj = new VWO($config);
         $additionalData = $obj->usageStats->getUsageStats();
-        $this->assertEquals(0, isset($additionalData['is_i']));
-        $this->assertEquals(1, $additionalData['is_cl']);
-        $this->assertEquals(0, isset($additionalData['is_ss']));
-        $this->assertEquals(1, $additionalData['tru']);
-        $this->assertEquals(0, isset($additionalData['gt']));
+        $this->assertEquals(false, isset($additionalData['ig']));
+        $this->assertEquals(false, isset($additionalData['cl']));
+        $this->assertEquals(false, isset($additionalData['ss']));
+        $this->assertEquals(false, isset($additionalData['gt']));
+        $this->assertEquals(false, isset($additionalData['_l']));
+    }
+
+    public function testNoAdditional()
+    {
+        $config = [
+            'settingsFile' => $this->settings1,
+        ];
+        $obj = new VWO($config);
+        $additionalData = $obj->usageStats->getUsageStats();
+        $this->assertEquals(false, isset($additionalData['ig']));
+        $this->assertEquals(false, isset($additionalData['cl']));
+        $this->assertEquals(false, isset($additionalData['ss']));
+        $this->assertEquals(false, isset($additionalData['gt']));
+        $this->assertEquals(false, isset($additionalData['_l']));
     }
 
     public function testGetFeatureVariableValueFailPriorCampaignActivationForFeatureRollout()

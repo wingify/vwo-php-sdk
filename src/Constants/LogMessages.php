@@ -58,7 +58,7 @@ class LogMessages
     const INFO_MESSAGES = [
         'VARIATION_RANGE_ALLOCATION' => '({file}): Campaign:{campaignKey} having variations:{variationName} with weight:{variationWeight} got range as: ( {start} - {end} ))',
         'VARIATION_ALLOCATED' => '({file}): UserId:{userId} of Campaign:{campaignKey} got variation: {variationName}',
-        'GETTING_UP_USER_STORAGE_SERVICE' => '({file}): Getting data into UserStorageService for userId:{userId} successful',
+        'GETTING_UP_USER_STORAGE_SERVICE' => '({file}): Getting data from UserStorageService for userId:{userId} successful',
         'SETTING_DATA_USER_STORAGE_SERVICE' => '({file}): Setting data into UserStorageService for userId:{userId} successful',
         'GOT_STORED_VARIATION' => '({file}): Got stored variation:{variationName} of campaign:{campaignKey} for userId:{userId} from UserStorageService',
         'NO_VARIATION_ALLOCATED' => '({file}): UserId:{userId} of Campaign:{campaignKey} did not get any variation',
@@ -84,7 +84,7 @@ class LogMessages
         'WHITELISTING_SKIPPED' => '({file}): For userId:{userId} of campaign:{campaignKey},{reason} whitelisting was skipped {variation}',
         'SEGMENTATION_SKIPPED' => '({file}): For userId:{userId} of campaign:{campaignKey}, segment was missing, hence skipping segmentation{variation}',
         'SEGMENTATION_STATUS' => '({file}): For userId:{userId} of campaign:{campaignKey} with variables:{customVariables} {status} {segmentationType} {variation}',
-        'GOAL_ALREADY_TRACKED' => '({file}): "Goal:{goalIdentifer} of Campaign:{campaignKey} for User ID:{userId} has already been tracked earlier. Skipping now',
+        'GOAL_ALREADY_TRACKED' => '({file}): "Goal:{goalIdentifier} of Campaign:{campaignKey} for User ID:{userId} has already been tracked earlier. Skipping now',
         'CAMPAIGN_NOT_ACTIVATED' => '({file}): Activate the campaign:{campaignKey} for User ID:{userId} to {reason}.',
         'USER_ALREADY_TRACKED' => '({file}): "User ID:{userId} for Campaign:{campaignKey} has already been tracked earlier for "{api}" API. Skipping now',
         'GOT_ELIGIBLE_CAMPAIGNS' => '({file}): Got {noOfEligibleCampaigns} eligible winners out of {noOfGroupCampaigns} from the Group:{name} and for User ID:{userId}',
@@ -127,7 +127,6 @@ class LogMessages
         'ACTIVATE_API_MISSING_PARAMS' => '({file}): "activate" API got bad parameters. It expects campaignKey(String) as first, userId(String) as second and options(optional Object) as third argument',
         'SEGMENTATION_ERROR' => '({file}): Error while segmenting the userId:{userId} of campaignKey:{campaignKey}{variation} with customVariables:{customVariables}. Error message: {err}',
         'NO_CAMPAIGN_FOUND' => '({file}): No campaign found for goalIdentifier:{goalIdentifier}. Please verify from VWO app.',
-        'INVALID_TRACK_RETURNING_USER_VALUE' => '{{file}): shouldTrackReturningUser should be boolean',
         'INVALID_GOAL_TYPE' => '({file}): goalTypeToTrack should be certain strings'
     ];
 }

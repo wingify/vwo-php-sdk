@@ -38,7 +38,7 @@ class EventDispatcher
      * API to track data
      *
      * @param string url
-     * @param array $parameters
+     * @param array      $parameters
      *
      * @return boolean
      */
@@ -68,7 +68,7 @@ class EventDispatcher
      *
      * @param string $url
      * @param string $method
-     * @param array $params
+     * @param array  $params
      *
      * @return void
      */

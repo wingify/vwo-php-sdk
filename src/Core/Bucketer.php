@@ -133,7 +133,7 @@ class Bucketer
      * return range of the current string value
      *
      * @param  $str
-     * @param  $maxPercent
+     * @param  $campaign
      * @return float|int
      */
     /*
@@ -141,7 +141,7 @@ class Bucketer
     * Copyright 2016-2019, Optimizely, used under Apache 2.0 License.
     * Source - https://github.com/optimizely/php-sdk/blob/master/src/Optimizely/Bucketer.php
     */
-    public static function getBucketVal($str, $campaign)
+    public static function getBucketVal($str, $campaign = [])
     {
         if(isset($campaign["isBucketingSeedEnabled"]) && $campaign["isBucketingSeedEnabled"]) {
             $str = $campaign["id"] . '_' . $str;

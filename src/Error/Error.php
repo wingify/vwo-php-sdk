@@ -35,6 +35,7 @@ namespace vwo\Error;
 
 /**
  * Base class for API exceptions. Used if failOnError is TRUE.
+ *
  * @codeCoverageIgnore
  */
 class Error extends \Exception

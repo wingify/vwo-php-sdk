@@ -26,7 +26,7 @@ class ImpressionBuilder
     /**
      * sdk version for api hit
      */
-    const SDK_VERSION = '1.22.0';
+    const SDK_VERSION = '1.23.0';
     /**
      * sdk langauge for api hit
      */
@@ -56,10 +56,9 @@ class ImpressionBuilder
             'goal_id' => $goal['id']
         );
 
-        if (
-            $goal['type'] == "REVENUE_TRACKING" && (is_string($revenueValue) || is_float(
-                $revenueValue
-            ) || is_int($revenueValue))
+        if ($goal['type'] == "REVENUE_TRACKING" && (is_string($revenueValue) || is_float(
+            $revenueValue
+        ) || is_int($revenueValue))
         ) {
             $params['r'] = $revenueValue;
         }
@@ -108,7 +107,7 @@ class ImpressionBuilder
      *
      * @param $accountId
      * @param $userId
-     * @param array $params - tomerge with
+     * @param array $params    - tomerge with
      *
      * @return array
      */
