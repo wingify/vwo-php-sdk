@@ -220,7 +220,7 @@ class Validations
                     if ($variable["type"] != 'json' && $variable["type"] != gettype($variable["value"])) {
                         return false;
                     } elseif ($variable["type"] == 'json') {
-                        if (!is_object(json_decode($variable["value"])) && !is_array(json_decode($variable["value"]))) {
+                        if (!is_array($variable["value"])) {
                             return false;
                         }
                     }
