@@ -65,7 +65,7 @@ class LoggerService
         }
         $message = CommonUtil::buildLogMessage($message, $params, $classname, self::$apiName);
         if(!$disableLogs) {
-            self::$_logger->log($message, $level);
+            self::$_logger->log($level, $message);
         }
 
         return false;

@@ -19,9 +19,9 @@
 namespace vwo;
 
 use Exception;
+use vwo\Logger\AbstractLogger;
 use vwo\Services\LoggerService;
 use vwo\Storage\UserStorageInterface;
-use vwo\Logger\LoggerInterface;
 
 class TestUtil
 {
@@ -138,15 +138,12 @@ class TestUtil
 /**
  * Class CustomLogger
  */
-class CustomLogger implements LoggerInterface
+class CustomLogger extends AbstractLogger
 {
-
     /**
-     * @param  $message
-     * @param  $level
-     * @return string
+     * @inheritdoc
      */
-    public function log($message, $level)
+    public function log($level, $message, array $context = array())
     {
         // echo $level . ' - ' . $message . PHP_EOL;
     }

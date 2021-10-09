@@ -19,6 +19,7 @@
 namespace vwo;
 
 use Exception as Exception;
+use Psr\Log\LoggerInterface;
 use vwo\Constants\Constants as Constants;
 use vwo\Constants\Urls as UrlConstants;
 use vwo\Constants\CampaignTypes;
@@ -32,7 +33,6 @@ use vwo\Utils\Validations as ValidationsUtil;
 use vwo\Utils\ImpressionBuilder as ImpressionBuilder;
 use vwo\Utils\EventDispatcher as EventDispatcher;
 use Monolog\Logger as Logger;
-use vwo\Logger\LoggerInterface;
 use vwo\Services\LoggerService as LoggerService;
 use vwo\Logger\VWOLogger as VWOLogger;
 use vwo\Core\Bucketer as Bucketer;

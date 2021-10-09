@@ -21,6 +21,7 @@ namespace vwo\Logger;
 use Monolog\Logger as Logger;
 use Monolog\Handler\StreamHandler;
 use Monolog\Formatter\LineFormatter;
+use Psr\Log\LoggerInterface;
 
 /***
  * Class VWOLogger
@@ -28,7 +29,7 @@ use Monolog\Formatter\LineFormatter;
  *
  * @package vwo\Logger
  */
-class VWOLogger implements LoggerInterface
+class VWOLogger extends AbstractLogger
 {
     var $logger;
 
@@ -86,15 +87,11 @@ class VWOLogger implements LoggerInterface
         return new LineFormatter("[%datetime%] %channel%.%level_name%: %message%\n");
     }
 
-    /***
-     * to add logs to monolog
-     *
-     * @param  $msg
-     * @param  int $level
-     * @return mixed|void
+    /**
+     * @inheritdoc
      */
-    public function log($msg, $level = Logger::INFO)
+    public function log($level, $message, array $context = array())
     {
-        $x = $this->logger->addRecord($level, $msg);
+        $this->logger->addRecord($level, $message, $context);
     }
 }
