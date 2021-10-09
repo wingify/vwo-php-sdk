@@ -100,25 +100,23 @@ Class UserStorage implements UserStorageInterface{
 
 **Code for implementing Custom Logger**
 
+Please see [the PSR-3 logger spec](https://www.php-fig.org/psr/psr-3/) for more information on the LoggerInterface.
+
 ```php
 <?php
 require_once('vendor/autoload.php');
-use vwo\Logger\LoggerInterface;
+use vwo\Logger\AbstractLogger;
 
 /**
  * Class CustomLogger
  */
-Class CustomLogger implements LoggerInterface{
-  /**
-    * @param $message
-    * @param $level
-    *
-    * @return
-    */
-  public function log($message, $level){
-    // use $level and log $message to either print or store them for later use
-  }
-
+Class CustomLogger extends AbstractLogger{
+    /**
+     * @inheritdoc
+     */
+    public function log($level, $message, array $context = array()){
+        // use $level and log $message to either print or store them for later use
+    }
 }
 ```
 
