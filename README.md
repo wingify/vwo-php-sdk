@@ -149,7 +149,7 @@ composer run-script test
 3. Run linter
 
 ```bash
-composer run-script test
+composer run-script lint
 ```
 
 4. Run code beautifier
