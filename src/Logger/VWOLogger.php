@@ -21,7 +21,6 @@ namespace vwo\Logger;
 use Monolog\Logger as Logger;
 use Monolog\Handler\StreamHandler;
 use Monolog\Formatter\LineFormatter;
-use Psr\Log\LoggerInterface;
 
 /***
  * Class VWOLogger
