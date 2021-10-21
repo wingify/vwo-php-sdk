@@ -19,6 +19,7 @@
 namespace vwo\Utils;
 
 use Monolog\Logger;
+use vwo\Constants\CampaignTypes;
 use vwo\Core\Bucketer;
 use vwo\Services\LoggerService;
 use vwo\Utils\Common as CommonUtil;
@@ -73,7 +74,19 @@ class Campaign
             $bucketInfo = self::getForcedBucket($campaign, $userId, $variationTargetingVariables, $disableLogs);
             $status = $bucketInfo != null ? 'satisfy' : "didn't satisfy";
 
-            LoggerService::log(Logger::DEBUG, LogMessages::INFO_MESSAGES['WHITELISTING_ELIGIBILITY_STATUS'], ['{status}' => $status, '{userId}' => $userId, '{variation}' => $status == 'satisfy' ? $bucketInfo['name'] : 'no', '{campaign_key}' => $campaign['key'], '{variation_targeting_variables}' => json_encode($variationTargetingVariables)], self::$CLASSNAME, $disableLogs);
+            LoggerService::log(
+                Logger::DEBUG,
+                LogMessages::INFO_MESSAGES['WHITELISTING_ELIGIBILITY_STATUS'],
+                [
+                    '{status}' => $status,
+                    '{userId}' => $userId,
+                    '{variation}' => $status == 'satisfy' ? ($campaign["type"] == CampaignTypes::FEATURE_ROLLOUT ? 'and hence becomes part of the rollout' : $bucketInfo['name'] . 'and hence variation is assigned') : '',
+                    '{campaign_key}' => $campaign['key'],
+                    '{variation_targeting_variables}' => json_encode($variationTargetingVariables)
+                ],
+                self::$CLASSNAME,
+                $disableLogs
+            );
         } else {
             LoggerService::log(Logger::INFO, LogMessages::INFO_MESSAGES['WHITELISTING_SKIPPED'], [ '{reason}' => '','{userId}' => $userId, '{campaignKey}' => $campaign['key'],'{variation}' => ''], self::$CLASSNAME, $disableLogs);
         }
@@ -103,9 +116,33 @@ class Campaign
                     $totalVariationTraffic += $variation['weight'];
                     $validVariations[] = $variation;
                 }
-                LoggerService::log(Logger::INFO, LogMessages::INFO_MESSAGES['SEGMENTATION_STATUS'], [ '{userId}' => $userId, '{campaignKey}' => $campaign['key'],'{segmentationType}' => 'whitelisting','{variation}' => 'for variation:' . $variation['name'],'{status}' => $result === true ? 'passed' : 'failed','{customVariables}' => json_encode($variationTargetingVariables)], self::$CLASSNAME, $disableLogs);
+                LoggerService::log(
+                    Logger::INFO,
+                    LogMessages::INFO_MESSAGES['SEGMENTATION_STATUS'],
+                    [
+                        '{userId}' => $userId,
+                        '{campaignKey}' => $campaign['key'],
+                        '{segmentationType}' => 'whitelisting',
+                        '{variation}' => $campaign['type'] == CampaignTypes::FEATURE_ROLLOUT ? '' : 'for variation:' . $variation['name'],
+                        '{status}' => $result === true ? 'passed' : 'failed',
+                        '{customVariables}' => json_encode($variationTargetingVariables)
+                    ],
+                    self::$CLASSNAME,
+                    $disableLogs
+                );
             } else {
-                LoggerService::log(Logger::INFO, LogMessages::INFO_MESSAGES['WHITELISTING_SKIPPED'], [ '{reason}' => 'segment was missing, hence','{userId}' => $userId, '{campaignKey}' => $campaign['key'],'{variation}' => 'for variation:' . $variation['name']], self::$CLASSNAME, $disableLogs);
+                LoggerService::log(
+                    Logger::INFO,
+                    LogMessages::INFO_MESSAGES['WHITELISTING_SKIPPED'],
+                    [
+                        '{reason}' => 'segment was missing, hence',
+                        '{userId}' => $userId,
+                        '{campaignKey}' => $campaign['key'],
+                        '{variation}' => $campaign['type'] == CampaignTypes::FEATURE_ROLLOUT ? '' : 'for variation:' . $variation['name']
+                    ],
+                    self::$CLASSNAME,
+                    $disableLogs
+                );
             }
         }
         $totalValidVariations = count($validVariations);

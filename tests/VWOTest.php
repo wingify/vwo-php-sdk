@@ -694,4 +694,82 @@ class VWOTest extends TestCase
         $value = $this->vwoInstance->getFeatureVariableValue($campaignKey, 'V1', $userId);
         $this->assertEquals(10, $value);
     }
+
+    public function testFRWhitelisting()
+    {
+        $campaignKey = 'FEATURE_ROLLOUT_KEY';
+        $options = ['variationTargetingVariables' => ['chrome' => false]];
+
+        $settings = FRWhitelistingSettings::setUp();
+
+        $vwoInstance = TestUtil::instantiateSdk($settings);
+        $vwoInstance->eventDispatcher = TestUtil::mockEventDispatcher($this);
+        foreach ($this->users as $userId) {
+            $isFeatureEnabled = $vwoInstance->isFeatureEnabled($campaignKey, $userId, $options);
+            $variableValue = $vwoInstance->getFeatureVariableValue($campaignKey, 'V1', $userId, $options);
+
+            $this->assertEquals(true, $isFeatureEnabled);
+            $this->assertEquals(10, $variableValue);
+        }
+    }
+
+    public function testFRWhitelistingPassWhenTrafficZero()
+    {
+        $campaignKey = 'FEATURE_ROLLOUT_KEY';
+        $options = ['variationTargetingVariables' => ['chrome' => false]];
+
+        $settings = FRWhitelistingSettings::setUp();
+        $settings["campaigns"][0]["percentTraffic"] = 0;
+
+        $vwoInstance = TestUtil::instantiateSdk($settings);
+        $vwoInstance->eventDispatcher = TestUtil::mockEventDispatcher($this);
+        foreach ($this->users as $userId) {
+            $isFeatureEnabled = $vwoInstance->isFeatureEnabled($campaignKey, $userId, $options);
+            $variableValue = $vwoInstance->getFeatureVariableValue($campaignKey, 'V1', $userId, $options);
+
+            $this->assertEquals(true, $isFeatureEnabled);
+            $this->assertEquals(10, $variableValue);
+        }
+    }
+
+    public function testFRWhitelistingNotPassed()
+    {
+        $campaignKey = 'FEATURE_ROLLOUT_KEY';
+        $options = ['variationTargetingVariables' => ['chrome' => true]];
+
+        $settings = FRWhitelistingSettings::setUp();
+
+        $vwoInstance = TestUtil::instantiateSdk($settings);
+        $vwoInstance->eventDispatcher = TestUtil::mockEventDispatcher($this);
+        foreach ($this->users as $userId) {
+            $isFeatureEnabled = $vwoInstance->isFeatureEnabled($campaignKey, $userId, $options);
+            $variableValue = $vwoInstance->getFeatureVariableValue($campaignKey, 'V1', $userId, $options);
+
+            $this->assertEquals(true, $isFeatureEnabled);
+            $this->assertEquals(10, $variableValue);
+        }
+    }
+
+    public function testFRWhitelistingNotPassedAndTraffic10()
+    {
+        $campaignKey = 'FEATURE_ROLLOUT_KEY';
+        $options = ['variationTargetingVariables' => ['chrome' => true]];
+
+        $settings = FRWhitelistingSettings::setUp();
+        $settings["campaigns"][0]["percentTraffic"] = 10;
+
+        $vwoInstance = TestUtil::instantiateSdk($settings);
+        $vwoInstance->eventDispatcher = TestUtil::mockEventDispatcher($this);
+        foreach ($this->users as $userId) {
+            $isFeatureEnabled = $vwoInstance->isFeatureEnabled($campaignKey, $userId, $options);
+            $variableValue = $vwoInstance->getFeatureVariableValue($campaignKey, 'V1', $userId, $options);
+
+            $expected = ucfirst($this->variationResults['FR_T_10_WHITELISTING_FAIL'][$userId]);
+            $this->assertEquals($expected, $isFeatureEnabled);
+            if($expected) {
+                $expected = 10;
+            }
+            $this->assertEquals($expected, $variableValue);
+        }
+    }
 }

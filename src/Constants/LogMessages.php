@@ -78,7 +78,7 @@ class LogMessages
         'FEATURE_ENABLED_FOR_USER' => '({file}): Feature having feature-key:{featureKey} for user ID:{userId} is {status}',
         'USER_IN_FEATURE_ROLLOUT' => '({file}): User ID:{userId} is in feature rollout:{featureKey}',
         'USER_NOT_IN_FEATURE_ROLLOUT' => '({file}): User ID:{userId} is NOT in feature rollout:{featureKey}',
-        'WHITELISTING_ELIGIBILITY_STATUS' => '({file}): User ID:{userId} of campaign:{campaign_key} with variation_targeting_variables:{variation_targeting_variables} {status} whitelisting and hence {variation} variation is assigned',
+        'WHITELISTING_ELIGIBILITY_STATUS' => '({file}): User ID:{userId} of campaign:{campaign_key} with variation_targeting_variables:{variation_targeting_variables} {status} whitelisting {variation}',
         'VARIABLE_FOUND' => '({file}): Value for variable:{variableKey} of campaign:{campaignKey} is:{variableValue} for user:{userId}',
         'VARIABLE_NOT_FOUND' => '({file}): Value for variable:{variableKey} of campaign:{campaignKey} is not found for user:{userId}',
         'WHITELISTING_SKIPPED' => '({file}): For userId:{userId} of campaign:{campaignKey},{reason} whitelisting was skipped {variation}',

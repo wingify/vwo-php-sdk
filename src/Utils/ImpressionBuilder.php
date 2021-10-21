@@ -26,7 +26,7 @@ class ImpressionBuilder
     /**
      * sdk version for api hit
      */
-    const SDK_VERSION = '1.23.1';
+    const SDK_VERSION = '1.23.2';
     /**
      * sdk langauge for api hit
      */

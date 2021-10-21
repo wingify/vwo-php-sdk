@@ -261,11 +261,7 @@ class VariationDecider
                 );
             }
         } else {
-            if ($campaign['type'] === CampaignTypes::AB) {
-                $decision['isUserWhitelisted'] = !!$bucketInfo['name'];
-            } elseif ($campaign['type'] === CampaignTypes::FEATURE_TEST) {
-                $decision['isUserWhitelisted'] = $bucketInfo['isFeatureEnabled'];
-            }
+            $decision['isUserWhitelisted'] = true;
         }
 
         if ($bucketInfo != null) {

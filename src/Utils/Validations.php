@@ -139,7 +139,17 @@ class Validations
             );
             return $response;
         } else {
-            LoggerService::log(Logger::INFO, LogMessages::INFO_MESSAGES['SEGMENTATION_SKIPPED'], ['{campaignKey}' => $campaign['key'],'{userId}' => $userId,'{variation}' => ''], self::$CLASSNAME, $disableLogs);
+            LoggerService::log(
+                Logger::INFO,
+                LogMessages::INFO_MESSAGES['SEGMENTATION_SKIPPED'],
+                [
+                    '{campaignKey}' => $campaign['key'],
+                    '{userId}' => $userId,
+                    '{variation}' => ''
+                ],
+                self::$CLASSNAME,
+                $disableLogs
+            );
             return true;
         }
     }

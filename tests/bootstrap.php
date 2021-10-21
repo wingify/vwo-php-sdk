@@ -31,5 +31,6 @@ require 'assets/SettingsFileMEG.php';
 require 'assets/SettingsWithPreSegmentation.php';
 require 'assets/SegmentEvaluatorJson.php';
 require 'assets/WhitelistingJson.php';
+require 'assets/FRWhitelistingSettings.php';
 require 'assets/VariationResults.php';
 require 'TestUtil.php';

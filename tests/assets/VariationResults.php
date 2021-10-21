@@ -871,5 +871,34 @@ class VariationResults
                 'Zeba'
                 => 'Variation-1'
             ],
+        'FR_T_10_WHITELISTING_FAIL' => [
+            'Ashley' => false,
+            'Bill' => false,
+            'Chris' => false,
+            'Dominic' => false,
+            'Emma' => false,
+            'Faizan' => true,
+            'Gimmy' => false,
+            'Harry' => false,
+            'Ian' => false,
+            'John' => false,
+            'King' => false,
+            'Lisa' => true,
+            'Mona' => true,
+            'Nina' => true,
+            'Olivia' => false,
+            'Pete' => false,
+            'Queen' => true,
+            'Robert' => false,
+            'Sarah' => false,
+            'Tierra' => false,
+            'Una' => false,
+            'Varun' => false,
+            'Will' => false,
+            'Xin' => false,
+            'You' => false,
+            'Zeba' => false
+        ]
+
     ];
 }
