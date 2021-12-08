@@ -105,7 +105,11 @@ class Campaign
      */
     private static function getForcedBucket($campaign, $userId, $variationTargetingVariables, $disableLogs = false)
     {
-        $variationTargetingVariables['_vwoUserId'] = $userId;
+        if(isset($campaign["isUserListEnabled"]) && $campaign["isUserListEnabled"]) {
+            $variationTargetingVariables['_vwoUserId'] = UuidUtil::get($userId, AccountUtil::instance()->getAccountId());
+        } else {
+            $variationTargetingVariables['_vwoUserId'] = $userId;
+        }
         $validVariations = [];
         $totalVariationTraffic = 0;
         $segmentObj = new SegmentEvaluator();

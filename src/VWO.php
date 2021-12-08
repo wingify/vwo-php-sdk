@@ -26,6 +26,7 @@ use vwo\Constants\LogMessages as LogMessages;
 use vwo\Services\HooksManager;
 use vwo\Services\UsageStats;
 use vwo\Storage\UserStorageInterface;
+use vwo\Utils\AccountUtil;
 use vwo\Utils\Campaign as CampaignUtil;
 use vwo\Utils\Common as CommonUtil;
 use vwo\Utils\Validations as ValidationsUtil;
@@ -151,6 +152,8 @@ class VWO
         $this->variationDecider = new VariationDecider($this->settings);
         if (isset($this->settings['accountId'])) {
             $this->variationDecider->setAccountId($this->settings['accountId']);
+            $accountUtil = AccountUtil::instance();
+            $accountUtil->setAccountId($this->settings['accountId']);
         }
         // Initialize Hooks manager so that callbacks can be invoked
         $this->variationDecider->setHooksManager(new HooksManager($config));

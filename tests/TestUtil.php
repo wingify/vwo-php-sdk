@@ -122,10 +122,6 @@ class TestUtil
             $config['goalTypeToTrack'] =  $options['goalTypeToTrack'];
         }
 
-        if (isset($options['shouldTrackReturningUser'])) {
-            $config['shouldTrackReturningUser'] =  $options['shouldTrackReturningUser'];
-        }
-
         if (isset($options['integrations'])) {
             $config['integrations'] = $options['integrations'];
         }

@@ -20,6 +20,7 @@ namespace vwo;
 
 use PHPUnit\Framework\TestCase;
 use Exception as Exception;
+use vwo\Utils\AccountUtil;
 use vwo\Utils\SegmentEvaluator;
 
 /***
@@ -498,6 +499,7 @@ class VWOTest extends TestCase
     {
         $whitlistingEvaluatorJson = new SegmentEvaluatorJson();
         $segmentData = json_decode(str_replace('\\', '\\\\', $whitlistingEvaluatorJson->setting), 1);
+        AccountUtil::instance()->setAccountId(null);
 
         foreach ($segmentData as $key => $segments) {
             foreach ($segments as $segment) {
@@ -513,7 +515,7 @@ class VWOTest extends TestCase
 
     public function testWhitelisting()
     {
-        $data = ['camapaignKey' => 'DEV_TEST_6', 'userId' => 'user_1'];
+        $data = ['campaignKey' => 'DEV_TEST_6', 'userId' => 'user_1'];
         $whitelistingTags = [
             'chrome' => false,
             'safari' => true,
@@ -532,8 +534,8 @@ class VWOTest extends TestCase
 
         $this->vwoInstance = TestUtil::instantiateSdk($whitelistingSetting);
         $this->vwoInstance->eventDispatcher = TestUtil::mockEventDispatcher($this);
-        $variationName = $this->vwoInstance->getVariationName($data['camapaignKey'], $data['userId'], ['variationTargetingVariables' => $whitelistingTags, 'customVariables' => $customVariables]);
-        $variationNameForFalse = $this->vwoInstance->getVariationName($data['camapaignKey'], $data['userId'], ['variationTargetingVariables' => $falseWhiteListingTags, 'customVariables' => $customVariables]);
+        $variationName = $this->vwoInstance->getVariationName($data['campaignKey'], $data['userId'], ['variationTargetingVariables' => $whitelistingTags, 'customVariables' => $customVariables]);
+        $variationNameForFalse = $this->vwoInstance->getVariationName($data['campaignKey'], $data['userId'], ['variationTargetingVariables' => $falseWhiteListingTags, 'customVariables' => $customVariables]);
 
         $expected1 = 'Variation-2';
         $expected2 = 'Control';
@@ -550,7 +552,7 @@ class VWOTest extends TestCase
             ]
         );
 
-        $variationName = $this->vwoInstance->getVariationName($data['camapaignKey'], $data['userId'], ['variationTargetingVariables' => $whitelistingTags, 'customVariables' => $customVariables]);
+        $variationName = $this->vwoInstance->getVariationName($data['campaignKey'], $data['userId'], ['variationTargetingVariables' => $whitelistingTags, 'customVariables' => $customVariables]);
         $this->assertEquals($expected1, $variationName);
     }
 
@@ -631,7 +633,6 @@ class VWOTest extends TestCase
         $config = [
             'settingsFile' => $this->settings1,
             'logging' => new CustomLogger(),
-            'shouldTrackReturningUser' => true,
             'isDevelopmentMode' => true
         ];
         $obj = new VWO($config);
