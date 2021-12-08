@@ -19,6 +19,7 @@
 namespace vwo\Utils;
 
 use Monolog\Logger as Logger;
+use vwo\Constants\Urls;
 use vwo\Services\LoggerService;
 use vwo\Constants\LogMessages as LogMessages;
 use vwo\HttpHandler\Connection as Connection;
@@ -107,5 +108,24 @@ class EventDispatcher
         // Send Request
         fwrite($socketConnection, $request);
         fclose($socketConnection);
+    }
+
+    public function sendPost($params = [], $postData = [])
+    {
+        if (self::$isDevelopmentMode) {
+            return false;
+        } else {
+            $connection = new Connection();
+
+            $url = Urls::EVENTS . '?' . http_build_query($params);
+            $connection->addHeader('User-Agent', ImpressionBuilder::SDK_LANGUAGE);
+            $response = $connection->post($url, $postData);
+        }
+
+        if (isset($response['httpStatus']) && $response['httpStatus'] == 200) {
+            return $response;
+        }
+        LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['IMPRESSION_FAILED'], ['{endPoint}' => $url, '{reason}' => '']);
+        return false;
     }
 }

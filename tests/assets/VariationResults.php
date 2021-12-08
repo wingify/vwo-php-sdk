@@ -871,6 +871,36 @@ class VariationResults
                 'Zeba'
                 => 'Variation-1'
             ],
+
+        'FEATURE_TEST' => [
+            'Ashley' => true,
+            'Bill' => true,
+            'Chris' => false,
+            'Dominic' => false,
+            'Emma' => true,
+            'Faizan' => true,
+            'Gimmy' => false,
+            'Harry' => true,
+            'Ian' => true,
+            'John' => true,
+            'King' => false,
+            'Lisa' => true,
+            'Mona' => true,
+            'Nina' => false,
+            'Olivia' => true,
+            'Pete' => false,
+            'Queen' => false,
+            'Robert' => true,
+            'Sarah' => true,
+            'Tierra' => false,
+            'Una' => true,
+            'Varun' => true,
+            'Will' => false,
+            'Xin' => true,
+            'You' => false,
+            'Zeba' => true
+        ],
+
         'FR_T_10_WHITELISTING_FAIL' => [
             'Ashley' => false,
             'Bill' => false,
@@ -899,6 +929,5 @@ class VariationResults
             'You' => false,
             'Zeba' => false
         ]
-
     ];
 }

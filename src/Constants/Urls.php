@@ -23,25 +23,31 @@ class Urls
     /**
      * base url for api hit
      */
-    const BASE_URL = 'https://dev.visualwebsiteoptimizer.com/server-side/';
+    const BASE_URL = 'https://dev.visualwebsiteoptimizer.com/';
+
+    const SERVER_SIDE_URI = 'server-side/';
     /**
      * query string to fetch settings
      */
-    const SETTINGS_URL = self::BASE_URL . 'settings';
+    const SETTINGS_URL = self::BASE_URL . self:: SERVER_SIDE_URI . 'settings';
     /**
      * query string to fetch settings once webhook is triggered
      */
-    const WEBHOOK_SETTINGS_URL = self::BASE_URL . 'pull';
+    const WEBHOOK_SETTINGS_URL = self::BASE_URL . self:: SERVER_SIDE_URI . 'pull';
     /**
      * query string to track goal
      */
-    const TRACK_GOAL_URL = self::BASE_URL . 'track-goal';
+    const TRACK_GOAL_URL = self::BASE_URL . self:: SERVER_SIDE_URI . 'track-goal';
     /**
      * query string to track user
      */
-    const TRACK_USER_URL = self::BASE_URL . 'track-user';
+    const TRACK_USER_URL = self::BASE_URL . self:: SERVER_SIDE_URI . 'track-user';
     /**
      * query string to push api
      */
-    const PUSH_URL = self::BASE_URL . 'push';
+    const PUSH_URL = self::BASE_URL . self:: SERVER_SIDE_URI . 'push';
+    /**
+     * query string for event arch for track goal, track user and push api APIs
+     */
+    const EVENTS = self::BASE_URL . 'events/t';
 }

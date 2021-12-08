@@ -25,6 +25,8 @@ use vwo\Logger\LoggerInterface;
 
 class TestUtil
 {
+    const TEST_ACCOUNT_ID = 88888888;
+
     public static function getUsers()
     {
         $users = [
@@ -88,7 +90,7 @@ class TestUtil
         return $mockEventDispatcher;
     }
 
-    public static function mockMethodToThrowEception($obj, $className, $method)
+    public static function mockMethodToThrowException($obj, $className, $method)
     {
         $mock = $obj->getMockBuilder($className)->setMethods([$method])->getMock();
         $mock->expects($obj->any())->method($method)->will($obj->throwException(new Exception()));

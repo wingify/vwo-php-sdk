@@ -51,6 +51,7 @@ class Validations
         "properties" => [
             "sdkKey" => ["type" => "string"],
             "version" => ["type" => "number"],
+            "isEventArchEnabled" => ["type" => "boolean"],
             "accountId" => ["type" => "number"],
             "campaigns" => [
                 'type' => 'array',
@@ -78,32 +79,38 @@ class Validations
     /**
      * Validate the tags and userId for push api
      *
-     * @param  string $tagKey
-     * @param  string $tagValue
      * @param  string $userId
+     * @param  array  $customDimensionMap
      * @return bool
      */
-    public static function pushApiParams($tagKey, $tagValue, $userId)
+    public static function pushApiParams($userId, $customDimensionMap = [])
     {
         if (!is_string($userId)  || empty($userId)) {
             LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['INVALID_USER_ID'], ['{userId}' => $userId,'{method}' => 'pushApiParams'], self::$CLASSNAME);
             return false;
         }
-        if (!is_string($tagKey) || empty($tagKey)) {
-            LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['TAG_KEY_CORRUPTED'], ['{tagKey}' => $tagKey,'{method}' => 'pushApiParams'], self::$CLASSNAME);
+
+        if (empty($customDimensionMap) || !is_array($customDimensionMap)) {
             return false;
         }
-        if (strlen($tagKey) > 255) {
-            LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['TAG_KEY_LENGTH_ERROR'], ['{tagKey}' => $tagKey,'{userId}' => $userId,'{method}' => 'pushApiParams'], self::$CLASSNAME);
-            return false;
-        }
-        if (!is_string($tagValue)  || empty($tagValue)) {
-            LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['TAG_VALUE_CORRUPTED'], ['{tagValue}' => $tagValue,'{method}' => 'pushApiParams'], self::$CLASSNAME);
-            return false;
-        }
-        if (strlen($tagValue) > 255) {
-            LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['TAG_VALUE_LENGTH_ERROR'], ['{tagValue}' => $tagValue,'{userId}' => $userId,'{method}' => 'pushApiParams'], self::$CLASSNAME);
-            return false;
+
+        foreach ($customDimensionMap as $tagKey => $tagValue) {
+            if (!is_string($tagKey) || empty($tagKey)) {
+                LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['TAG_KEY_CORRUPTED'], ['{tagKey}' => $tagKey,'{method}' => 'pushApiParams'], self::$CLASSNAME);
+                return false;
+            }
+            if (strlen($tagKey) > 255) {
+                LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['TAG_KEY_LENGTH_ERROR'], ['{tagKey}' => $tagKey,'{userId}' => $userId,'{method}' => 'pushApiParams'], self::$CLASSNAME);
+                return false;
+            }
+            if (!is_string($tagValue)  || empty($tagValue)) {
+                LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['TAG_VALUE_CORRUPTED'], ['{tagValue}' => $tagValue,'{method}' => 'pushApiParams'], self::$CLASSNAME);
+                return false;
+            }
+            if (strlen($tagValue) > 255) {
+                LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['TAG_VALUE_LENGTH_ERROR'], ['{tagValue}' => $tagValue,'{userId}' => $userId,'{method}' => 'pushApiParams'], self::$CLASSNAME);
+                return false;
+            }
         }
 
         return true;

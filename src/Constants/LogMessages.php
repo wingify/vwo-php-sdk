@@ -48,7 +48,10 @@ class LogMessages
         'USER_HASH_BUCKET_VALUE' => '({file}): User ID:{userId} having hash:{hashValue} got bucketValue:{bucketValue}',
         'VARIATION_HASH_BUCKET_VALUE' => '({file}): User ID:{userId} for campaign:{campaignKey} having percent traffic:{percentTraffic} got bucket value:{bucketValue}',
         'CAMPAIGN_NOT_ACTIVATED' => '({file}): Campaign:{campaignKey} for User ID:{userId} is not yet activated for API:{api}. Use activate API to activate A/B test or isFeatureEnabled API to activate Feature Test.',
-        'GOT_ELIGIBLE_CAMPAIGNS' => '({file}): Campaigns:{eligibleCampaignsKey} are eligible, campaigns: {ineligibleCampaignsLogText} are ineligible from the Group:{name} for the User ID:{userId}'
+        'GOT_ELIGIBLE_CAMPAIGNS' => '({file}): Campaigns:{eligibleCampaignsKey} are eligible, campaigns: {ineligibleCampaignsLogText} are ineligible from the Group:{name} for the User ID:{userId}',
+        'IMPRESSION_FOR_EVENT_ARCH_TRACK_USER' => '({file}): impression built for vwo_variationShown event for account ID:{a}, user ID:{u}, and campaign ID:{c}',
+        'IMPRESSION_FOR_EVENT_ARCH_TRACK_GOAL' => '({file}): impression built for {goalName} event for account ID:{a}, user ID:{u}, and campaign ID:{c}',
+        'IMPRESSION_FOR_EVENT_ARCH_PUSH' => '({file}): impression built for visitor property:{property} for account ID:{a} and user ID:{u}'
     ];
 
     /**
@@ -67,6 +70,7 @@ class LogMessages
         'GOT_VARIATION_FOR_USER' => '({file}): userId:{userId} for campaign:{campaignKey} got variationName:{variationName}',
         'USER_GOT_NO_VARIATION' => '({file}): userId:{userId} for campaign:{campaignKey} did not allot any variation',
         'IMPRESSION_SUCCESS' => '({file}): Event sent to VWO - {endPoint} having main keys: accountId:{accountId}, campaignId:{campaignId} and variationId:{variationId}',
+        'IMPRESSION_SUCCESS_FOR_EVENT_ARCH' => '({file}): Impression for {event} - {url} was successfully received by VWO for account ID:{a}',
         'IMPRESSION_SUCCESS_GOAL' => '({file}): Event sent to VWO - {endPoint} having main keys: accountId:{accountId}, campaignId:{campaignId}, variationId:{variationId} and goalId:{goalId}',
         'IMPRESSION_SUCCESS_FOR_FEATURE' => '({file}): Event sent to VWO - {endPoint} having main keys: accountId:{accountId} and campaignId:{campaignId}',
         'IMPRESSION_SUCCESS_PUSH' => '({file}): Event sent to VWO - {endPoint} having main keys: accountId:{accountId} and tags:{tags}',

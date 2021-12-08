@@ -47,9 +47,9 @@ class ValidationsTest extends TestCase
         $tagValue = 'qwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTest';
         $tagValue .= 'qwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTest';
         $tagValue .= 'qwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTest';
-        $useridError = ValidationsUtil::pushApiParams('abc', '', '');
-        $tagValueEmpty = ValidationsUtil::pushApiParams('abc', '', $userId);
-        $tagValueSizeError = ValidationsUtil::pushApiParams('abc', $tagValue, $userId);
+        $useridError = ValidationsUtil::pushApiParams('', ['abc' => '']);
+        $tagValueEmpty = ValidationsUtil::pushApiParams($userId, ['abc' => '']);
+        $tagValueSizeError = ValidationsUtil::pushApiParams($userId, ['abc' => $tagValue]);
         $this->assertEquals(false, $useridError);
         $this->assertEquals(false, $tagValueEmpty);
         $this->assertEquals(false, $tagValueSizeError);

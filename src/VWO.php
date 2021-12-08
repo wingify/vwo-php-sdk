@@ -20,6 +20,8 @@ namespace vwo;
 
 use Exception as Exception;
 use vwo\Constants\Constants as Constants;
+use vwo\Constants\EventEnum;
+use vwo\Constants\Urls;
 use vwo\Constants\Urls as UrlConstants;
 use vwo\Constants\CampaignTypes;
 use vwo\Constants\LogMessages as LogMessages;
@@ -237,14 +239,25 @@ class VWO
             $result['response'] = ((isset($variationData) && !isset($variationData['isFeatureEnabled'])) || (isset($variationData['isFeatureEnabled']) && $variationData['isFeatureEnabled']) == true) ? true : false;
 
             if ($variationData) {
-                $parameters = ImpressionBuilder::getVisitorQueryParams(
-                    $this->settings['accountId'],
-                    $campaign,
-                    $userId,
-                    $variationData['id'],
-                    $this->getSDKKey()
-                );
-                $parameters = array_merge($parameters, $this->usageStats->getUsageStats());
+                if($this->isEventArchEnabled()) {
+                    $parameters = ImpressionBuilder::getEventsBaseProperties($this->settings['accountId'], $this->getSDKKey(), EventEnum::VWO_VARIATION_SHOWN, $this->usageStats->getUsageStats());
+                    $payload = ImpressionBuilder::getTrackUserPayloadData(
+                        $this->settings,
+                        $userId,
+                        EventEnum::VWO_VARIATION_SHOWN,
+                        $campaign['id'],
+                        $variationData['id']
+                    );
+                } else {
+                    $parameters = ImpressionBuilder::getVisitorQueryParams(
+                        $this->settings['accountId'],
+                        $campaign,
+                        $userId,
+                        $variationData['id'],
+                        $this->getSDKKey()
+                    );
+                    $parameters = array_merge($parameters, $this->usageStats->getUsageStats());
+                }
             }
 
             if (isset($variationData) && $result['response'] == false) {
@@ -255,19 +268,22 @@ class VWO
                 );
 
                 if ($this->isEligibleToSendImpressionToVWO()) {
-                    $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_USER_URL, 'GET', $parameters);
-                    LoggerService::log(
-                        Logger::INFO,
-                        LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
-                        ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)]
-                    );
+                    if($this->isEventArchEnabled()) {
+                        $this->eventDispatcher->sendPost($parameters, $payload);
+                    } else {
+                        $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_USER_URL, 'GET', $parameters);
+                        LoggerService::log(
+                            Logger::INFO,
+                            LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
+                            ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)]
+                        );
+                    }
                 } else {
                     LoggerService::log(
                         Logger::INFO,
                         LogMessages::INFO_MESSAGES['USER_ALREADY_TRACKED'],
                         ['{userId}' => $userId, '{campaignKey}' => $campaignKey, '{api}' => self::$apiName]
                     );
-
                 }
 
                 return false;
@@ -280,12 +296,16 @@ class VWO
                 );
 
                 if ($this->isEligibleToSendImpressionToVWO()) {
-                    $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_USER_URL, 'GET', $parameters);
-                    LoggerService::log(
-                        Logger::INFO,
-                        LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
-                        ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)]
-                    );
+                    if($this->isEventArchEnabled()) {
+                        $this->eventDispatcher->sendPost($parameters, $payload);
+                    } else {
+                        $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_USER_URL, 'GET', $parameters);
+                        LoggerService::log(
+                            Logger::INFO,
+                            LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
+                            ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)]
+                        );
+                    }
 
                     if (!$this->isDevelopmentMode) {
                         LoggerService::log(
@@ -441,6 +461,8 @@ class VWO
             return null;
         }
 
+        $metricMap = [];
+        $revenueProps = [];
         $result = [];
         foreach ($campaigns as $campaign) {
             try {
@@ -509,39 +531,47 @@ class VWO
                         }
                     }
 
-                    $parameters = ImpressionBuilder::getConversionQueryParams(
-                        $this->settings['accountId'],
-                        $campaign,
-                        $userId,
-                        $bucketInfo['id'],
-                        $goal,
-                        $revenueValue,
-                        $this->getSDKKey()
-                    );
-                    $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_GOAL_URL, 'GET', $parameters);
-
-                    LoggerService::log(
-                        Logger::INFO,
-                        LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_GOAL'],
-                        array('{properties}' => $this->getAllowedToLogImpressionParams($parameters))
-                    );
+                    if($this->isEventArchEnabled()) {
+                        if($goal['type'] == "REVENUE_TRACKING" && !in_array($goal['revenueProp'], $revenueProps)) {
+                            $revenueProps[] = $goal['revenueProp'];
+                        }
+                        $metricMap[$campaign['id']] = $goal["id"];
+                    } else {
+                        $parameters = ImpressionBuilder::getConversionQueryParams(
+                            $this->settings['accountId'],
+                            $campaign,
+                            $userId,
+                            $bucketInfo['id'],
+                            $goal,
+                            $revenueValue,
+                            $this->getSDKKey()
+                        );
+                        $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_GOAL_URL, 'GET', $parameters);
+                        LoggerService::log(
+                            Logger::INFO,
+                            LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_GOAL'],
+                            array('{properties}' => $this->getAllowedToLogImpressionParams($parameters))
+                        );
+                    }
 
                     if ($this->isDevelopmentMode) {
                         $result[$campaign['key']] = true;
                         continue;
                     }
 
-                    LoggerService::log(
-                        Logger::INFO,
-                        LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS_GOAL'],
-                        [
-                            '{endPoint}' => 'track-goal',
-                            '{campaignId}' => $campaign['id'],
-                            '{variationId}' => $bucketInfo['id'],
-                            '{accountId}' => $this->settings['accountId'],
-                            '{goalId}' => $goal['id']
-                        ]
-                    );
+                    if(!$this->isEventArchEnabled()) {
+                        LoggerService::log(
+                            Logger::INFO,
+                            LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS_GOAL'],
+                            [
+                                '{endPoint}' => 'track-goal',
+                                '{campaignId}' => $campaign['id'],
+                                '{variationId}' => $bucketInfo['id'],
+                                '{accountId}' => $this->settings['accountId'],
+                                '{goalId}' => $goal['id']
+                            ]
+                        );
+                    }
 
                     $result[$campaign['key']] = true;
                 } else {
@@ -555,6 +585,30 @@ class VWO
                 }
             } catch (Exception $e) {
                 LoggerService::log(Logger::ERROR, $e->getMessage());
+            }
+        }
+
+        if($this->isEventArchEnabled()) {
+            $parameters = ImpressionBuilder::getEventsBaseProperties($this->settings['accountId'], $this->getSDKKey(), $goalIdentifier);
+            $payload = ImpressionBuilder::getTrackGoalPayloadData(
+                $this->settings,
+                $userId,
+                $goalIdentifier,
+                $revenueValue,
+                $metricMap,
+                $revenueProps
+            );
+            $this->eventDispatcher->sendPost($parameters, $payload);
+            if($this->isEligibleToSendImpressionToVWO()) {
+                LoggerService::log(
+                    Logger::INFO,
+                    LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS_FOR_EVENT_ARCH'],
+                    [
+                        '{a}' => $parameters["a"],
+                        '{event}' => 'visitor property:' . json_encode($payload["d"]["visitor"]["props"]),
+                        '{url}' => Urls::EVENTS
+                    ]
+                );
             }
         }
 
@@ -622,34 +676,57 @@ class VWO
             if ($bucketInfo !== null) {
                 if ($trackVisitor) {
                     if ($this->isEligibleToSendImpressionToVWO()) {
-                        $parameters = ImpressionBuilder::getVisitorQueryParams(
-                            $this->settings['accountId'],
-                            $campaign,
-                            $userId,
-                            $bucketInfo['id'],
-                            $this->getSDKKey()
-                        );
+                        if($this->isEventArchEnabled()) {
+                            $parameters = ImpressionBuilder::getEventsBaseProperties($this->settings['accountId'], $this->getSDKKey(), EventEnum::VWO_VARIATION_SHOWN, $this->usageStats->getUsageStats());
+                            $payload = ImpressionBuilder::getTrackUserPayloadData(
+                                $this->settings,
+                                $userId,
+                                EventEnum::VWO_VARIATION_SHOWN,
+                                $campaign['id'],
+                                $bucketInfo['id']
+                            );
+                            $this->eventDispatcher->sendPost($parameters, $payload);
+                        } else {
+                            $parameters = ImpressionBuilder::getVisitorQueryParams(
+                                $this->settings['accountId'],
+                                $campaign,
+                                $userId,
+                                $bucketInfo['id'],
+                                $this->getSDKKey()
+                            );
 
-                        $parameters =  array_merge($parameters, $this->usageStats->getUsageStats());
-                        $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_USER_URL, 'GET', $parameters);
-
-                        LoggerService::log(
-                            Logger::INFO,
-                            LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
-                            ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)]
-                        );
-
-                        if (!$this->isDevelopmentMode) {
+                            $parameters =  array_merge($parameters, $this->usageStats->getUsageStats());
+                            $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_USER_URL, 'GET', $parameters);
                             LoggerService::log(
                                 Logger::INFO,
-                                LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS'],
-                                [
-                                    '{endPoint}' => 'track-user',
-                                    '{campaignId}' => $campaign['id'],
-                                    '{variationId}' => $bucketInfo['id'],
-                                    '{accountId}' => $this->settings['accountId']
-                                ]
+                                LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
+                                ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)]
                             );
+                        }
+
+                        if (!$this->isDevelopmentMode) {
+                            if($this->isEventArchEnabled()) {
+                                LoggerService::log(
+                                    Logger::INFO,
+                                    LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS_FOR_EVENT_ARCH'],
+                                    [
+                                        '{a}' => $parameters["a"],
+                                        '{event}' => 'visitor property:' . json_encode($payload["d"]["visitor"]["props"]),
+                                        '{url}' => Urls::EVENTS
+                                    ]
+                                );
+                            } else {
+                                LoggerService::log(
+                                    Logger::INFO,
+                                    LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS'],
+                                    [
+                                        '{endPoint}' => 'track-user',
+                                        '{campaignId}' => $campaign['id'],
+                                        '{variationId}' => $bucketInfo['id'],
+                                        '{accountId}' => $this->settings['accountId']
+                                    ]
+                                );
+                            }
                         }
                     } else {
                         LoggerService::log(
@@ -695,41 +772,60 @@ class VWO
      * @param  $userId
      * @return bool
      */
-    public function push($tagKey, $tagValue, $userId)
+    public function push($tagKey, $tagValue, $userId = '')
     {
         self::$apiName = 'push';
         LoggerService::setApiName(self::$apiName);
 
+        $customDimensionMap = [];
+        if(!$userId || is_array($tagKey)) {
+            $customDimensionMap = $tagKey;
+            $userId = $tagValue;
+        } else {
+            $customDimensionMap[$tagKey] = $tagValue;
+        }
+
         try {
-            if (!ValidationsUtil::pushApiParams($tagKey, $tagValue, $userId)
+            if (!ValidationsUtil::pushApiParams($userId, $customDimensionMap)
                 || !ValidationsUtil::checkSettingSchema($this->settings)
             ) {
                 return false;
             }
 
-            $parameters = ImpressionBuilder::getPushQueryParams($this->settings['accountId'], $userId, $tagKey, $tagValue, $this->getSDKKey());
-            $this->eventDispatcher->sendAsyncRequest(UrlConstants::PUSH_URL, 'GET', $parameters);
+            if($this->isEventArchEnabled()) {
+                $parameters = ImpressionBuilder::getEventsBaseProperties($this->settings['accountId'], $this->getSDKKey(), EventEnum::VWO_SYNC_VISITOR_PROP);
+                $payload = ImpressionBuilder::getPushPayloadData(
+                    $this->settings,
+                    $userId,
+                    EventEnum::VWO_SYNC_VISITOR_PROP,
+                    $customDimensionMap
+                );
+                $result = $this->eventDispatcher->sendPost($parameters, $payload);
+            } else {
+                foreach ($customDimensionMap as $tagKey => $tagValue) {
+                    $parameters = ImpressionBuilder::getPushQueryParams($this->settings['accountId'], $userId, $this->getSDKKey(), $tagKey, $tagValue);
+                    $this->eventDispatcher->sendAsyncRequest(UrlConstants::PUSH_URL, 'GET', $parameters);
+                    if (!$this->isDevelopmentMode) {
+                        LoggerService::log(
+                            Logger::INFO,
+                            LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS_PUSH'],
+                            [
+                                '{endPoint}' => 'push',
+                                '{accountId}' => $this->settings['accountId'],
+                                '{tags}' => $parameters['tags']
+                            ]
+                        );
 
-            LoggerService::log(
-                Logger::INFO,
-                LogMessages::INFO_MESSAGES['IMPRESSION_FOR_PUSH'],
-                ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)]
-            );
+                        $result = true;
+                    }
+                }
+
+            }
 
             if ($this->isDevelopmentMode) {
                 return true;
-            } else {
-                LoggerService::log(
-                    Logger::INFO,
-                    LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS_PUSH'],
-                    [
-                        '{endPoint}' => 'push',
-                        '{accountId}' => $this->settings['accountId'],
-                        '{tags}' => $parameters['tags']
-                    ]
-                );
-
-                return true;
+            } elseif ($result) {
+                return $result;
             }
             LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['IMPRESSION_FAILED'], ['{endPoint}' => 'push', '{reason}' => '']);
         } catch (Exception $e) {
@@ -777,5 +873,10 @@ class VWO
     {
         unset($parameters['env']);
         return json_encode($parameters);
+    }
+
+    private function isEventArchEnabled()
+    {
+        return isset($this->settings['isEventArchEnabled']) && $this->settings['isEventArchEnabled'];
     }
 }

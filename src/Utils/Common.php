@@ -188,4 +188,9 @@ class Common
     {
         return (time() / 10);
     }
+
+    public static function getCurrentUnixTimestampInMillis()
+    {
+        return round(microtime(true) * 1000);
+    }
 }

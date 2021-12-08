@@ -99,14 +99,14 @@ class VWOTest extends TestCase
 
     public function testApiException()
     {
-        $obj = TestUtil::instantiateSdk($this->settings8);
+        $obj = TestUtil::instantiateSdk($this->settings8, ['isDevelopmentMode' => 1]);
 
         $value1 = $obj->isFeatureEnabled('FEATURE_TEST_ALL_DISABLED', $this->users[0]);
         $value2 = $obj->isFeatureEnabled('FEATURE_TEST', $this->users[0]);
         $this->assertEquals(false, $value1);
         $this->assertEquals(true, $value2);
 
-        $obj->variationDecider = TestUtil::mockMethodToThrowEception($this, 'VariationDecider', 'fetchVariationData');
+        $obj->variationDecider = TestUtil::mockMethodToThrowException($this, 'VariationDecider', 'fetchVariationData');
 
         foreach ($this->users as $userId) {
             $value1 = $obj->isFeatureEnabled('FEATURE_ROLLOUT_ONLY', $userId);
@@ -117,7 +117,7 @@ class VWOTest extends TestCase
         }
 
         $obj = TestUtil::instantiateSdk($this->settings1);
-        $obj->variationDecider = TestUtil::mockMethodToThrowEception($this, 'VariationDecider', 'fetchVariationData');
+        $obj->variationDecider = TestUtil::mockMethodToThrowException($this, 'VariationDecider', 'fetchVariationData');
 
         foreach ($this->users as $userId) {
             $value1 = $obj->activate('DEV_TEST_1', $userId);
@@ -130,8 +130,8 @@ class VWOTest extends TestCase
         }
 
         $obj = TestUtil::instantiateSdk($this->settings1);
-        $obj->eventDispatcher = TestUtil::mockMethodToThrowEception($this, 'EventDispatcher', 'send');
-        $obj->eventDispatcher = TestUtil::mockMethodToThrowEception($this, 'EventDispatcher', 'sendAsyncRequest');
+        $obj->eventDispatcher = TestUtil::mockMethodToThrowException($this, 'EventDispatcher', 'send');
+        $obj->eventDispatcher = TestUtil::mockMethodToThrowException($this, 'EventDispatcher', 'sendAsyncRequest');
 
         foreach ($this->users as $userId) {
             $value = $obj->push('tagKey', 'tagValue', $userId);
@@ -216,8 +216,7 @@ class VWOTest extends TestCase
             $this->vwoInstance->eventDispatcher = TestUtil::mockEventDispatcher($this);
             $campaignKey = 'DEV_TEST_' . $devtest;
             $options = [];
-            for ($i = 0; $i < count($this->users); $i++) {
-                $userId = $this->users[$i];
+            foreach ($this->users as $userId) {
                 foreach ($settingsFile['campaigns'] as $campaign) {
                     if ($campaign['key'] == $campaignKey) {
                         $goalname = $campaign['goals'][0]['identifier'];
@@ -382,6 +381,8 @@ class VWOTest extends TestCase
                 $isAllfeaturesDisbled = $this->vwoInstance->isFeatureEnabled($featureTestVaritaionsDisabledKey, $userId);
                 $isFeatureRolloutForZeroTraffic = $this->vwoInstance->isFeatureEnabled($featureRolloutZeroTrafficKey, $userId);
 
+                $expected = ucfirst($this->variationResults[$featureTestKey][$userId]);
+                $this->assertEquals($expected, $isFeatureEnabled);
                 // false in case of feature rollout when traffic is zero
                 // as in php false == null gives true then we have $isFeatureRolloutForZeroTraffic= false every time in this case . so handlng this here
                 $this->assertEquals(true, is_null($isFeatureRolloutForZeroTraffic) == false && $isFeatureRolloutForZeroTraffic == false);
@@ -491,6 +492,12 @@ class VWOTest extends TestCase
 
         foreach ($cases as $case) {
             $response = $this->vwoInstance->push($case['tagKey'], $case['tagValue'], $userId);
+            $this->assertEquals($case['expected'], $response);
+        }
+
+        //pass tagKey & tagValue as pair in associative array for multiple Custom Dimension
+        foreach ($cases as $case) {
+            $response = $this->vwoInstance->push([$case['tagKey'] => $case['tagValue']], $userId);
             $this->assertEquals($case['expected'], $response);
         }
     }
@@ -694,6 +701,104 @@ class VWOTest extends TestCase
         $this->vwoInstance->_userStorageObj = TestUtil::mockUserStorageInterface($this, $variationInfo);
         $value = $this->vwoInstance->getFeatureVariableValue($campaignKey, 'V1', $userId);
         $this->assertEquals(10, $value);
+    }
+
+    public function testActivateWithEventArch()
+    {
+        for ($devtest = 1; $devtest < 7; $devtest++) {
+            $settings = $this->{'settings' . $devtest};
+            $settings["isEventArchEnabled"] = true;
+            $this->vwoInstance = TestUtil::instantiateSdk($settings, ["isDevelopmentMode" => 1]);
+
+            $campaignKey = 'DEV_TEST_' . $devtest;
+            foreach ($this->users as $userId) {
+                $variationName = $this->vwoInstance->activate($campaignKey, $userId);
+                $expected = ucfirst($this->variationResults[$campaignKey][$userId]);
+                $this->assertEquals($expected, $variationName);
+            }
+        }
+    }
+
+    public function testIsFeatureEnabledWithEventArch()
+    {
+        for ($devtest = 8; $devtest < 9; $devtest++) {
+            $settings = $this->{'settings' . $devtest};
+            $settings["isEventArchEnabled"] = true;
+            $this->vwoInstance = TestUtil::instantiateSdk($settings, ["isDevelopmentMode" => 1]);
+
+            $featureTestKey = 'FEATURE_TEST';
+            foreach ($this->users as $userId) {
+                $isFeatureEnabled = $this->vwoInstance->isFeatureEnabled($featureTestKey, $userId);
+                $expected = ucfirst($this->variationResults[$featureTestKey][$userId]);
+                $this->assertEquals($expected, $isFeatureEnabled);
+            }
+        }
+    }
+
+    public function testPushApiWithEventArch()
+    {
+        $userId = $this->users[rand(0, count($this->users) - 1)];
+
+        $cases = [
+            //empty case
+            ['tagKey' => '', 'tagValue' => '', 'expected' => false],
+            //length check
+            ['tagKey' => 'qwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuiopptyeytry',
+                'tagValue' => 'qwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuioppqwertyuiopptyeytry',
+                'expected' => false],
+            //datatype case
+            ['tagKey' => 1, 'tagValue' => 2, 'expected' => false],
+            //happy case
+            ['tagKey' => 'foo', 'tagValue' => 'bar', 'expected' => true],
+        ];
+
+        $settings = $this->settings8;
+        $settings["isEventArchEnabled"] = true;
+        $this->vwoInstance = TestUtil::instantiateSdk($settings, ['isUserStorage' => 1, "isDevelopmentMode" => 1]);
+        foreach ($cases as $case) {
+            $response = $this->vwoInstance->push($case['tagKey'], $case['tagValue'], $userId);
+            $this->assertEquals($case['expected'], $response);
+        }
+
+        //pass tagKey & tagValue as pair in associative array for multiple Custom Dimension
+        foreach ($cases as $case) {
+            $response = $this->vwoInstance->push([$case['tagKey'] => $case['tagValue']], $userId);
+            $this->assertEquals($case['expected'], $response);
+        }
+    }
+
+    public function testTrackApiWithEventArch()
+    {
+        for ($devtest = 1; $devtest < 7; $devtest++) {
+            $settingsFile = $this->{'settings' . $devtest};
+            $settingsFile["isEventArchEnabled"] = true;
+
+            $this->vwoInstance = TestUtil::instantiateSdk($settingsFile, ['isDevelopmentMode' => 1]);
+            $campaignKey = 'DEV_TEST_' . $devtest;
+            $options = [];
+            foreach ($this->users as $userId) {
+                foreach ($settingsFile['campaigns'] as $index => $campaign) {
+                    if ($campaign['key'] == $campaignKey) {
+                        $goalName = $campaign['goals'][0]['identifier'];
+                        if ($campaign['goals'][0]['type'] == 'REVENUE_TRACKING') {
+                            $options['revenueValue'] = 10;
+                            $settingsFile['campaigns'][$index]['goals'][0]['revenueProp'] = 'dummyRevenueProperty';
+                            $this->vwoInstance = TestUtil::instantiateSdk($settingsFile, ['isDevelopmentMode' => 1]);
+                        }
+                        break;
+                    }
+                }
+                $result = $this->vwoInstance->track($campaignKey, $userId, $goalName, $options);
+
+                $expected = ucfirst($this->variationResults[$campaignKey][$userId]);
+                if ($expected == null) {
+                    $expected = false;
+                } else {
+                    $expected = true;
+                }
+                $this->assertEquals($expected, $result);
+            }
+        }
     }
 
     public function testFRWhitelisting()
