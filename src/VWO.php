@@ -79,6 +79,8 @@ class VWO
 
     private $goalTypeToTrack;
 
+    private $isOptedOut = false;
+
     const GOAL_TYPES = [
         'REVENUE' => 'REVENUE_TRACKING',
         'CUSTOM' => 'CUSTOM_GOAL',
@@ -165,9 +167,9 @@ class VWO
     }
 
     /**
-     * @param  $accountId
-     * @param  $sdkKey
-     * @param  $isTriggeredByWebhook
+     * @param  String|Integer $accountId
+     * @param  String         $sdkKey
+     * @param  bool           $isTriggeredByWebhook
      * @return bool|mixed
      */
     public static function getSettingsFile($accountId, $sdkKey, $isTriggeredByWebhook = false)
@@ -204,6 +206,10 @@ class VWO
     {
         self::$apiName = 'isFeatureEnabled';
         LoggerService::setApiName(self::$apiName);
+
+        if($this->isOptedOut()) {
+            return false;
+        }
 
         try {
             LoggerService::log(
@@ -346,6 +352,10 @@ class VWO
         self::$apiName = 'getFeatureVariableValue';
         LoggerService::setApiName(self::$apiName);
 
+        if($this->isOptedOut()) {
+            return false;
+        }
+
         try {
             if (!ValidationsUtil::validateIsFeatureEnabledParams($campaignKey, $userId)
                 || !ValidationsUtil::checkSettingSchema(
@@ -441,6 +451,10 @@ class VWO
     {
         self::$apiName = 'track';
         LoggerService::setApiName(self::$apiName);
+
+        if($this->isOptedOut()) {
+            return false;
+        }
 
         $revenueValue = CommonUtil::getValueFromOptions($options, 'revenueValue');
         $bucketInfo = null;
@@ -634,6 +648,10 @@ class VWO
         self::$apiName = 'activate';
         LoggerService::setApiName(self::$apiName);
 
+        if($this->isOptedOut()) {
+            return false;
+        }
+
         LoggerService::log(
             Logger::INFO,
             LogMessages::INFO_MESSAGES['API_CALLED'],
@@ -757,6 +775,10 @@ class VWO
         self::$apiName = 'getVariationName';
         LoggerService::setApiName(self::$apiName);
 
+        if($this->isOptedOut()) {
+            return false;
+        }
+
         LoggerService::log(
             Logger::INFO,
             LogMessages::INFO_MESSAGES['API_CALLED'],
@@ -776,6 +798,10 @@ class VWO
     {
         self::$apiName = 'push';
         LoggerService::setApiName(self::$apiName);
+
+        if($this->isOptedOut()) {
+            return false;
+        }
 
         $customDimensionMap = [];
         if(!$userId || is_array($tagKey)) {
@@ -873,6 +899,46 @@ class VWO
     {
         unset($parameters['env']);
         return json_encode($parameters);
+    }
+
+    /**
+     * Manually opting out of VWO SDK, No tracking will happen
+     *
+     * @return bool
+     */
+    public function setOptOut()
+    {
+        self::$apiName = 'optOut';
+        LoggerService::setApiName(self::$apiName);
+
+        LoggerService::log(
+            Logger::INFO,
+            LogMessages::INFO_MESSAGES['OPT_OUT_API_CALLED']
+        );
+
+        $this->isOptedOut = true;
+        $this->settings = null;
+        $this->_userStorageObj = null;
+        $this->eventDispatcher = null;
+        $this->variationDecider = null;
+        return $this->isOptedOut;
+    }
+
+    /**
+     * Check if VWO SDK is manually opted out
+     *
+     * @return bool
+     */
+    private function isOptedOut()
+    {
+        if ($this->isOptedOut) {
+            LoggerService::log(
+                Logger::INFO,
+                LogMessages::INFO_MESSAGES['API_NOT_ENABLED'],
+                ['{api}' => self::$apiName]
+            );
+        }
+        return $this->isOptedOut;
     }
 
     private function isEventArchEnabled()

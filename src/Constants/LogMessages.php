@@ -76,6 +76,8 @@ class LogMessages
         'IMPRESSION_SUCCESS_PUSH' => '({file}): Event sent to VWO - {endPoint} having main keys: accountId:{accountId} and tags:{tags}',
         'INVALID_VARIATION_KEY' => '({file}): Variation was not assigned to userId:{userId} for campaign:{campaignKey}',
         'API_CALLED' => '({file}): API: {api} called for userId : {userId}',
+        'OPT_OUT_API_CALLED' => '({file}): You have opted out for not tracking i.e. all API calls will stop functioning and will simply early return',
+        'API_NOT_ENABLED' => '({file}): {api} API is disabled as you opted out for tracking. Reinitialize the SDK to enable the normal functioning of all APIs.',
         'IMPRESSION_FOR_TRACK_USER' => '({file}): impression built for track-user - {properties}',
         'IMPRESSION_FOR_TRACK_GOAL' => '({file}): impression built for track-goal - {properties}',
         'IMPRESSION_FOR_PUSH' => '({file}): impression built for push-api - {properties}',

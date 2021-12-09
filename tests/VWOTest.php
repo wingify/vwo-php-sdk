@@ -878,4 +878,65 @@ class VWOTest extends TestCase
             $this->assertEquals($expected, $variableValue);
         }
     }
+
+    public function testOptOutAPI()
+    {
+        $config = [
+            'settingsFile' => $this->settings1
+        ];
+        $sdkInstance = new VWO($config);
+        $response = $sdkInstance->setOptOut();
+        $this->assertEquals(true, $response);
+    }
+
+    public function testAPIsWhenOptOutCalled()
+    {
+        $config = [
+            'settingsFile' => $this->settings1
+        ];
+        $sdkInstance = new VWO($config);
+        $goalIdentifier = 'CUSTOM';
+        $userId = $this->users[0];
+        $response = $sdkInstance->setOptOut();
+        $this->assertEquals(true, $response);
+        $response = $sdkInstance->activate("DEV_TEST_1", $userId, []);
+        $this->assertEquals(false, $response);
+        $response = $sdkInstance->getVariationName("DEV_TEST_1", $userId, []);
+        $this->assertEquals(false, $response);
+        $response = $sdkInstance->track("DEV_TEST_1", $userId, $goalIdentifier, []);
+        $this->assertEquals(false, $response);
+        $response = $sdkInstance->isFeatureEnabled("DEV_TEST_1", $userId, []);
+        $this->assertEquals(false, $response);
+        $response = $sdkInstance->getFeatureVariableValue("DEV_TEST_1", "variable1", $userId, []);
+        $this->assertEquals(false, $response);
+        $response = $sdkInstance->push("tagKey", "tagValue", $userId);
+        $this->assertEquals(false, $response);
+    }
+
+    public function testAPIsWhenOptOutCalledTwoTimes()
+    {
+        $config = [
+            'settingsFile' => $this->settings1
+        ];
+        $sdkInstance = new VWO($config);
+        $goalIdentifier = 'CUSTOM';
+        $userId = $this->users[0];
+        $response = $sdkInstance->setOptOut();
+        $this->assertEquals(true, $response);
+        $response = $sdkInstance->activate("DEV_TEST_1", $userId, []);
+        $this->assertEquals(false, $response);
+        $response = $sdkInstance->getVariationName("DEV_TEST_1", $userId, []);
+        $this->assertEquals(false, $response);
+        $response = $sdkInstance->track("DEV_TEST_1", $userId, $goalIdentifier, []);
+        $this->assertEquals(false, $response);
+
+        $response = $sdkInstance->setOptOut();
+        $this->assertEquals(true, $response);
+        $response = $sdkInstance->activate("DEV_TEST_1", $userId, []);
+        $this->assertEquals(false, $response);
+        $response = $sdkInstance->getVariationName("DEV_TEST_1", $userId, []);
+        $this->assertEquals(false, $response);
+        $response = $sdkInstance->track("DEV_TEST_1", $userId, $goalIdentifier, []);
+        $this->assertEquals(false, $response);
+    }
 }
