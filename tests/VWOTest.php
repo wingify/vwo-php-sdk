@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright 2019-2021 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,10 @@ namespace vwo;
 
 use PHPUnit\Framework\TestCase;
 use Exception as Exception;
+use vwo\Constants\Urls;
 use vwo\Utils\AccountUtil;
+use vwo\Utils\Common;
+use vwo\Utils\DataLocationManager;
 use vwo\Utils\SegmentEvaluator;
 
 /***
@@ -938,5 +941,33 @@ class VWOTest extends TestCase
         $this->assertEquals(false, $response);
         $response = $sdkInstance->track("DEV_TEST_1", $userId, $goalIdentifier, []);
         $this->assertEquals(false, $response);
+    }
+
+    public function testGetUrlWithoutDataResidencyLocation()
+    {
+        $settings = [];
+        DataLocationManager::instance()->setSettings($settings);
+        $this->assertEquals(Urls::BASE_URL . Urls::SERVER_SIDE_URI, Common::getUrl(''));
+    }
+
+    public function testGetUrlWithDataResidencyLocation()
+    {
+        $settings = ["dataResidencyLocation" => 'eu'];
+        DataLocationManager::instance()->setSettings($settings);
+        $this->assertEquals(Urls::BASE_URL . 'eu/' . Urls::SERVER_SIDE_URI, Common::getUrl(''));
+    }
+
+    public function testGetEventsUrlWithoutDataResidencyLocation()
+    {
+        $settings = [];
+        DataLocationManager::instance()->setSettings($settings);
+        $this->assertEquals(Urls::BASE_URL . Urls::EVENTS_ENDPOINT, Common::getEventsUrl());
+    }
+
+    public function testGetEventsUrlWithDataResidencyLocation()
+    {
+        $settings = ["dataResidencyLocation" => 'eu'];
+        DataLocationManager::instance()->setSettings($settings);
+        $this->assertEquals(Urls::BASE_URL . 'eu/' . Urls::EVENTS_ENDPOINT, Common::getEventsUrl());
     }
 }

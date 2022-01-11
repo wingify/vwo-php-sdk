@@ -19,11 +19,13 @@
 namespace vwo\Utils;
 
 
-class AccountUtil
+use vwo\Constants\Urls;
+
+class DataLocationManager
 {
     protected static $instance;
 
-    private $accountId;
+    private $settings;
 
     private function __construct()
     {
@@ -32,18 +34,22 @@ class AccountUtil
     public static function instance()
     {
         if (!self::$instance) {
-            self::$instance = new AccountUtil();
+            self::$instance = new DataLocationManager();
         }
         return self::$instance;
     }
 
-    public function getAccountId()
+    public function getDataLocation()
     {
-        return $this->accountId;
+        $url = Urls::BASE_URL;
+        if(isset($this->settings['dataResidencyLocation']) && $this->settings['dataResidencyLocation']) {
+            $url = $url . $this->settings['dataResidencyLocation'] . '/';
+        }
+        return $url;
     }
 
-    public function setAccountId($accountId)
+    public function setSettings($settings)
     {
-        $this->accountId = $accountId;
+        $this->settings = $settings;
     }
 }

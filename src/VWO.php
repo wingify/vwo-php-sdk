@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright 2019-2021 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ use vwo\Storage\UserStorageInterface;
 use vwo\Utils\AccountUtil;
 use vwo\Utils\Campaign as CampaignUtil;
 use vwo\Utils\Common as CommonUtil;
+use vwo\Utils\DataLocationManager;
 use vwo\Utils\Validations as ValidationsUtil;
 use vwo\Utils\ImpressionBuilder as ImpressionBuilder;
 use vwo\Utils\EventDispatcher as EventDispatcher;
@@ -103,6 +104,9 @@ class VWO
         // is settings and logger files are provided then set the values to the object
         $settings = isset($config['settingsFile']) ? $config['settingsFile'] : '';
         $logger = isset($config['logging']) ? $config['logging'] : null;
+        if($settings) {
+            DataLocationManager::instance()->setSettings($settings);
+        }
 
         // dev mode enable wont send tracking hits to the servers
         $this->isDevelopmentMode = (isset($config['isDevelopmentMode']) && $config['isDevelopmentMode'] == 1) ? 1 : 0;
@@ -277,7 +281,7 @@ class VWO
                     if($this->isEventArchEnabled()) {
                         $this->eventDispatcher->sendPost($parameters, $payload);
                     } else {
-                        $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_USER_URL, 'GET', $parameters);
+                        $this->eventDispatcher->sendAsyncRequest(CommonUtil::getUrl(Urls::TRACK_USER_ENDPOINT), 'GET', $parameters);
                         LoggerService::log(
                             Logger::INFO,
                             LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
@@ -305,7 +309,7 @@ class VWO
                     if($this->isEventArchEnabled()) {
                         $this->eventDispatcher->sendPost($parameters, $payload);
                     } else {
-                        $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_USER_URL, 'GET', $parameters);
+                        $this->eventDispatcher->sendAsyncRequest(CommonUtil::getUrl(Urls::TRACK_USER_ENDPOINT), 'GET', $parameters);
                         LoggerService::log(
                             Logger::INFO,
                             LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
@@ -318,7 +322,7 @@ class VWO
                             Logger::INFO,
                             LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS_FOR_FEATURE'],
                             [
-                            '{endPoint}' => 'track-user',
+                            '{endPoint}' => Urls::TRACK_USER_ENDPOINT,
                             '{campaignId}' => $campaign['id'],
                             '{accountId}' => $this->settings['accountId']
                             ]
@@ -560,7 +564,7 @@ class VWO
                             $revenueValue,
                             $this->getSDKKey()
                         );
-                        $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_GOAL_URL, 'GET', $parameters);
+                        $this->eventDispatcher->sendAsyncRequest(CommonUtil::getUrl(Urls::TRACK_GOAL_ENDPOINT), 'GET', $parameters);
                         LoggerService::log(
                             Logger::INFO,
                             LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_GOAL'],
@@ -578,7 +582,7 @@ class VWO
                             Logger::INFO,
                             LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS_GOAL'],
                             [
-                                '{endPoint}' => 'track-goal',
+                                '{endPoint}' => Urls::TRACK_GOAL_ENDPOINT,
                                 '{campaignId}' => $campaign['id'],
                                 '{variationId}' => $bucketInfo['id'],
                                 '{accountId}' => $this->settings['accountId'],
@@ -620,7 +624,7 @@ class VWO
                     [
                         '{a}' => $parameters["a"],
                         '{event}' => 'visitor property:' . json_encode($payload["d"]["visitor"]["props"]),
-                        '{url}' => Urls::EVENTS
+                        '{url}' => CommonUtil::getEventsUrl()
                     ]
                 );
             }
@@ -714,7 +718,7 @@ class VWO
                             );
 
                             $parameters =  array_merge($parameters, $this->usageStats->getUsageStats());
-                            $this->eventDispatcher->sendAsyncRequest(UrlConstants::TRACK_USER_URL, 'GET', $parameters);
+                            $this->eventDispatcher->sendAsyncRequest(CommonUtil::getUrl(Urls::TRACK_USER_ENDPOINT), 'GET', $parameters);
                             LoggerService::log(
                                 Logger::INFO,
                                 LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
@@ -730,7 +734,7 @@ class VWO
                                     [
                                         '{a}' => $parameters["a"],
                                         '{event}' => 'visitor property:' . json_encode($payload["d"]["visitor"]["props"]),
-                                        '{url}' => Urls::EVENTS
+                                        '{url}' => CommonUtil::getEventsUrl()
                                     ]
                                 );
                             } else {
@@ -738,7 +742,7 @@ class VWO
                                     Logger::INFO,
                                     LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS'],
                                     [
-                                        '{endPoint}' => 'track-user',
+                                        '{endPoint}' => Urls::TRACK_USER_ENDPOINT,
                                         '{campaignId}' => $campaign['id'],
                                         '{variationId}' => $bucketInfo['id'],
                                         '{accountId}' => $this->settings['accountId']
@@ -830,13 +834,13 @@ class VWO
             } else {
                 foreach ($customDimensionMap as $tagKey => $tagValue) {
                     $parameters = ImpressionBuilder::getPushQueryParams($this->settings['accountId'], $userId, $this->getSDKKey(), $tagKey, $tagValue);
-                    $this->eventDispatcher->sendAsyncRequest(UrlConstants::PUSH_URL, 'GET', $parameters);
+                    $this->eventDispatcher->sendAsyncRequest(CommonUtil::getUrl(Urls::PUSH_ENDPOINT), 'GET', $parameters);
                     if (!$this->isDevelopmentMode) {
                         LoggerService::log(
                             Logger::INFO,
                             LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS_PUSH'],
                             [
-                                '{endPoint}' => 'push',
+                                '{endPoint}' => Urls::PUSH_ENDPOINT,
                                 '{accountId}' => $this->settings['accountId'],
                                 '{tags}' => $parameters['tags']
                             ]

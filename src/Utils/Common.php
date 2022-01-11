@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright 2019-2021 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
  */
 
 namespace vwo\Utils;
+
+use vwo\Constants\Urls;
 
 /***
  * All the common function will be invoked from common  class
@@ -192,5 +194,26 @@ class Common
     public static function getCurrentUnixTimestampInMillis()
     {
         return round(microtime(true) * 1000);
+    }
+
+    /**
+     * get URL
+     *
+     * @param  string $endPoint
+     * @return string
+     */
+    public static function getUrl($endPoint)
+    {
+        return DataLocationManager::instance()->getDataLocation() . Urls::SERVER_SIDE_URI . $endPoint;
+    }
+
+    /**
+     * get events URL
+     *
+     * @return string
+     */
+    public static function getEventsUrl()
+    {
+        return DataLocationManager::instance()->getDataLocation() . Urls::EVENTS_ENDPOINT;
     }
 }

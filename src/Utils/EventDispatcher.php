@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright 2019-2021 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,6 +110,13 @@ class EventDispatcher
         fclose($socketConnection);
     }
 
+    /**
+     * Send call to the destination i.e. VWO server
+     *
+     * @param  array $params
+     * @param  array $postData
+     * @return false|mixed|string
+     */
     public function sendPost($params = [], $postData = [])
     {
         if (self::$isDevelopmentMode) {
@@ -117,7 +124,7 @@ class EventDispatcher
         } else {
             $connection = new Connection();
 
-            $url = Urls::EVENTS . '?' . http_build_query($params);
+            $url = Common::getEventsUrl() . '?' . http_build_query($params);
             $connection->addHeader('User-Agent', ImpressionBuilder::SDK_LANGUAGE);
             $response = $connection->post($url, $postData);
         }

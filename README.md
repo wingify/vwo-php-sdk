@@ -164,4 +164,4 @@ composer run-script phpcbf
 
 [Apache License, Version 2.0](https://github.com/wingify/vwo-php-sdk/blob/master/LICENSE)
 
-Copyright 2019-2021 Wingify Software Pvt. Ltd.
+Copyright 2019-2022 Wingify Software Pvt. Ltd.

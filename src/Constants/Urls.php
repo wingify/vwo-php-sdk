@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright 2019-2021 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,17 +37,17 @@ class Urls
     /**
      * query string to track goal
      */
-    const TRACK_GOAL_URL = self::BASE_URL . self:: SERVER_SIDE_URI . 'track-goal';
+    const TRACK_GOAL_ENDPOINT = 'track-goal';
     /**
      * query string to track user
      */
-    const TRACK_USER_URL = self::BASE_URL . self:: SERVER_SIDE_URI . 'track-user';
+    const TRACK_USER_ENDPOINT = 'track-user';
     /**
      * query string to push api
      */
-    const PUSH_URL = self::BASE_URL . self:: SERVER_SIDE_URI . 'push';
+    const PUSH_ENDPOINT = 'push';
     /**
      * query string for event arch for track goal, track user and push api APIs
      */
-    const EVENTS = self::BASE_URL . 'events/t';
+    const EVENTS_ENDPOINT = 'events/t';
 }
