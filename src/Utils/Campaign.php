@@ -20,11 +20,11 @@ namespace vwo\Utils;
 
 use Monolog\Logger;
 use vwo\Constants\CampaignTypes;
+use vwo\Constants\FileNameEnum;
 use vwo\Core\Bucketer;
 use vwo\Services\LoggerService;
 use vwo\Utils\Common as CommonUtil;
-use vwo\Constants\Constants as Constants;
-use vwo\Constants\LogMessages as LogMessages;
+use Exception as Exception;
 use vwo\Utils\SegmentEvaluator as SegmentEvaluator;
 
 /***
@@ -36,8 +36,7 @@ use vwo\Utils\SegmentEvaluator as SegmentEvaluator;
  */
 class Campaign
 {
-
-    private static $CLASSNAME = 'vwo\Utils\Campaign';
+    const CLASSNAME = FileNameEnum::CAMPAIGN;
     /**
      * to set the range on the setting level means to each and every campaign
      *
@@ -49,7 +48,7 @@ class Campaign
     {
         if (isset($settings['campaigns']) && count($settings['campaigns'])) {
             foreach ($settings['campaigns'] as $key => $campaign) {
-                $settings['campaigns'][$key]['variations'] = Bucketer::addRangesToVariations($campaign['variations']);
+                $settings['campaigns'][$key]['variations'] = Bucketer::addRangesToVariations($campaign['variations'], $campaign['key']);
             }
         }
 
@@ -75,20 +74,21 @@ class Campaign
             $status = $bucketInfo != null ? 'satisfy' : "didn't satisfy";
 
             LoggerService::log(
-                Logger::DEBUG,
-                LogMessages::INFO_MESSAGES['WHITELISTING_ELIGIBILITY_STATUS'],
+                Logger::INFO,
+                'SEGMENTATION_STATUS',
                 [
                     '{status}' => $status,
                     '{userId}' => $userId,
                     '{variation}' => $status == 'satisfy' ? ($campaign["type"] == CampaignTypes::FEATURE_ROLLOUT ? 'and hence becomes part of the rollout' : $bucketInfo['name'] . 'and hence variation is assigned') : '',
-                    '{campaign_key}' => $campaign['key'],
-                    '{variation_targeting_variables}' => json_encode($variationTargetingVariables)
+                    '{campaignKey}' => $campaign['key'],
+                    '{customVariables}' => json_encode($variationTargetingVariables),
+                    '{segmentationType}' => 'whitelisting'
                 ],
-                self::$CLASSNAME,
+                self::CLASSNAME,
                 $disableLogs
             );
         } else {
-            LoggerService::log(Logger::INFO, LogMessages::INFO_MESSAGES['WHITELISTING_SKIPPED'], [ '{reason}' => '','{userId}' => $userId, '{campaignKey}' => $campaign['key'],'{variation}' => ''], self::$CLASSNAME, $disableLogs);
+            LoggerService::log(Logger::DEBUG, 'WHITELISTING_SKIPPED', [ '{reason}' => '','{userId}' => $userId, '{campaignKey}' => $campaign['key'],'{variation}' => ''], self::CLASSNAME, $disableLogs);
         }
         return $bucketInfo;
     }
@@ -105,8 +105,8 @@ class Campaign
      */
     private static function getForcedBucket($campaign, $userId, $variationTargetingVariables, $disableLogs = false)
     {
-        if(isset($campaign["isUserListEnabled"]) && $campaign["isUserListEnabled"]) {
-            $variationTargetingVariables['_vwoUserId'] = UuidUtil::get($userId, AccountUtil::instance()->getAccountId());
+        if (isset($campaign["isUserListEnabled"]) && $campaign["isUserListEnabled"]) {
+            $variationTargetingVariables['_vwoUserId'] = UuidUtil::get($userId, AccountUtil::instance()->getAccountId(), true);
         } else {
             $variationTargetingVariables['_vwoUserId'] = $userId;
         }
@@ -114,46 +114,62 @@ class Campaign
         $totalVariationTraffic = 0;
         $segmentObj = new SegmentEvaluator();
         foreach ($campaign['variations'] as $variation) {
-            if (isset($variation['segments']) && count($variation['segments'])) {
-                $result = $segmentObj->evaluate($variation['segments'], $variationTargetingVariables);
-                if ($result) {
-                    $totalVariationTraffic += $variation['weight'];
-                    $validVariations[] = $variation;
+            try {
+                if (isset($variation['segments']) && count($variation['segments'])) {
+                    $result = $segmentObj->evaluate($variation['segments'], $variationTargetingVariables);
+                    if ($result) {
+                        $totalVariationTraffic += $variation['weight'];
+                        $validVariations[] = $variation;
+                    }
+                    LoggerService::log(
+                        Logger::INFO,
+                        'SEGMENTATION_STATUS',
+                        [
+                            '{userId}' => $userId,
+                            '{campaignKey}' => $campaign['key'],
+                            '{segmentationType}' => 'whitelisting',
+                            '{variation}' => $campaign['type'] == CampaignTypes::FEATURE_ROLLOUT ? '' : 'for variation:' . $variation['name'],
+                            '{status}' => $result === true ? 'passed' : 'failed',
+                            '{customVariables}' => json_encode($variationTargetingVariables)
+                        ],
+                        self::CLASSNAME,
+                        $disableLogs
+                    );
+                } else {
+                    LoggerService::log(
+                        Logger::DEBUG,
+                        'SEGMENTATION_SKIPPED',
+                        [
+                            '{userId}' => $userId,
+                            '{campaignKey}' => $campaign['key'],
+                            '{variation}' => $campaign['type'] == CampaignTypes::FEATURE_ROLLOUT ? '' : 'for variation:' . $variation['name']
+                        ],
+                        self::CLASSNAME,
+                        $disableLogs
+                    );
                 }
+            } catch (Exception $e) {
                 LoggerService::log(
-                    Logger::INFO,
-                    LogMessages::INFO_MESSAGES['SEGMENTATION_STATUS'],
+                    Logger::ERROR,
+                    'SEGMENTATION_ERROR',
                     [
-                        '{userId}' => $userId,
                         '{campaignKey}' => $campaign['key'],
-                        '{segmentationType}' => 'whitelisting',
-                        '{variation}' => $campaign['type'] == CampaignTypes::FEATURE_ROLLOUT ? '' : 'for variation:' . $variation['name'],
-                        '{status}' => $result === true ? 'passed' : 'failed',
-                        '{customVariables}' => json_encode($variationTargetingVariables)
+                        '{variation}' => $variation['name'],
+                        '{userId}' => $userId,
+                        '{customVariables}' => json_encode($variationTargetingVariables),
+                        '{err}' => $e->getMessage()
                     ],
-                    self::$CLASSNAME,
+                    self::CLASSNAME,
                     $disableLogs
                 );
-            } else {
-                LoggerService::log(
-                    Logger::INFO,
-                    LogMessages::INFO_MESSAGES['WHITELISTING_SKIPPED'],
-                    [
-                        '{reason}' => 'segment was missing, hence',
-                        '{userId}' => $userId,
-                        '{campaignKey}' => $campaign['key'],
-                        '{variation}' => $campaign['type'] == CampaignTypes::FEATURE_ROLLOUT ? '' : 'for variation:' . $variation['name']
-                    ],
-                    self::$CLASSNAME,
-                    $disableLogs
-                );
+                return null;
             }
         }
         $totalValidVariations = count($validVariations);
         if ($totalValidVariations == 1) {
             return $validVariations[0];
         } elseif ($totalValidVariations > 1) {
-            return self::evaluateBestVariation($validVariations, $totalVariationTraffic, $userId, $campaign);
+            return self::evaluateBestVariation($validVariations, $totalVariationTraffic, $userId, $campaign, $disableLogs);
         }
         return null;
     }
@@ -163,15 +179,16 @@ class Campaign
      * @param  $totalVariationTraffic
      * @param  $userId
      * @param  $campaign
+     * @param  bool $disableLogs
      * @return null| array of variation
      */
-    private static function evaluateBestVariation($validVariations, $totalVariationTraffic, $userId, $campaign)
+    private static function evaluateBestVariation($validVariations, $totalVariationTraffic, $userId, $campaign, $disableLogs = false)
     {
         //scale and assign ranges to the variations
         $validVariations = self::scaleVariations($validVariations, $totalVariationTraffic);
-        $validVariations = Bucketer::addRangesToVariations($validVariations);
+        $validVariations = Bucketer::addRangesToVariations($validVariations, $campaign['key']);
         //find murmur
-        $bucketVal = Bucketer::getBucketVal($userId, $campaign);
+        list($bucketVal, $hashValue) = Bucketer::getBucketVal($userId, $campaign, $disableLogs);
         //get range according to murmur
         $rangeForVariation = Bucketer::getRangeForVariations($bucketVal);
         //get variation
@@ -250,14 +267,14 @@ class Campaign
         $groupCampaigns = [];
         $groups = $settings["groups"];
 
-        if($groups && array_key_exists($groupId, $groups)) {
+        if ($groups && array_key_exists($groupId, $groups)) {
             $groupCampaignIds = $groups[$groupId]["campaigns"];
         }
 
-        if($groupCampaignIds) {
+        if ($groupCampaignIds) {
             foreach ($groupCampaignIds as $campaignId) {
                 foreach ($settings["campaigns"] as $campaign) {
-                    if($campaign["id"] == $campaignId && $campaign["status"] == 'RUNNING') {
+                    if ($campaign["id"] == $campaignId && $campaign["status"] == 'RUNNING') {
                         $groupCampaigns[] = $campaign;
                     }
                 }

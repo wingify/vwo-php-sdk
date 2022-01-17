@@ -430,7 +430,7 @@ class Settings8
                                             'id' => 1,
                                         ],
                                         [
-                                            'value' => ["a"=>3],
+                                            'value' => ["a" => 3],
                                             'type' => 'json',
                                             'key' => 'V1',
                                             'id' => 1,

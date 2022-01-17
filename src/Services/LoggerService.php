@@ -22,6 +22,7 @@ use Exception as Exception;
 use Monolog\Logger as Logger;
 use vwo\Utils\Common as CommonUtil;
 use vwo\Logger\VWOLogger as VWOLogger;
+use vwo\Utils\LogMessagesUtil;
 
 class LoggerService
 {
@@ -48,14 +49,14 @@ class LoggerService
      /**
       * function to log to the default/ custom logger
       *
-      * @param  $level
-      * @param  $message
+      * @param  int    $level
+      * @param  string $messageType
       * @param  array  $params
       * @param  string $classname
       * @param  bool   $disableLogs disable logs if True
       * @return bool
       */
-    public static function log($level, $message, $params = [], $classname = '', $disableLogs = false)
+    public static function log($level, $messageType, $params = [], $classname = '', $disableLogs = false)
     {
         if (self::$_logger == null) {
             self::$_logger = new VWOLogger(Logger::DEBUG, 'php://stdout');
@@ -63,11 +64,40 @@ class LoggerService
         if (empty($classname)) {
             $classname = self::name();
         }
+        $message = self::getMessageBasedOnLevel($level, $messageType);
         $message = CommonUtil::buildLogMessage($message, $params, $classname, self::$apiName);
-        if(!$disableLogs) {
+        if (!$disableLogs) {
             self::$_logger->log($message, $level);
         }
 
         return false;
+    }
+
+    /**
+     * function to get log message on the basis of log levels
+     *
+     * @param  int    $logLevel
+     * @param  string $messageType
+     * @return string
+     */
+    private static function getMessageBasedOnLevel($logLevel, $messageType)
+    {
+        $message = "";
+        switch ($logLevel) {
+            case Logger::DEBUG:
+                $message = LogMessagesUtil::instance()->getDebugMessage($messageType);
+                break;
+            case Logger::INFO:
+                $message = LogMessagesUtil::instance()->getInfoMessage($messageType);
+                break;
+            case Logger::ERROR:
+                $message = LogMessagesUtil::instance()->getErrorMessage($messageType);
+                break;
+            case Logger::WARNING:
+                $message = LogMessagesUtil::instance()->getWarnMessage($messageType);
+                break;
+        }
+
+        return $message;
     }
 }

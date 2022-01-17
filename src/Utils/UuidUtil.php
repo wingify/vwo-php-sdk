@@ -19,21 +19,23 @@
 namespace vwo\Utils;
 
 use Monolog\Logger;
+use Exception as Exception;
 use Ramsey\Uuid\Uuid;
+use vwo\Constants\FileNameEnum;
 use vwo\Services\LoggerService;
-use vwo\Constants\LogMessages as LogMessages;
-use vwo\Constants\Constants as Constants;
 
 class UuidUtil
 {
     const UUID_SEED = 'https://vwo.com';
-    const CLASSNAME = 'vwo\Utils\UuidUtil';
+    const CLASSNAME = FileNameEnum::UUID_UTIL;
+
     /**
-     * @param  $userId
-     * @param  $accountId
+     * @param  string $userId
+     * @param  int    $accountId
+     * @param  bool   $disableLogs
      * @return string
      */
-    public static function get($userId, $accountId)
+    public static function get($userId, $accountId, $disableLogs = false)
     {
         $uuid = '';
         try {
@@ -41,11 +43,9 @@ class UuidUtil
             $uuid5_seed_accountId = Uuid::uuid5($uuid5_seed, $accountId);
             $uuid5 = Uuid::uuid5($uuid5_seed_accountId, $userId);
             $uuid = strtoupper(str_replace('-', '', $uuid5->toString()));
-            LoggerService::log(Logger::DEBUG, LogMessages::DEBUG_MESSAGES['UUID_FOR_USER'], ['{userid}' => $userId, '{accountId}' => $accountId, '{desiredUuid}' => $uuid], self::CLASSNAME);
-        } catch (UnsatisfiedDependencyException $e) {
-            LoggerService::log(Logger::ERROR, 'UnsatisfiedDependencyException : ' . $e->getMessage());
+            LoggerService::log(Logger::DEBUG, 'USER_UUID', ['{userId}' => $userId, '{accountId}' => $accountId, '{uuid}' => $uuid], self::CLASSNAME, $disableLogs);
         } catch (Exception $e) {
-            LoggerService::log(Logger::ERROR, $e->getMessage());
+            LoggerService::log(Logger::ERROR, $e->getMessage(), [], self::CLASSNAME);
         }
 
         return $uuid;

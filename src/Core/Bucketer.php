@@ -19,7 +19,6 @@
 namespace vwo\Core;
 
 use Monolog\Logger;
-use vwo\Constants\LogMessages;
 use vwo\Services\LoggerService;
 use vwo\Utils\Murmur as murmur;
 
@@ -29,11 +28,10 @@ use vwo\Utils\Murmur as murmur;
  */
 class Bucketer
 {
-
     private static $SEED = 1;
     private static $MAX_VALUE = 0x100000000;
     private static $MAX_RANGE = 10000;
-    private static $CLASSNAME = 'vwo\BucketService';
+    const CLASSNAME = 'vwo\BucketService';
 
 
     public static $MAX_CAMPAIGN_TRAFFIC = 100;
@@ -74,7 +72,7 @@ class Bucketer
     /***
      * To get the bucket value using userId and campaign
      *
-     * @param  $userid
+     * @param  $userId
      * @param  $campaign
      * @param  bool $disableLogs optional: disable logs if True
      * @return array|null
@@ -82,9 +80,10 @@ class Bucketer
     public static function getBucket($userId, $campaign, $disableLogs = false)
     {
         // if bucketing to be done
-        $bucketVal = self::getBucketVal($userId, $campaign);
-        if (!self::isUserPartofCampaign($bucketVal, $campaign['percentTraffic'])) {
-            LoggerService::log(Logger::DEBUG, LogMessages::DEBUG_MESSAGES['USER_NOT_PART_OF_CAMPAIGN'], ['{userId}' => $userId, '{method}' => 'getBucket', '{campaignKey}' => $campaign['key']], self::$CLASSNAME, $disableLogs);
+        list($bucketVal, $hashValue) = self::getBucketVal($userId, $campaign, $disableLogs);
+        $isUserPart = self::isUserPartofCampaign($bucketVal, $campaign['percentTraffic']);
+        LoggerService::log(Logger::INFO, 'USER_CAMPAIGN_ELIGIBILITY', ['{userId}' => $userId, '{status}' => $isUserPart ? 'eligible' : 'not eligible', '{campaignKey}' => $campaign['key']], self::CLASSNAME, $disableLogs);
+        if (!$isUserPart) {
             return null;
         }
         $multiplier = self::getMultiplier($campaign['percentTraffic']);
@@ -92,12 +91,13 @@ class Bucketer
         $rangeForVariations = self::getRangeForVariations($bucketVal, $multiplier);
 
         $variation = self::variationUsingRange($rangeForVariations, $campaign['variations']);
-        LoggerService::log(Logger::DEBUG, LogMessages::DEBUG_MESSAGES['VARIATION_HASH_BUCKET_VALUE'], ['{userId}' => $userId,'{bucketValue}' => $rangeForVariations, '{percentTraffic}' => $campaign['percentTraffic'], '{campaignKey}' => $campaign['key']], self::$CLASSNAME);
+
+        LoggerService::log(Logger::DEBUG, 'USER_CAMPAIGN_BUCKET_VALUES', ['{userId}' => $userId,'{bucketValue}' => $rangeForVariations, '{hashValue}' => $hashValue, '{percentTraffic}' => $campaign['percentTraffic'], '{campaignKey}' => $campaign['key']], self::CLASSNAME);
         if ($variation !== null) {
-            LoggerService::log(Logger::INFO, LogMessages::INFO_MESSAGES['GOT_VARIATION_FOR_USER'], ['{variationName}' => $variation['name'], '{userId}' => $userId, '{method}' => 'getBucket', '{campaignKey}' => $campaign['key']], self::$CLASSNAME);
+            LoggerService::log(Logger::INFO, 'USER_VARIATION_STATUS', ['{userId}' => $userId, '{campaignKey}' => $campaign['key'], '{status}' => 'got variation:' . $variation['name']], self::CLASSNAME);
             return $variation;
         }
-        LoggerService::log(Logger::INFO, LogMessages::INFO_MESSAGES['NO_VARIATION_ALLOCATED'], ['{userId}' => $userId, '{campaignKey}' => $campaign['key']], self::$CLASSNAME);
+        LoggerService::log(Logger::INFO, 'USER_VARIATION_STATUS', ['{userId}' => $userId, '{campaignKey}' => $campaign['key'], '{status}' => 'got no variation'], self::CLASSNAME);
         return null;
     }
 
@@ -132,26 +132,38 @@ class Bucketer
     /***
      * return range of the current string value
      *
-     * @param  $str
+     * @param  $userId
      * @param  $campaign
-     * @return float|int
+     * @param  bool $disableLogs optional: disable logs if True
+     * @return array returns bucket value and hash value
      */
     /*
     * The function getBucketVal has references from “Optimizely PHP SDK, version 3.2.0” Copyright 2016-2019, Optimizely,
     * Copyright 2016-2019, Optimizely, used under Apache 2.0 License.
     * Source - https://github.com/optimizely/php-sdk/blob/master/src/Optimizely/Bucketer.php
     */
-    public static function getBucketVal($str, $campaign = [])
+    public static function getBucketVal($userId, $campaign = [], $disableLogs = false)
     {
-        if(isset($campaign["isBucketingSeedEnabled"]) && $campaign["isBucketingSeedEnabled"]) {
-            $str = $campaign["id"] . '_' . $str;
+        if (isset($campaign["isBucketingSeedEnabled"]) && $campaign["isBucketingSeedEnabled"]) {
+            $userId = $campaign["id"] . '_' . $userId;
         }
-        $code = self::getmurmurHash_Int($str);
+        $code = self::getmurmurHash_Int($userId);
         $range = $code / self::$MAX_VALUE;
         if ($range < 0) {
             $range += (10000 / (self::$MAX_RANGE));
         }
-        return $range;
+        LoggerService::log(
+            Logger::DEBUG,
+            'USER_HASH_BUCKET_VALUE',
+            [
+                '{userId}' => $userId,
+                '{hashValue}' => $code,
+                '{bucketValue}' => $range
+            ],
+            self::CLASSNAME,
+            $disableLogs
+        );
+        return [$range, $code];
     }
 
     /**
@@ -208,11 +220,26 @@ class Bucketer
      * function to calculate range of every variation
      *
      * @param  $variations
+     * @param  $campaignKey
      * @return array variation array
      */
-    public static function addRangesToVariations($variations)
+    public static function addRangesToVariations($variations, $campaignKey)
     {
-        return self::addRanges($variations);
+        $variations = self::addRanges($variations);
+        foreach ($variations as $variation) {
+            LoggerService::log(
+                Logger::DEBUG,
+                'VARIATION_RANGE_ALLOCATION',
+                [
+                    '{variationName}' => $variation['name'],
+                    '{campaignKey}' => $campaignKey,
+                    '{variationWeight}' => $variation['weight'],
+                    '{start}' => $variation['min_range'],
+                    '{end}' => $variation['max_range']
+                ]
+            );
+        }
+        return $variations;
     }
 
     /**

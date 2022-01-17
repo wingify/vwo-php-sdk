@@ -8,6 +8,7 @@
     }],
     "description": "VWO server side sdk",
     "require": {
+        "vwo/vwo-sdk-log-messages": "^0.2.0",
         "monolog/monolog": "^1.0 || ^2.0",
         "ramsey/uuid": "^3.8",
         "justinrainbow/json-schema": "^5.2"
@@ -28,6 +29,12 @@
             "vwo\\": "tests/"
         }
     },
+    "repositories": [
+        {
+            "type": "git",
+            "url": "https://github.com/wingify/vwo-sdk-log-messages.git"
+        }
+    ],
     "scripts": {
         "lint": ["./vendor/bin/phplint"],
         "phpcs": ["./vendor/bin/phpcs ./src/ ./tests/"],

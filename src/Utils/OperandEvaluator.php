@@ -18,6 +18,7 @@
 
 namespace vwo\Utils;
 
+use vwo\Constants\FileNameEnum;
 use vwo\Utils\Common as CommonUtil;
 use vwo\Constants\Segments as SegmentConstants;
 use vwo\Constants\Constants;
@@ -30,7 +31,7 @@ use Monolog\Logger as Logger;
  */
 class OperandEvaluator
 {
-    static $CLASSNAME = '/Utils/OperandEvaluator';
+    static $CLASSNAME = FileNameEnum::OPERAND_EVALUATOR;
 
     /**
      * @param  $operand

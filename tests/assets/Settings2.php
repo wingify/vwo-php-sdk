@@ -20,7 +20,6 @@ namespace vwo;
 
 class Settings2
 {
-
     public static function setup()
     {
         return [

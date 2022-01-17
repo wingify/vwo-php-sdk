@@ -19,14 +19,15 @@
 namespace vwo\Utils;
 
 use Monolog\Logger as Logger;
+use vwo\Constants\FileNameEnum;
 use vwo\Constants\Urls;
 use vwo\Services\LoggerService;
-use vwo\Constants\LogMessages as LogMessages;
 use vwo\HttpHandler\Connection as Connection;
 
 class EventDispatcher
 {
     static $isDevelopmentMode;
+    const CLASSNAME = FileNameEnum::EVENT_DISPATCHER;
 
     function __construct($isDevelopmentMode)
     {
@@ -56,10 +57,8 @@ class EventDispatcher
 
         if (isset($response['httpStatus']) && $response['httpStatus'] == 200) {
             return $response;
-        } else {
-            return false;
         }
-        LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['IMPRESSION_FAILED'], ['{endPoint}' => $url, '{reason}' => '']);
+        LoggerService::log(Logger::ERROR, 'IMPRESSION_FAILED', ['{endPoint}' => $url, '{err}' => ''], self::CLASSNAME);
 
         return false;
     }
@@ -71,13 +70,13 @@ class EventDispatcher
      * @param string $method
      * @param array  $params
      *
-     * @return void
+     * @return int|false
      */
     public function sendAsyncRequest($url, $method, $params = [])
     {
         // If in DEV mode, do not send any call
         if (self::$isDevelopmentMode) {
-            return;
+            return false;
         }
 
         // Parse url and extract information
@@ -90,13 +89,15 @@ class EventDispatcher
         if (!$socketConnection) {
             LoggerService::log(
                 Logger::ERROR,
-                LogMessages::ERROR_MESSAGES['IMPRESSION_FAILED'],
+                'IMPRESSION_FAILED',
                 [
                     '{endPoint}' => $url,
-                    '{reason}' => 'Unable to connect to ' . $host . '. Error: ' . $errstr . ' ' . ($errno)]
+                    '{err}' => 'Unable to connect to ' . $host . '. Error: ' . $errstr . ' ' . ($errno)
+                ],
+                self::CLASSNAME
             );
 
-            return;
+            return false;
         }
 
         // Build request
@@ -106,8 +107,9 @@ class EventDispatcher
         $request .= 'Connection: Close' . "\r\n\r\n";
 
         // Send Request
-        fwrite($socketConnection, $request);
+        $result = fwrite($socketConnection, $request);
         fclose($socketConnection);
+        return $result;
     }
 
     /**
@@ -132,7 +134,7 @@ class EventDispatcher
         if (isset($response['httpStatus']) && $response['httpStatus'] == 200) {
             return $response;
         }
-        LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['IMPRESSION_FAILED'], ['{endPoint}' => $url, '{reason}' => '']);
+        LoggerService::log(Logger::ERROR, 'IMPRESSION_FAILED', ['{endPoint}' => $url, '{err}' => ''], self::CLASSNAME);
         return false;
     }
 }

@@ -24,7 +24,6 @@ namespace vwo\Services;
  */
 class HooksManager
 {
-
     function __construct($config)
     {
         $this->init($config);
@@ -37,7 +36,8 @@ class HooksManager
      */
     public function init($config = [])
     {
-        if (isset($config['integrations'])
+        if (
+            isset($config['integrations'])
             && isset($config['integrations']['callback'])
             && is_callable($config['integrations']['callback'])
         ) {

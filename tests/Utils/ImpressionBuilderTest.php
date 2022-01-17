@@ -166,7 +166,7 @@ class ImpressionBuilderTest extends TestCase
     public function checkAllPropertiesPresent($properties, $expectedProperties)
     {
         foreach ($expectedProperties as $field) {
-            if(!isset($properties[$field])) {
+            if (!isset($properties[$field])) {
                 return false;
             }
         }
@@ -176,11 +176,11 @@ class ImpressionBuilderTest extends TestCase
     public function checkAllPropertiesPresentAndTheirTypes($properties, $expectedProperties)
     {
         foreach ($expectedProperties as $key => $value) {
-            if(!isset($properties[$key]) || (gettype($properties[$key]) != gettype($expectedProperties[$key]))) {
+            if (!isset($properties[$key]) || (gettype($properties[$key]) != gettype($expectedProperties[$key]))) {
                 return false;
             } elseif (is_array($properties[$key])) {
                 $allPresent = $this->checkAllPropertiesPresentAndTheirTypes($properties[$key], $expectedProperties[$key]);
-                if(!$allPresent) {
+                if (!$allPresent) {
                     return false;
                 }
             }

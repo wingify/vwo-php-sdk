@@ -18,6 +18,7 @@
 
 namespace vwo\Utils;
 
+use vwo\Constants\FileNameEnum;
 use vwo\Constants\Urls;
 
 /***
@@ -29,8 +30,7 @@ use vwo\Constants\Urls;
  */
 class Common
 {
-
-    private static $CLASSNAME = 'vwo\Utils\Common';
+    private static $CLASSNAME = FileNameEnum::COMMON;
 
     /***
      * basic creation of log message from constants.php
@@ -120,16 +120,16 @@ class Common
     public static function typeCast($value, $type)
     {
         switch ($type) {
-        case 'double':
-            return (float)$value;
-        case 'string':
-            return (string)$value;
-        case 'boolean':
-            return (bool)$value;
-        case 'integer':
-            return (int)$value;
-        case 'json':
-            return $value;
+            case 'double':
+                return (float)$value;
+            case 'string':
+                return (string)$value;
+            case 'boolean':
+                return (bool)$value;
+            case 'integer':
+                return (int)$value;
+            case 'json':
+                return $value;
         }
     }
 
@@ -178,10 +178,10 @@ class Common
             return $options[$optionName];
         }
         switch ($optionName) {
-        case 'customVariables':
-            return [];
-        case 'variationTargetingVariables':
-            return [];
+            case 'customVariables':
+                return [];
+            case 'variationTargetingVariables':
+                return [];
         }
         return null;
     }

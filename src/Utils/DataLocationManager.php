@@ -18,7 +18,6 @@
 
 namespace vwo\Utils;
 
-
 use vwo\Constants\Urls;
 
 class DataLocationManager
@@ -42,7 +41,7 @@ class DataLocationManager
     public function getDataLocation()
     {
         $url = Urls::BASE_URL;
-        if(isset($this->settings['dataResidencyLocation']) && $this->settings['dataResidencyLocation']) {
+        if (isset($this->settings['dataResidencyLocation']) && $this->settings['dataResidencyLocation']) {
             $url = $url . $this->settings['dataResidencyLocation'] . '/';
         }
         return $url;

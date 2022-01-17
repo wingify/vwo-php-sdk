@@ -138,7 +138,6 @@ class TestUtil
  */
 class CustomLogger implements LoggerInterface
 {
-
     /**
      * @param  $message
      * @param  $level
@@ -152,7 +151,6 @@ class CustomLogger implements LoggerInterface
 
 class UserStorageTest implements UserStorageInterface
 {
-
     private $goalIdentifier = '';
 
     /**
@@ -193,7 +191,6 @@ class UserStorageTest implements UserStorageInterface
 
 class UserStorageGetCorruptedTest implements UserStorageInterface
 {
-
     /**
      * @param  $userId
      * @param  $campaignKey

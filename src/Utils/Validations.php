@@ -18,17 +18,19 @@
 
 namespace vwo\Utils;
 
-use vwo\Constants\CampaignTypes;
-use vwo\VWO;
 use Monolog\Logger;
 use JsonSchema\Constraints\Factory;
 use JsonSchema\SchemaStorage;
 use JsonSchema\Validator as Validator;
 use JsonSchema\Constraints\Constraint;
-use vwo\Utils\COmmon as CommonUtil;
+use Exception as Exception;
+use vwo\Constants\CampaignTypes;
+use vwo\Constants\FileNameEnum;
+use vwo\Storage\UserStorageInterface;
+use vwo\VWO;
+use vwo\Utils\Common as CommonUtil;
 use vwo\Utils\SegmentEvaluator as SegmentEvaluator;
 use vwo\Services\LoggerService;
-use vwo\Constants\LogMessages as LogMessages;
 
 /***
  * Class Validations
@@ -38,8 +40,7 @@ use vwo\Constants\LogMessages as LogMessages;
  */
 class Validations
 {
-
-    static $CLASSNAME = 'vwo\Utils\Validations';
+    const CLASSNAME = FileNameEnum::VALIDATIONS;
 
     /**
      * schema for settings array
@@ -87,7 +88,6 @@ class Validations
     public static function pushApiParams($userId, $customDimensionMap = [])
     {
         if (!is_string($userId)  || empty($userId)) {
-            LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['INVALID_USER_ID'], ['{userId}' => $userId,'{method}' => 'pushApiParams'], self::$CLASSNAME);
             return false;
         }
 
@@ -97,19 +97,17 @@ class Validations
 
         foreach ($customDimensionMap as $tagKey => $tagValue) {
             if (!is_string($tagKey) || empty($tagKey)) {
-                LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['TAG_KEY_CORRUPTED'], ['{tagKey}' => $tagKey,'{method}' => 'pushApiParams'], self::$CLASSNAME);
                 return false;
             }
             if (strlen($tagKey) > 255) {
-                LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['TAG_KEY_LENGTH_ERROR'], ['{tagKey}' => $tagKey,'{userId}' => $userId,'{method}' => 'pushApiParams'], self::$CLASSNAME);
+                LoggerService::log(Logger::ERROR, 'TAG_KEY_LENGTH_EXCEEDED', ['{tagKey}' => $tagKey,'{userId}' => $userId], self::CLASSNAME);
                 return false;
             }
             if (!is_string($tagValue)  || empty($tagValue)) {
-                LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['TAG_VALUE_CORRUPTED'], ['{tagValue}' => $tagValue,'{method}' => 'pushApiParams'], self::$CLASSNAME);
                 return false;
             }
             if (strlen($tagValue) > 255) {
-                LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['TAG_VALUE_LENGTH_ERROR'], ['{tagValue}' => $tagValue,'{userId}' => $userId,'{method}' => 'pushApiParams'], self::$CLASSNAME);
+                LoggerService::log(Logger::ERROR, 'TAG_VALUE_LENGTH_EXCEEDED', ['{tagValue}' => $tagValue,'{userId}' => $userId], self::CLASSNAME);
                 return false;
             }
         }
@@ -130,36 +128,53 @@ class Validations
     {
         $customVariables = CommonUtil::getValueFromOptions($options, 'customVariables');
         $segment = new SegmentEvaluator();
-        if (array_key_exists('segments', $campaign) && count($campaign['segments'])) {
-            $response = $segment->evaluate($campaign['segments'], $customVariables);
+        try {
+            if (array_key_exists('segments', $campaign) && count($campaign['segments'])) {
+                $response = $segment->evaluate($campaign['segments'], $customVariables);
+                LoggerService::log(
+                    Logger::INFO,
+                    'SEGMENTATION_STATUS',
+                    [
+                        '{status}' => $response === true ? 'passed' : 'failed',
+                        '{campaignKey}' => $campaign['key'],
+                        '{userId}' => $userId,
+                        '{customVariables}' => json_encode($customVariables),
+                        '{segmentationType}' => 'pre-segmentation',
+                        '{variation}' => ''
+                    ],
+                    self::CLASSNAME,
+                    $disableLogs
+                );
+                return $response;
+            } else {
+                LoggerService::log(
+                    Logger::DEBUG,
+                    'SEGMENTATION_SKIPPED',
+                    [
+                        '{campaignKey}' => $campaign['key'],
+                        '{variation}' => '',
+                        '{userId}' => $userId
+                    ],
+                    self::CLASSNAME,
+                    $disableLogs
+                );
+                return true;
+            }
+        } catch (Exception $e) {
             LoggerService::log(
-                Logger::INFO,
-                LogMessages::INFO_MESSAGES['SEGMENTATION_STATUS'],
-                [
-                     '{status}' => $response === true ? 'passed' : 'failed',
-                     '{campaignKey}' => $campaign['key'],
-                     '{userId}' => $userId,
-                     '{customVariables}' => json_encode($customVariables),
-                     '{segmentationType}' => 'pre-segmentation',
-                     '{variation}' => ''
-                ],
-                self::$CLASSNAME,
-                $disableLogs
-            );
-            return $response;
-        } else {
-            LoggerService::log(
-                Logger::INFO,
-                LogMessages::INFO_MESSAGES['SEGMENTATION_SKIPPED'],
+                Logger::ERROR,
+                'SEGMENTATION_ERROR',
                 [
                     '{campaignKey}' => $campaign['key'],
+                    '{variation}' => '',
                     '{userId}' => $userId,
-                    '{variation}' => ''
+                    '{customVariables}' => json_encode($customVariables),
+                    '{err}' => $e->getMessage()
                 ],
-                self::$CLASSNAME,
+                self::CLASSNAME,
                 $disableLogs
             );
-            return true;
+            return false;
         }
     }
 
@@ -178,23 +193,24 @@ class Validations
         $jsonValidator->validate($request, self::$jsonSchemaObject, Constraint::CHECK_MODE_VALIDATE_SCHEMA);
         if ($jsonValidator->isValid() && self::validateVariablesInCampaigns($request["campaigns"])) {
             $response = true;
-            LoggerService::log(Logger::DEBUG, LogMessages::DEBUG_MESSAGES['VALID_CONFIGURATION']);
+            LoggerService::log(Logger::INFO, 'CONFIG_VALID', [], self::CLASSNAME);
         } else {
-            LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['SETTINGS_FILE_CORRUPTED']);
+            LoggerService::log(Logger::ERROR, 'SETTINGS_FILE_CORRUPTED', [], self::CLASSNAME);
         }
         return $response;
     }
 
     /**
-     * campaignkey and userid validation for feature enable
+     * campaignKey and userid validation for feature enable
      *
      * @param  string $campaignKey
      * @param  string $userId
+     * @param  string $apiName
      * @return bool
      */
-    public static function validateIsFeatureEnabledParams($campaignKey, $userId)
+    public static function validateIsFeatureEnabledParams($campaignKey, $userId, $apiName = '')
     {
-        if (self::validateCampaignKey($campaignKey) && self::validateUserId($userId)) {
+        if (self::validateCampaignKey($campaignKey, $apiName) && self::validateUserId($userId)) {
             return true;
         }
         return false;
@@ -209,14 +225,14 @@ class Validations
     private static function validateVariablesInCampaigns($campaigns)
     {
         foreach ($campaigns as $campaign) {
-            if($campaign["type"] == CampaignTypes::FEATURE_TEST) {
+            if ($campaign["type"] == CampaignTypes::FEATURE_TEST) {
                 foreach ($campaign["variations"] as $variation) {
-                    if(!self::validateVariables($variation["variables"])) {
+                    if (!self::validateVariables($variation["variables"])) {
                         return false;
                     }
                 }
-            } elseif($campaign["type"] == CampaignTypes::FEATURE_ROLLOUT) {
-                if(!self::validateVariables($campaign["variables"])) {
+            } elseif ($campaign["type"] == CampaignTypes::FEATURE_ROLLOUT) {
+                if (!self::validateVariables($campaign["variables"])) {
                     return false;
                 }
             }
@@ -228,7 +244,6 @@ class Validations
     {
         if (isset($variables) && is_array($variables)) {
             foreach ($variables as $variable) {
-
                 if (isset($variable["key"]) && isset($variable["id"]) && isset($variable["type"]) && isset($variable["value"])) {
                     // validate variable key & type are string and id is integer
                     if (!is_string($variable["key"]) || !is_int($variable["id"]) || !is_string($variable["type"])) {
@@ -258,14 +273,15 @@ class Validations
      * check whether campaignKey provided by end user is present in settings on VWO or not
      *
      * @param  $campaignKey string
+     * @param  $apiName     string
      * @return bool
      */
-    public static function validateCampaignKey($campaignKey)
+    public static function validateCampaignKey($campaignKey, $apiName)
     {
         if (is_string($campaignKey)) {
             return true;
         }
-        LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['FEATURE_KEY_CORRUPTED'], ['{campaignKey}' => $campaignKey], self::$CLASSNAME);
+        LoggerService::log(Logger::ERROR, 'CONFIG_PARAMETER_INVALID', ['{parameter}' => 'campaignKey', '{api}' => $apiName, '{type}' => 'string'], self::CLASSNAME);
         return false;
     }
 
@@ -280,7 +296,7 @@ class Validations
         if (is_string($userId)) {
             return true;
         }
-        LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['USERID_KEY_CORRUPTED'], ['{userId}' => $userId], self::$CLASSNAME);
+        LoggerService::log(Logger::ERROR, 'USER_ID_INVALID', ['{userId}' => $userId], self::CLASSNAME);
         return false;
     }
 
@@ -289,9 +305,10 @@ class Validations
      *
      * @param  string $campaignKey
      * @param  array  $settings
+     * @param  string $apiName
      * @return null
      */
-    public static function getCampaignFromCampaignKey($campaignKey, $settings)
+    public static function getCampaignFromCampaignKey($campaignKey, $settings, $apiName)
     {
         if (isset($settings) && isset($settings['campaigns'])) {
             foreach ($settings['campaigns'] as $campaign) {
@@ -303,7 +320,7 @@ class Validations
                 }
             }
         }
-        LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['CAMPAIGN_NOT_RUNNING'], ['{campaignKey}' => $campaignKey], self::$CLASSNAME);
+        LoggerService::log(Logger::WARNING, 'CAMPAIGN_NOT_RUNNING', ['{campaignKey}' => $campaignKey, '{api}' => $apiName], self::CLASSNAME);
         return null;
     }
 
@@ -314,13 +331,14 @@ class Validations
      * @param  array  $settings
      * @param  string $goalIdentifier
      * @param  string $goalTypeToTrack
+     * @param  string $apiName
      * @return array
      */
-    private static function getCampaignsFromCampaignKeys($campaignKeys, $settings, $goalIdentifier, $goalTypeToTrack = 'ALL')
+    private static function getCampaignsFromCampaignKeys($campaignKeys, $settings, $goalIdentifier, $goalTypeToTrack, $apiName)
     {
         $campaigns = [];
         foreach ($campaignKeys as $campaignKey) {
-            $campaign = self::getCampaignForCampaignKeyAndGoal($campaignKey, $settings, $goalIdentifier, $goalTypeToTrack);
+            $campaign = self::getCampaignForCampaignKeyAndGoal($campaignKey, $settings, $goalIdentifier, $goalTypeToTrack, $apiName);
             if ($campaign) {
                 $campaigns[] = $campaign;
             }
@@ -360,23 +378,24 @@ class Validations
      * @param  array             $settings
      * @param  string            $goalIdentifier
      * @param  string            $goalTypeToTrack
+     * @param  string            $apiName
      * @return array
      */
-    public static function getCampaigns($campaignKey, $settings, $goalIdentifier, $goalTypeToTrack = 'ALL')
+    public static function getCampaigns($campaignKey, $settings, $goalIdentifier, $goalTypeToTrack, $apiName)
     {
         $campaigns = [];
         if (!$campaignKey) {
             $campaigns = self::getCampaignsForGoal($settings, $goalIdentifier, $goalTypeToTrack);
         } elseif (is_array($campaignKey)) {
-            $campaigns = self::getCampaignsFromCampaignKeys($campaignKey, $settings, $goalIdentifier, $goalTypeToTrack);
+            $campaigns = self::getCampaignsFromCampaignKeys($campaignKey, $settings, $goalIdentifier, $goalTypeToTrack, $apiName);
         } elseif (is_string($campaignKey)) {
-            $campaign = self::getCampaignForCampaignKeyAndGoal($campaignKey, $settings, $goalIdentifier, $goalTypeToTrack);
+            $campaign = self::getCampaignForCampaignKeyAndGoal($campaignKey, $settings, $goalIdentifier, $goalTypeToTrack, $apiName);
             if ($campaign) {
                 $campaigns[] = $campaign;
             }
         }
         if (count($campaigns) == 0) {
-            LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['NO_CAMPAIGN_FOUND'], ['{goalIdentifier}' => $goalIdentifier], self::$CLASSNAME);
+            LoggerService::log(Logger::ERROR, 'CAMPAIGN_NOT_FOUND_FOR_GOAL', ['{goalIdentifier}' => $goalIdentifier], self::CLASSNAME);
         }
         return $campaigns;
     }
@@ -388,11 +407,12 @@ class Validations
      * @param  array        $settings
      * @param  string       $goalIdentifier
      * @param  string       $goalTypeToTrack
+     * @param  string       $apiName
      * @return array|null
      */
-    public static function getCampaignForCampaignKeyAndGoal($campaignKey, $settings, $goalIdentifier, $goalTypeToTrack)
+    public static function getCampaignForCampaignKeyAndGoal($campaignKey, $settings, $goalIdentifier, $goalTypeToTrack, $apiName)
     {
-        $campaign = self::getCampaignFromCampaignKey($campaignKey, $settings);
+        $campaign = self::getCampaignFromCampaignKey($campaignKey, $settings, $apiName);
         if ($campaign) {
             $goal = CommonUtil::getGoalFromGoals($campaign['goals'], $goalIdentifier);
             if (self::validateGoal($goal, $goalTypeToTrack)) {
@@ -414,6 +434,75 @@ class Validations
                     $goal['type'] == VWO::GOAL_TYPES[$goalTypeToTrack]
                 )
             )
+        );
+    }
+
+    /**
+     * validate the sdk configuration passed during instantiation
+     *
+     * @param  array  $config
+     * @param  string $apiName
+     * @return bool
+     */
+    public static function validateSDKConfiguration($config, $apiName)
+    {
+        if (isset($config['isDevelopmentMode'])) {
+            if (is_bool($config['isDevelopmentMode']) || in_array($config['isDevelopmentMode'], [0,1])) {
+                self::validConfigLog('isDevelopmentMode', 'boolean');
+            } else {
+                self::invalidConfigLog('isDevelopmentMode', 'boolean', $apiName);
+                return false;
+            }
+        }
+
+        if (isset($config['userStorageService'])) {
+            if ($config['userStorageService'] instanceof UserStorageInterface) {
+                self::validConfigLog('userStorageService', 'object');
+            } else {
+                self::invalidConfigLog('userStorageService', 'object', $apiName);
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * log information about valid parameter in sdk configuration passed during instantiation
+     *
+     * @param string $parameter
+     * @param string $type
+     */
+    private static function validConfigLog($parameter, $type)
+    {
+        LoggerService::log(
+            Logger::INFO,
+            'CONFIG_PARAMETER_USED',
+            [
+                '{parameter}' => $parameter,
+                '{type}' => $type
+            ],
+            self::CLASSNAME
+        );
+    }
+
+    /**
+     * log error about invalid parameter in sdk configuration passed during instantiation
+     *
+     * @param string $parameter
+     * @param string $type
+     */
+    private static function invalidConfigLog($parameter, $type, $apiName)
+    {
+        LoggerService::log(
+            Logger::ERROR,
+            'CONFIG_PARAMETER_INVALID',
+            [
+                '{parameter}' => $parameter,
+                '{type}' => $type,
+                '{api}' => $apiName
+            ],
+            self::CLASSNAME
         );
     }
 }

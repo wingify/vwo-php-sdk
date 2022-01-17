@@ -18,12 +18,6 @@
 
 namespace vwo\Services;
 
-use Monolog\Logger as Logger;
-use vwo\Constants\LogMessages as LogMessages;
-use vwo\Logger\LoggerInterface;
-use vwo\Services\LoggerService as LoggerService;
-use vwo\Storage\UserStorageInterface;
-
 class UsageStats
 {
     private $usageStats;

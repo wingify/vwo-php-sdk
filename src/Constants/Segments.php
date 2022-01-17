@@ -26,7 +26,6 @@ namespace vwo\Constants;
  */
 class Segments
 {
-
     const OPERAND_NOT = 'not';
     const OPERAND_AND = 'and';
     const OPERAND_OR = 'or';

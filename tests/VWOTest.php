@@ -33,7 +33,6 @@ use vwo\Utils\SegmentEvaluator;
  */
 class VWOTest extends TestCase
 {
-
     private $vwoInstance;
     private $variationResults = '';
     private $segmentEvaluatorJson = '';
@@ -438,18 +437,18 @@ class VWOTest extends TestCase
             $variation = $this->vwoInstance->getVariationName($featureTestKey, $userId);
 
             switch ($variation) {
-            case 'Control':
-                $expectedIsFeatureEnabled = true;
-                $expectedFeatureVariableValue = 10;
-                break;
-            case 'Variation-1':
-                $expectedIsFeatureEnabled = false;
-                $expectedFeatureVariableValue = 10;
-                break;
-            case 'Variation-2':
-                $expectedIsFeatureEnabled = true;
-                $expectedFeatureVariableValue = 20;
-                break;
+                case 'Control':
+                    $expectedIsFeatureEnabled = true;
+                    $expectedFeatureVariableValue = 10;
+                    break;
+                case 'Variation-1':
+                    $expectedIsFeatureEnabled = false;
+                    $expectedFeatureVariableValue = 10;
+                    break;
+                case 'Variation-2':
+                    $expectedIsFeatureEnabled = true;
+                    $expectedFeatureVariableValue = 20;
+                    break;
             }
 
             $campaignKeyWrong = $this->vwoInstance->getFeatureVariableValue(123, 'V!', $userId);
@@ -875,7 +874,7 @@ class VWOTest extends TestCase
 
             $expected = ucfirst($this->variationResults['FR_T_10_WHITELISTING_FAIL'][$userId]);
             $this->assertEquals($expected, $isFeatureEnabled);
-            if($expected) {
+            if ($expected) {
                 $expected = 10;
             }
             $this->assertEquals($expected, $variableValue);

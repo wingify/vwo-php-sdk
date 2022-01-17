@@ -16,33 +16,18 @@
  * limitations under the License.
  */
 
-namespace vwo\Utils;
+namespace vwo\Constants;
 
-class AccountUtil
+class FileNameEnum
 {
-    protected static $instance;
-
-    private $accountId;
-
-    private function __construct()
-    {
-    }
-
-    public static function instance()
-    {
-        if (!self::$instance) {
-            self::$instance = new AccountUtil();
-        }
-        return self::$instance;
-    }
-
-    public function getAccountId()
-    {
-        return $this->accountId;
-    }
-
-    public function setAccountId($accountId)
-    {
-        $this->accountId = $accountId;
-    }
+    const VWO = 'vwo\VWO';
+    const BUCKETER = 'vwo\Core\Bucketer';
+    const VARIATION_DECIDER = 'vwo\Core\VariationDecider';
+    const CAMPAIGN = 'vwo\Utils\Campaign';
+    const COMMON = 'vwo\Utils\Common';
+    const EVENT_DISPATCHER = 'vwo\Utils\EventDispatcher';
+    const IMPRESSION_BUILDER = 'vwo\Utils\ImpressionBuilder';
+    const OPERAND_EVALUATOR = 'vwo\Utils\OperandEvaluator';
+    const UUID_UTIL = 'vwo\Utils\UuidUtil';
+    const VALIDATIONS = 'vwo\Utils\Validations';
 }

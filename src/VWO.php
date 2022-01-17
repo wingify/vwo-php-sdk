@@ -21,10 +21,10 @@ namespace vwo;
 use Exception as Exception;
 use vwo\Constants\Constants as Constants;
 use vwo\Constants\EventEnum;
+use vwo\Constants\FileNameEnum;
 use vwo\Constants\Urls;
 use vwo\Constants\Urls as UrlConstants;
 use vwo\Constants\CampaignTypes;
-use vwo\Constants\LogMessages as LogMessages;
 use vwo\Services\HooksManager;
 use vwo\Services\UsageStats;
 use vwo\Storage\UserStorageInterface;
@@ -41,6 +41,7 @@ use vwo\Services\LoggerService as LoggerService;
 use vwo\Logger\VWOLogger as VWOLogger;
 use vwo\Core\Bucketer as Bucketer;
 use vwo\Core\VariationDecider as VariationDecider;
+use vwo\Utils\LogMessagesUtil;
 
 /***
  * Class for exposing various APIs
@@ -56,6 +57,8 @@ class VWO
     static $LOG_LEVEL_INFO = 200;
     static $LOG_LEVEL_WARNINGG = 300;
     static $LOG_LEVEL_ERROR = 400;
+
+    const CLASSNAME = FileNameEnum::VWO;
 
     static $apiName;
 
@@ -97,14 +100,22 @@ class VWO
     function __construct($config)
     {
         self::$apiName = 'init';
+        LoggerService::setApiName(self::$apiName);
         if (!is_array($config)) {
             return (object)[];
         }
+
+        if (!ValidationsUtil::validateSDKConfiguration($config, self::$apiName)) {
+            LoggerService::log(Logger::ERROR, 'CONFIG_CORRUPTED', [], self::CLASSNAME);
+            return (object)[];
+        }
+        LogMessagesUtil::instance();
+
         $usageStats = [];
         // is settings and logger files are provided then set the values to the object
         $settings = isset($config['settingsFile']) ? $config['settingsFile'] : '';
         $logger = isset($config['logging']) ? $config['logging'] : null;
-        if($settings) {
+        if ($settings) {
             DataLocationManager::instance()->setSettings($settings);
         }
 
@@ -119,7 +130,7 @@ class VWO
             LoggerService::setLogger($_logger);
         } elseif ($logger instanceof LoggerInterface) {
             LoggerService::setLogger($logger);
-            LoggerService::log(Logger::DEBUG, LogMessages::DEBUG_MESSAGES['CUSTOM_LOGGER_USED']);
+            LoggerService::log(Logger::DEBUG, 'CONFIG_CUSTOM_LOGGER_USED', [], self::CLASSNAME);
             $usageStats['cl'] = 1;
         }
 
@@ -136,26 +147,38 @@ class VWO
                 $this->goalTypeToTrack = $config['goalTypeToTrack'];
                 $usageStats['gt'] = 1;
             } else {
-                LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['INVALID_GOAL_TYPE']);
+                LoggerService::log(Logger::ERROR, 'CONFIG_PARAMETER_INVALID', ['{parameter}' => 'goalTypeToTrack', '{api}' => self::$apiName, '{type}' => 'strings(REVENUE, CUSTOM, ALL)'], self::CLASSNAME);
             }
         } else {
             $this->goalTypeToTrack = 'ALL';
         }
 
         // initial logging started for each new object
-        LoggerService::log(
-            Logger::DEBUG,
-            LogMessages::DEBUG_MESSAGES['SET_DEVELOPMENT_MODE'],
-            ['{devmode}' => $this->isDevelopmentMode]
-        );
+        if ($this->isDevelopmentMode) {
+            LoggerService::log(
+                Logger::DEBUG,
+                'CONFIG_DEVELOPMENT_MODE_STATUS',
+                [],
+                self::CLASSNAME
+            );
+        }
 
         $res = ValidationsUtil::checkSettingSchema($settings);
         if ($res) {
             $this->settings = CampaignUtil::makeRanges($settings);
+            LoggerService::log(
+                Logger::DEBUG,
+                'SETTINGS_FILE_PROCESSED',
+                ['{accountId}' => $this->settings['accountId']],
+                self::CLASSNAME
+            );
+        } else {
+            LoggerService::log(Logger::ERROR, 'SETTINGS_FILE_INVALID', [], self::CLASSNAME);
+            return (object)[];
         }
 
         // $this->connection = new Connection();
-        LoggerService::log(Logger::DEBUG, LogMessages::DEBUG_MESSAGES['SDK_INITIALIZED']);
+        LoggerService::log(Logger::INFO, 'SDK_INITIALIZED', [], self::CLASSNAME);
 
         $this->variationDecider = new VariationDecider($this->settings);
         if (isset($this->settings['accountId'])) {
@@ -180,22 +203,23 @@ class VWO
     {
         self::$apiName = 'getSettingsFile';
         LoggerService::setApiName(self::$apiName);
+        if (!$accountId || !$sdkKey) {
+            LoggerService::log(Logger::ERROR, 'MISSING_IMPORT_SETTINGS_MANDATORY_PARAMS', [], self::CLASSNAME);
+            return false;
+        }
         try {
             $parameters = ImpressionBuilder::getSettingsFileQueryParams($accountId, $sdkKey);
             $eventDispatcher = new EventDispatcher(false);
 
-            $url = '';
             if ($isTriggeredByWebhook) {
                 $url = UrlConstants::WEBHOOK_SETTINGS_URL;
             } else {
                 $url = UrlConstants::SETTINGS_URL;
             }
 
-            $response = $eventDispatcher->send($url, $parameters);
-
-            return $response;
+            return $eventDispatcher->send($url, $parameters);
         } catch (Exception $e) {
-            LoggerService::log(Logger::ERROR, $e->getMessage());
+            LoggerService::log(Logger::ERROR, $e->getMessage(), [], self::CLASSNAME);
         }
         return false;
     }
@@ -211,32 +235,26 @@ class VWO
         self::$apiName = 'isFeatureEnabled';
         LoggerService::setApiName(self::$apiName);
 
-        if($this->isOptedOut()) {
+        if ($this->isOptedOut()) {
             return false;
         }
 
         try {
-            LoggerService::log(
-                Logger::INFO,
-                LogMessages::INFO_MESSAGES['API_CALLED'],
-                ['{api}' => 'isFeatureEnabled', '{userId}' => $userId]
-            );
-
-            if (!ValidationsUtil::validateIsFeatureEnabledParams($campaignKey, $userId)
-                || !ValidationsUtil::checkSettingSchema($this->settings)
-            ) {
+            if (!ValidationsUtil::validateIsFeatureEnabledParams($campaignKey, $userId, self::$apiName)) {
+                LoggerService::log(Logger::ERROR, 'API_BAD_PARAMETERS', ['{api}' => self::$apiName], self::CLASSNAME);
                 return null;
             }
             // get campaigns
-            $campaign = ValidationsUtil::getCampaignFromCampaignKey($campaignKey, $this->settings);
+            $campaign = ValidationsUtil::getCampaignFromCampaignKey($campaignKey, $this->settings, self::$apiName);
             if ($campaign == null) {
                 return null;
             }
-            if ($campaign !== null && $campaign['type'] == CampaignTypes::AB) {
+            if ($campaign['type'] == CampaignTypes::AB) {
                 LoggerService::log(
-                    Logger::ERROR,
-                    LogMessages::ERROR_MESSAGES['INVALID_CAMPAIGN_FOR_API'],
-                    ['{api}' => 'isFeatureEnabled', '{campaignType}' => $campaign['type'], '{userId}' => $userId]
+                    Logger::WARNING,
+                    'CAMPAIGN_NOT_RUNNING',
+                    ['{api}' => 'isFeatureEnabled', '{campaignKey}' => $campaignKey, '{userId}' => $userId],
+                    self::CLASSNAME
                 );
                 return null;
             }
@@ -249,7 +267,7 @@ class VWO
             $result['response'] = ((isset($variationData) && !isset($variationData['isFeatureEnabled'])) || (isset($variationData['isFeatureEnabled']) && $variationData['isFeatureEnabled']) == true) ? true : false;
 
             if ($variationData) {
-                if($this->isEventArchEnabled()) {
+                if ($this->isEventArchEnabled()) {
                     $parameters = ImpressionBuilder::getEventsBaseProperties($this->settings['accountId'], $this->getSDKKey(), EventEnum::VWO_VARIATION_SHOWN, $this->usageStats->getUsageStats());
                     $payload = ImpressionBuilder::getTrackUserPayloadData(
                         $this->settings,
@@ -271,75 +289,92 @@ class VWO
             }
 
             if (isset($variationData) && $result['response'] == false) {
-                LoggerService::log(
-                    Logger::INFO,
-                    LogMessages::INFO_MESSAGES['FEATURE_ENABLED_FOR_USER'],
-                    ['{featureKey}' => $campaignKey, '{userId}' => $userId, '{status}' => 'disabled']
-                );
-
                 if ($this->isEligibleToSendImpressionToVWO()) {
-                    if($this->isEventArchEnabled()) {
-                        $this->eventDispatcher->sendPost($parameters, $payload);
+                    if ($this->isEventArchEnabled()) {
+                        $response = $this->eventDispatcher->sendPost($parameters, $payload);
                     } else {
-                        $this->eventDispatcher->sendAsyncRequest(CommonUtil::getUrl(Urls::TRACK_USER_ENDPOINT), 'GET', $parameters);
+                        LoggerService::log(
+                            Logger::DEBUG,
+                            'IMPRESSION_FOR_TRACK_USER',
+                            ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)],
+                            self::CLASSNAME
+                        );
+                        $response = $this->eventDispatcher->sendAsyncRequest(CommonUtil::getUrl(Urls::TRACK_USER_ENDPOINT), 'GET', $parameters);
+                    }
+                    LoggerService::log(
+                        Logger::INFO,
+                        'FEATURE_STATUS',
+                        ['{campaignKey}' => $campaignKey, '{userId}' => $userId, '{status}' => 'disabled'],
+                        self::CLASSNAME
+                    );
+                    if ($response) {
                         LoggerService::log(
                             Logger::INFO,
-                            LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
-                            ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)]
+                            'IMPRESSION_SUCCESS',
+                            [
+                                '{endPoint}' => 'track-user',
+                                '{mainKeys}' => json_encode(["campaignId" => $campaign['id']]),
+                                '{accountId}' => $this->settings['accountId']
+                            ],
+                            self::CLASSNAME
                         );
                     }
                 } else {
                     LoggerService::log(
                         Logger::INFO,
-                        LogMessages::INFO_MESSAGES['USER_ALREADY_TRACKED'],
-                        ['{userId}' => $userId, '{campaignKey}' => $campaignKey, '{api}' => self::$apiName]
+                        'CAMPAIGN_USER_ALREADY_TRACKED',
+                        ['{userId}' => $userId, '{campaignKey}' => $campaignKey, '{api}' => self::$apiName],
+                        self::CLASSNAME
                     );
                 }
-
                 return false;
             }
             if ($result !== false && isset($result['response']) && $result['response'] == true && isset($variationData)) {
-                LoggerService::log(
-                    Logger::INFO,
-                    LogMessages::INFO_MESSAGES['FEATURE_ENABLED_FOR_USER'],
-                    ['{featureKey}' => $campaignKey, '{userId}' => $userId, '{status}' => 'enabled']
-                );
-
                 if ($this->isEligibleToSendImpressionToVWO()) {
-                    if($this->isEventArchEnabled()) {
-                        $this->eventDispatcher->sendPost($parameters, $payload);
+                    if ($this->isEventArchEnabled()) {
+                        $response = $this->eventDispatcher->sendPost($parameters, $payload);
                     } else {
-                        $this->eventDispatcher->sendAsyncRequest(CommonUtil::getUrl(Urls::TRACK_USER_ENDPOINT), 'GET', $parameters);
                         LoggerService::log(
-                            Logger::INFO,
-                            LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
-                            ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)]
+                            Logger::DEBUG,
+                            'IMPRESSION_FOR_TRACK_USER',
+                            ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)],
+                            self::CLASSNAME
                         );
+                        $response = $this->eventDispatcher->sendAsyncRequest(CommonUtil::getUrl(Urls::TRACK_USER_ENDPOINT), 'GET', $parameters);
                     }
+                    LoggerService::log(
+                        Logger::INFO,
+                        'FEATURE_STATUS',
+                        ['{campaignKey}' => $campaignKey, '{userId}' => $userId, '{status}' => 'enabled'],
+                        self::CLASSNAME
+                    );
 
-                    if (!$this->isDevelopmentMode) {
+                    if ($response) {
                         LoggerService::log(
                             Logger::INFO,
-                            LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS_FOR_FEATURE'],
+                            'IMPRESSION_SUCCESS',
                             [
-                            '{endPoint}' => Urls::TRACK_USER_ENDPOINT,
-                            '{campaignId}' => $campaign['id'],
-                            '{accountId}' => $this->settings['accountId']
-                            ]
+                                '{mainKeys}' => json_encode(["campaignId" => $campaign['id']]),
+                                '{endPoint}' => Urls::TRACK_USER_ENDPOINT,
+                                '{campaignId}' => $campaign['id'],
+                                '{accountId}' => $this->settings['accountId']
+                            ],
+                            self::CLASSNAME
                         );
                     }
                 } else {
                     LoggerService::log(
                         Logger::INFO,
-                        LogMessages::INFO_MESSAGES['USER_ALREADY_TRACKED'],
-                        ['{userId}' => $userId, '{campaignKey}' => $campaignKey, '{api}' => self::$apiName]
+                        'CAMPAIGN_USER_ALREADY_TRACKED',
+                        ['{userId}' => $userId, '{campaignKey}' => $campaignKey, '{api}' => self::$apiName],
+                        self::CLASSNAME
                     );
                 }
                 return true;
             }
             return $campaign['type'] == CampaignTypes::FEATURE_ROLLOUT ? false : null;
         } catch (Exception $e) {
-            LoggerService::log(Logger::ERROR, $e->getMessage());
+            LoggerService::log(Logger::ERROR, $e->getMessage(), [], self::CLASSNAME);
         }
 
         return isset($campaign) && isset($campaign['type']) && ($campaign['type'] == CampaignTypes::FEATURE_ROLLOUT) ? false : null;
@@ -356,30 +391,28 @@ class VWO
         self::$apiName = 'getFeatureVariableValue';
         LoggerService::setApiName(self::$apiName);
 
-        if($this->isOptedOut()) {
+        if ($this->isOptedOut()) {
             return false;
         }
 
         try {
-            if (!ValidationsUtil::validateIsFeatureEnabledParams($campaignKey, $userId)
-                || !ValidationsUtil::checkSettingSchema(
-                    $this->settings
-                )
-            ) {
+            if (!ValidationsUtil::validateIsFeatureEnabledParams($campaignKey, $userId, self::$apiName)) {
+                LoggerService::log(Logger::ERROR, 'API_BAD_PARAMETERS', ['{api}' => self::$apiName], self::CLASSNAME);
                 return null;
             }
 
-            $campaign = ValidationsUtil::getCampaignFromCampaignKey($campaignKey, $this->settings);
+            $campaign = ValidationsUtil::getCampaignFromCampaignKey($campaignKey, $this->settings, self::$apiName);
             if ($campaign != null && $campaign['type'] == CampaignTypes::AB) {
                 LoggerService::log(
                     Logger::ERROR,
-                    LogMessages::ERROR_MESSAGES['INVALID_API_CALL'],
+                    'API_NOT_APPLICABLE',
                     [
                         '{api}' => 'getFeatureVariableValue',
                         '{userId}' => $userId,
                         '{campaignKey}' => $campaignKey,
                         '{campaignType}' => 'SERVER AB'
-                    ]
+                    ],
+                    self::CLASSNAME
                 );
                 return null;
             }
@@ -412,31 +445,34 @@ class VWO
             }
             if ($value == null) {
                 LoggerService::log(
-                    Logger::DEBUG,
-                    LogMessages::INFO_MESSAGES['VARIABLE_NOT_FOUND'],
+                    Logger::INFO,
+                    'FEATURE_VARIABLE_DEFAULT_VALUE',
                     [
-                        '{userId}' => $userId,
                         '{variableKey}' => $variableKey,
-                        '{campaignKey}' => $campaignKey,
-                        '{variableValue}' => $value
-                    ]
+                        '{variationName}' => $variationData["name"]
+                    ],
+                    self::CLASSNAME
                 );
             } else {
+                if (is_array($value)) {
+                    $value = json_encode($value);
+                }
                 LoggerService::log(
-                    Logger::DEBUG,
-                    LogMessages::INFO_MESSAGES['VARIABLE_FOUND'],
+                    Logger::INFO,
+                    'FEATURE_VARIABLE_VALUE',
                     [
                         '{userId}' => $userId,
                         '{variableKey}' => $variableKey,
                         '{campaignKey}' => $campaignKey,
                         '{variableValue}' => $value
-                    ]
+                    ],
+                    self::CLASSNAME
                 );
             }
 
             return $value;
         } catch (Exception $e) {
-            LoggerService::log(Logger::ERROR, $e->getMessage());
+            LoggerService::log(Logger::ERROR, $e->getMessage(), [], self::CLASSNAME);
         }
 
         return null;
@@ -456,7 +492,7 @@ class VWO
         self::$apiName = 'track';
         LoggerService::setApiName(self::$apiName);
 
-        if($this->isOptedOut()) {
+        if ($this->isOptedOut()) {
             return false;
         }
 
@@ -464,16 +500,17 @@ class VWO
         $bucketInfo = null;
 
 
-        if (empty($userId)
+        if (
+            empty($userId)
             || empty($goalIdentifier)
             || !(is_null($campaignKey) || is_array($campaignKey) || is_string($campaignKey))
         ) {
-            LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['TRACK_API_MISSING_PARAMS']);
+            LoggerService::log(Logger::ERROR, 'API_BAD_PARAMETERS', ['{api}' => self::$apiName], self::CLASSNAME);
             return null;
         }
 
         $goalTypeToTrack = $this->getGoalTypeToTrack($options);
-        $campaigns = ValidationsUtil::getCampaigns($campaignKey, $this->settings, $goalIdentifier, $goalTypeToTrack);
+        $campaigns = ValidationsUtil::getCampaigns($campaignKey, $this->settings, $goalIdentifier, $goalTypeToTrack, self::$apiName);
 
         if (empty($campaigns)) {
             return null;
@@ -487,13 +524,14 @@ class VWO
                 if ($campaign['type'] == CampaignTypes::FEATURE_ROLLOUT) {
                     LoggerService::log(
                         Logger::ERROR,
-                        LogMessages::ERROR_MESSAGES['INVALID_API_CALL'],
+                        'API_NOT_APPLICABLE',
                         [
                             '{api}' => 'track',
                             '{userId}' => $userId,
                             '{campaignKey}' => $campaign['key'],
                             '{campaignType}' => $campaign['type']
-                        ]
+                        ],
+                        self::CLASSNAME
                     );
                     $result[$campaign['key']] = null;
                     continue;
@@ -511,12 +549,13 @@ class VWO
                     if ($goal['type'] == "REVENUE_TRACKING" && is_null($revenueValue)) {
                         LoggerService::log(
                             Logger::ERROR,
-                            LogMessages::ERROR_MESSAGES['MISSING_GOAL_REVENUE'],
+                            'TRACK_API_REVENUE_NOT_PASSED_FOR_REVENUE_GOAL',
                             [
                                 '{goalIdentifier}' => $goalIdentifier,
                                 '{campaignKey}' => $campaign['key'],
                                 '{userId}' => $userId
-                            ]
+                            ],
+                            self::CLASSNAME
                         );
                         $result[$campaign['key']] = null;
                         continue;
@@ -533,24 +572,27 @@ class VWO
 
                         if (!in_array($goalIdentifier, $identifiers)) {
                             $bucketInfo['goalIdentifier'] .=  "_vwo_$goalIdentifier";
-                            $this->variationDecider->userStorageSet($this->_userStorageObj, $userId, $campaign['key'], $bucketInfo, $bucketInfo['goalIdentifier']);
+                            if (!empty($this->_userStorageObj)) {
+                                $this->variationDecider->userStorageSet($this->_userStorageObj, $userId, $campaign['key'], $bucketInfo, $bucketInfo['goalIdentifier']);
+                            }
                         } else {
                             LoggerService::log(
                                 Logger::INFO,
-                                LogMessages::INFO_MESSAGES['GOAL_ALREADY_TRACKED'],
+                                'CAMPAIGN_GOAL_ALREADY_TRACKED',
                                 [
                                     '{goalIdentifier}' => $goalIdentifier,
                                     '{campaignKey}' => $campaign['key'],
                                     '{userId}' => $userId
-                                ]
+                                ],
+                                self::CLASSNAME
                             );
                             $result[$campaign['key']] = false;
                             continue;
                         }
                     }
 
-                    if($this->isEventArchEnabled()) {
-                        if($goal['type'] == "REVENUE_TRACKING" && !in_array($goal['revenueProp'], $revenueProps)) {
+                    if ($this->isEventArchEnabled()) {
+                        if ($goal['type'] == "REVENUE_TRACKING" && !in_array($goal['revenueProp'], $revenueProps)) {
                             $revenueProps[] = $goal['revenueProp'];
                         }
                         $metricMap[$campaign['id']] = $goal["id"];
@@ -564,12 +606,25 @@ class VWO
                             $revenueValue,
                             $this->getSDKKey()
                         );
-                        $this->eventDispatcher->sendAsyncRequest(CommonUtil::getUrl(Urls::TRACK_GOAL_ENDPOINT), 'GET', $parameters);
                         LoggerService::log(
-                            Logger::INFO,
-                            LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_GOAL'],
-                            array('{properties}' => $this->getAllowedToLogImpressionParams($parameters))
+                            Logger::DEBUG,
+                            'IMPRESSION_FOR_TRACK_GOAL',
+                            ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)],
+                            self::CLASSNAME
                         );
+                        $resp = $this->eventDispatcher->sendAsyncRequest(CommonUtil::getUrl(Urls::TRACK_GOAL_ENDPOINT), 'GET', $parameters);
+                        if ($resp) {
+                            LoggerService::log(
+                                Logger::INFO,
+                                'IMPRESSION_SUCCESS',
+                                [
+                                    '{endPoint}' => Urls::TRACK_GOAL_ENDPOINT,
+                                    '{mainKeys}' => json_encode(["campaignId" => $campaign['id'], "variationId" => $bucketInfo['id'], "goalId" => $goal['id']]),
+                                    '{accountId}' => $this->settings['accountId']
+                                ],
+                                self::CLASSNAME
+                            );
+                        }
                     }
 
                     if ($this->isDevelopmentMode) {
@@ -577,36 +632,23 @@ class VWO
                         continue;
                     }
 
-                    if(!$this->isEventArchEnabled()) {
-                        LoggerService::log(
-                            Logger::INFO,
-                            LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS_GOAL'],
-                            [
-                                '{endPoint}' => Urls::TRACK_GOAL_ENDPOINT,
-                                '{campaignId}' => $campaign['id'],
-                                '{variationId}' => $bucketInfo['id'],
-                                '{accountId}' => $this->settings['accountId'],
-                                '{goalId}' => $goal['id']
-                            ]
-                        );
-                    }
-
                     $result[$campaign['key']] = true;
                 } else {
                     LoggerService::log(
                         Logger::ERROR,
-                        LogMessages::ERROR_MESSAGES['TRACK_API_GOAL_NOT_FOUND'],
-                        ['{campaignKey}' => $campaign['key'], '{userId}' => $userId]
+                        'TRACK_API_GOAL_NOT_FOUND',
+                        ['{campaignKey}' => $campaign['key'], '{userId}' => $userId, "{goalIdentifier}" => $goalIdentifier],
+                        self::CLASSNAME
                     );
 
                     $result[$campaign['key']] = null;
                 }
             } catch (Exception $e) {
-                LoggerService::log(Logger::ERROR, $e->getMessage());
+                LoggerService::log(Logger::ERROR, $e->getMessage(), [], self::CLASSNAME);
             }
         }
 
-        if($this->isEventArchEnabled()) {
+        if ($this->isEventArchEnabled()) {
             $parameters = ImpressionBuilder::getEventsBaseProperties($this->settings['accountId'], $this->getSDKKey(), $goalIdentifier);
             $payload = ImpressionBuilder::getTrackGoalPayloadData(
                 $this->settings,
@@ -617,15 +659,16 @@ class VWO
                 $revenueProps
             );
             $this->eventDispatcher->sendPost($parameters, $payload);
-            if($this->isEligibleToSendImpressionToVWO()) {
+            if ($this->isEligibleToSendImpressionToVWO()) {
                 LoggerService::log(
                     Logger::INFO,
-                    LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS_FOR_EVENT_ARCH'],
+                    'IMPRESSION_SUCCESS_FOR_EVENT_ARCH',
                     [
-                        '{a}' => $parameters["a"],
+                        '{accountId}' => $parameters["a"],
                         '{event}' => 'visitor property:' . json_encode($payload["d"]["visitor"]["props"]),
-                        '{url}' => CommonUtil::getEventsUrl()
-                    ]
+                        '{endPoint}' => CommonUtil::getEventsUrl()
+                    ],
+                    self::CLASSNAME
                 );
             }
         }
@@ -642,9 +685,9 @@ class VWO
     /**
      * to send variation name along with api hit to send add visitor hit
      *
-     * @param  $campaignKey
-     * @param  $userId
-     * @param  $options
+     * @param  string $campaignKey
+     * @param  string $userId
+     * @param  array  $options
      * @return string|null
      */
     public function activate($campaignKey, $userId, $options = [])
@@ -652,16 +695,11 @@ class VWO
         self::$apiName = 'activate';
         LoggerService::setApiName(self::$apiName);
 
-        if($this->isOptedOut()) {
+        if ($this->isOptedOut()) {
             return false;
         }
 
-        LoggerService::log(
-            Logger::INFO,
-            LogMessages::INFO_MESSAGES['API_CALLED'],
-            ['{api}' => 'activate', '{userId}' => $userId]
-        );
-        return $this->getVariation($campaignKey, $userId, $options, 1);
+        return $this->getVariation($campaignKey, $userId, $options, 1, self::$apiName);
     }
 
     /**
@@ -669,25 +707,32 @@ class VWO
      *
      * @param  $campaignKey
      * @param  $userId
-     * @param  int $trackVisitor
+     * @param  array  $options
+     * @param  int    $trackVisitor
+     * @param  string $apiName
      * @return null|string
      */
-    private function getVariation($campaignKey, $userId, $options = [], $trackVisitor = 0)
+    private function getVariation($campaignKey, $userId, $options, $trackVisitor, $apiName)
     {
+        if (empty($userId) || !is_string($campaignKey)) {
+            LoggerService::log(Logger::ERROR, 'API_BAD_PARAMETERS', ['{api}' => self::$apiName], self::CLASSNAME);
+            return null;
+        }
         $bucketInfo = null;
         try {
-            $campaign = ValidationsUtil::getCampaignFromCampaignKey($campaignKey, $this->settings);
+            $campaign = ValidationsUtil::getCampaignFromCampaignKey($campaignKey, $this->settings, $apiName);
             if ($campaign !== null) {
                 if (($campaign['type'] == CampaignTypes::FEATURE_ROLLOUT) || ($campaign['type'] == CampaignTypes::FEATURE_TEST && $trackVisitor == 1)) {
                     LoggerService::log(
                         Logger::ERROR,
-                        LogMessages::ERROR_MESSAGES['INVALID_API_CALL'],
+                        'API_NOT_APPLICABLE',
                         [
                             '{api}' => $trackVisitor == 1 ? 'activate' : 'getVariationName',
                             '{userId}' => $userId,
                             '{campaignKey}' => $campaignKey,
                             '{campaignType}' => $campaign['type']
-                        ]
+                        ],
+                        self::CLASSNAME
                     );
                     return $bucketInfo;
                 }
@@ -698,7 +743,7 @@ class VWO
             if ($bucketInfo !== null) {
                 if ($trackVisitor) {
                     if ($this->isEligibleToSendImpressionToVWO()) {
-                        if($this->isEventArchEnabled()) {
+                        if ($this->isEventArchEnabled()) {
                             $parameters = ImpressionBuilder::getEventsBaseProperties($this->settings['accountId'], $this->getSDKKey(), EventEnum::VWO_VARIATION_SHOWN, $this->usageStats->getUsageStats());
                             $payload = ImpressionBuilder::getTrackUserPayloadData(
                                 $this->settings,
@@ -720,41 +765,43 @@ class VWO
                             $parameters =  array_merge($parameters, $this->usageStats->getUsageStats());
                             $this->eventDispatcher->sendAsyncRequest(CommonUtil::getUrl(Urls::TRACK_USER_ENDPOINT), 'GET', $parameters);
                             LoggerService::log(
-                                Logger::INFO,
-                                LogMessages::INFO_MESSAGES['IMPRESSION_FOR_TRACK_USER'],
-                                ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)]
+                                Logger::DEBUG,
+                                'IMPRESSION_FOR_TRACK_USER',
+                                ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)],
+                                self::CLASSNAME
                             );
                         }
 
                         if (!$this->isDevelopmentMode) {
-                            if($this->isEventArchEnabled()) {
+                            if ($this->isEventArchEnabled()) {
                                 LoggerService::log(
                                     Logger::INFO,
-                                    LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS_FOR_EVENT_ARCH'],
+                                    'IMPRESSION_SUCCESS_FOR_EVENT_ARCH',
                                     [
-                                        '{a}' => $parameters["a"],
+                                        '{accountId}' => $parameters["a"],
                                         '{event}' => 'visitor property:' . json_encode($payload["d"]["visitor"]["props"]),
-                                        '{url}' => CommonUtil::getEventsUrl()
+                                        '{endPoint}' => CommonUtil::getEventsUrl()
                                     ]
                                 );
                             } else {
                                 LoggerService::log(
                                     Logger::INFO,
-                                    LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS'],
+                                    'IMPRESSION_SUCCESS',
                                     [
+                                        '{mainKeys}' => json_encode(["campaignId" => $campaign['id'], "variationId" => $bucketInfo['id']]),
                                         '{endPoint}' => Urls::TRACK_USER_ENDPOINT,
-                                        '{campaignId}' => $campaign['id'],
-                                        '{variationId}' => $bucketInfo['id'],
                                         '{accountId}' => $this->settings['accountId']
-                                    ]
+                                    ],
+                                    self::CLASSNAME
                                 );
                             }
                         }
                     } else {
                         LoggerService::log(
                             Logger::INFO,
-                            LogMessages::INFO_MESSAGES['USER_ALREADY_TRACKED'],
-                            ['{userId}' => $userId, '{campaignKey}' => $campaignKey, '{api}' => self::$apiName]
+                            'CAMPAIGN_USER_ALREADY_TRACKED',
+                            ['{userId}' => $userId, '{campaignKey}' => $campaignKey, '{api}' => self::$apiName],
+                            self::CLASSNAME
                         );
                     }
                 }
@@ -762,16 +809,17 @@ class VWO
                 return $bucketInfo['name'];
             }
         } catch (Exception $e) {
-            LoggerService::log(Logger::ERROR, $e->getMessage());
+            LoggerService::log(Logger::ERROR, $e->getMessage(), [], self::CLASSNAME);
         }
         return null;
     }
 
     /**
-     * to send variation name along with api hit to send add visitor hit
+     * Gets the variation assigned for the user for the campaign
      *
-     * @param  $campaignKey
-     * @param  $userId
+     * @param  string $campaignKey
+     * @param  string $userId
+     * @param  array  $options
      * @return string|null
      */
     public function getVariationName($campaignKey, $userId, $options = [])
@@ -779,17 +827,10 @@ class VWO
         self::$apiName = 'getVariationName';
         LoggerService::setApiName(self::$apiName);
 
-        if($this->isOptedOut()) {
+        if ($this->isOptedOut()) {
             return false;
         }
-
-        LoggerService::log(
-            Logger::INFO,
-            LogMessages::INFO_MESSAGES['API_CALLED'],
-            ['{api}' => 'getVariationName', '{userId}' => $userId]
-        );
-
-        return $this->getVariation($campaignKey, $userId, $options, 0);
+        return $this->getVariation($campaignKey, $userId, $options, 0, self::$apiName);
     }
 
     /**
@@ -803,12 +844,13 @@ class VWO
         self::$apiName = 'push';
         LoggerService::setApiName(self::$apiName);
 
-        if($this->isOptedOut()) {
+        if ($this->isOptedOut()) {
             return false;
         }
 
         $customDimensionMap = [];
-        if(!$userId || is_array($tagKey)) {
+        //reshuffling
+        if (!$userId || is_array($tagKey)) {
             $customDimensionMap = $tagKey;
             $userId = $tagValue;
         } else {
@@ -816,13 +858,12 @@ class VWO
         }
 
         try {
-            if (!ValidationsUtil::pushApiParams($userId, $customDimensionMap)
-                || !ValidationsUtil::checkSettingSchema($this->settings)
-            ) {
+            if (!ValidationsUtil::pushApiParams($userId, $customDimensionMap)) {
+                LoggerService::log(Logger::ERROR, 'API_BAD_PARAMETERS', ['{api}' => self::$apiName], self::CLASSNAME);
                 return false;
             }
 
-            if($this->isEventArchEnabled()) {
+            if ($this->isEventArchEnabled()) {
                 $parameters = ImpressionBuilder::getEventsBaseProperties($this->settings['accountId'], $this->getSDKKey(), EventEnum::VWO_SYNC_VISITOR_PROP);
                 $payload = ImpressionBuilder::getPushPayloadData(
                     $this->settings,
@@ -834,22 +875,27 @@ class VWO
             } else {
                 foreach ($customDimensionMap as $tagKey => $tagValue) {
                     $parameters = ImpressionBuilder::getPushQueryParams($this->settings['accountId'], $userId, $this->getSDKKey(), $tagKey, $tagValue);
+                    LoggerService::log(
+                        Logger::DEBUG,
+                        'IMPRESSION_FOR_PUSH',
+                        ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)],
+                        self::CLASSNAME
+                    );
                     $this->eventDispatcher->sendAsyncRequest(CommonUtil::getUrl(Urls::PUSH_ENDPOINT), 'GET', $parameters);
                     if (!$this->isDevelopmentMode) {
                         LoggerService::log(
                             Logger::INFO,
-                            LogMessages::INFO_MESSAGES['IMPRESSION_SUCCESS_PUSH'],
+                            'IMPRESSION_SUCCESS',
                             [
                                 '{endPoint}' => Urls::PUSH_ENDPOINT,
                                 '{accountId}' => $this->settings['accountId'],
-                                '{tags}' => $parameters['tags']
-                            ]
+                                '{mainKeys}' => json_encode(["tags" => $parameters['tags']])
+                            ],
+                            self::CLASSNAME
                         );
-
                         $result = true;
                     }
                 }
-
             }
 
             if ($this->isDevelopmentMode) {
@@ -857,9 +903,9 @@ class VWO
             } elseif ($result) {
                 return $result;
             }
-            LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['IMPRESSION_FAILED'], ['{endPoint}' => 'push', '{reason}' => '']);
+            LoggerService::log(Logger::ERROR, 'IMPRESSION_FAILED', ['{endPoint}' => 'push', '{err}' => ''], self::CLASSNAME);
         } catch (Exception $e) {
-            LoggerService::log(Logger::ERROR, $e->getMessage());
+            LoggerService::log(Logger::ERROR, $e->getMessage(), [], self::CLASSNAME);
         }
 
         return false;
@@ -894,7 +940,12 @@ class VWO
         } elseif (array_key_exists($options['goalTypeToTrack'], self::GOAL_TYPES)) {
             $goalTypeToTrack = $options['goalTypeToTrack'];
         } else {
-            LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['INVALID_GOAL_TYPE']);
+            LoggerService::log(
+                Logger::ERROR,
+                'CONFIG_PARAMETER_INVALID',
+                ['{parameter}' => 'goalTypeToTrack', '{api}' => self::$apiName, '{type}' => 'strings(REVENUE, CUSTOM, ALL)'],
+                self::CLASSNAME
+            );
         }
         return $goalTypeToTrack;
     }
@@ -917,7 +968,9 @@ class VWO
 
         LoggerService::log(
             Logger::INFO,
-            LogMessages::INFO_MESSAGES['OPT_OUT_API_CALLED']
+            'OPT_OUT_API_CALLED',
+            [],
+            self::CLASSNAME
         );
 
         $this->isOptedOut = true;
@@ -938,8 +991,9 @@ class VWO
         if ($this->isOptedOut) {
             LoggerService::log(
                 Logger::INFO,
-                LogMessages::INFO_MESSAGES['API_NOT_ENABLED'],
-                ['{api}' => self::$apiName]
+                'API_NOT_ENABLED',
+                ['{api}' => self::$apiName],
+                self::CLASSNAME
             );
         }
         return $this->isOptedOut;

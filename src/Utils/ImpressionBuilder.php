@@ -18,11 +18,9 @@
 
 namespace vwo\Utils;
 
-use http\Url;
 use Monolog\Logger as Logger;
 use vwo\Constants\EventEnum;
-use vwo\Constants\LogMessages as LogMessages;
-use vwo\Constants\Urls;
+use vwo\Constants\FileNameEnum;
 use vwo\Services\LoggerService as LoggerService;
 use vwo\Utils\UuidUtil;
 use vwo\Utils\Common as CommonUtil;
@@ -32,13 +30,13 @@ class ImpressionBuilder
     /**
      * sdk version for api hit
      */
-    const SDK_VERSION = '1.29.0';
+    const SDK_VERSION = '1.31.0';
     /**
      * sdk langauge for api hit
      */
     const SDK_LANGUAGE = 'php';
 
-    const CLASSNAME = 'vwo\Utils\ImpressionBuilder';
+    const CLASSNAME = FileNameEnum::IMPRESSION_BUILDER;
 
     public static function getVisitorQueryParams($accountId, $campaign, $userId, $combination, $sdkKey)
     {
@@ -64,9 +62,10 @@ class ImpressionBuilder
             'goal_id' => $goal['id']
         );
 
-        if ($goal['type'] == "REVENUE_TRACKING" && (is_string($revenueValue) || is_float(
-            $revenueValue
-        ) || is_int($revenueValue))
+        if (
+            $goal['type'] == "REVENUE_TRACKING" && (is_string($revenueValue) || is_float(
+                $revenueValue
+            ) || is_int($revenueValue))
         ) {
             $params['r'] = $revenueValue;
         }
@@ -146,7 +145,7 @@ class ImpressionBuilder
     {
         $params['account_id'] = $accountId;
         $params['sId'] = time();
-        $params['u'] = UuidUtil::get($userId, $accountId);
+        $params['u'] = UuidUtil::get($userId, $accountId, true);
 
         $params['random'] = time() / 10;
 
@@ -189,7 +188,7 @@ class ImpressionBuilder
      */
     public static function getEventBasePayload($configObj, $userId, $eventName, $usageStats = [])
     {
-        $uuid = UuidUtil::get($userId, $configObj["accountId"]);
+        $uuid = UuidUtil::get($userId, $configObj["accountId"], true);
         $sdkKey = $configObj["sdkKey"];
 
         $props = [
@@ -250,11 +249,11 @@ class ImpressionBuilder
 
         LoggerService::log(
             Logger::DEBUG,
-            LogMessages::DEBUG_MESSAGES['IMPRESSION_FOR_EVENT_ARCH_TRACK_USER'],
+            'IMPRESSION_FOR_EVENT_ARCH_TRACK_USER',
             [
-                '{a}' => $configObj["accountId"],
-                '{u}' => $userId,
-                '{c}' => $campaignId,
+                '{accountId}' => $configObj["accountId"],
+                '{userId}' => $userId,
+                '{campaignId}' => $campaignId,
             ],
             self::CLASSNAME
         );
@@ -282,12 +281,12 @@ class ImpressionBuilder
             $metric["id_$campaignId"] = ["g_$goalId"];
             LoggerService::log(
                 Logger::DEBUG,
-                LogMessages::DEBUG_MESSAGES['IMPRESSION_FOR_EVENT_ARCH_TRACK_GOAL'],
+                'IMPRESSION_FOR_EVENT_ARCH_TRACK_GOAL',
                 [
                     '{goalName}' => $eventName,
-                    '{a}' => $configObj["accountId"],
-                    '{u}' => $userId,
-                    '{c}' => $campaignId
+                    '{accountId}' => $configObj["accountId"],
+                    '{userId}' => $userId,
+                    '{campaignId}' => $campaignId
                 ],
                 self::CLASSNAME
             );
@@ -297,7 +296,7 @@ class ImpressionBuilder
             "metric" => $metric
         ];
 
-        if(count($revenueProps) && $revenueValue) {
+        if (count($revenueProps) && $revenueValue) {
             foreach ($revenueProps as $revenueProp) {
                 $properties["d"]["event"]["props"]["vwoMeta"][$revenueProp] = $revenueValue;
             }
@@ -329,10 +328,10 @@ class ImpressionBuilder
 
         LoggerService::log(
             Logger::DEBUG,
-            LogMessages::DEBUG_MESSAGES['IMPRESSION_FOR_EVENT_ARCH_PUSH'],
+            'IMPRESSION_FOR_EVENT_ARCH_PUSH',
             [
-                '{a}' => $configObj["accountId"],
-                '{u}' => $userId,
+                '{accountId}' => $configObj["accountId"],
+                '{userId}' => $userId,
                 '{property}' => json_encode($customDimensionMap)
             ],
             self::CLASSNAME
