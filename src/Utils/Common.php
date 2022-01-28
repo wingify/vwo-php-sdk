@@ -216,4 +216,14 @@ class Common
     {
         return DataLocationManager::instance()->getDataLocation() . Urls::EVENTS_ENDPOINT;
     }
+
+    /**
+     * get batch events URL
+     *
+     * @return string
+     */
+    public static function getBatchEventsUrl()
+    {
+        return DataLocationManager::instance()->getDataLocation() . Urls::SERVER_SIDE_URI . Urls::BATCH_EVENTS_ENDPOINT;
+    }
 }

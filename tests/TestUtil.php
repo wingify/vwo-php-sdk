@@ -83,9 +83,10 @@ class TestUtil
 
     public static function mockEventDispatcher($obj, $status = 200)
     {
-        $mockEventDispatcher = $obj->getMockBuilder('EventDispatcher')->setMethods(['send', 'sendAsyncRequest'])->getMock();
+        $mockEventDispatcher = $obj->getMockBuilder('EventDispatcher')->setMethods(['send', 'sendAsyncRequest', 'sendBatchEventRequest'])->getMock();
         $mockEventDispatcher->method('send')->will($obj->returnValue(['httpStatus' => $status]));
-        $mockEventDispatcher->method('sendAsyncRequest')->will($obj->returnValue(['httpStatus' => $status]));
+        $mockEventDispatcher->method('sendAsyncRequest')->will($obj->returnValue($status == 200));
+        $mockEventDispatcher->method('sendBatchEventRequest')->will($obj->returnValue($status == 200));
 
         return $mockEventDispatcher;
     }

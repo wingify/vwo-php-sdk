@@ -79,39 +79,56 @@ class Validations
     ];
 
     /**
-     * Validate the tags and userId for push api
+     * Validate the customDimensionMap (tagKey - tagValue pair) and userId for push api
      *
      * @param  string $userId
      * @param  array  $customDimensionMap
-     * @return bool
+     * @return array  [(isValidParams), (map containing tagKey-false pair for invalid tagKey-tagValue), (map containing valid tagKey-tagValue pair)]
      */
-    public static function pushApiParams($userId, $customDimensionMap = [])
+    public static function pushApiParams($userId, $customDimensionMap)
     {
-        if (!is_string($userId)  || empty($userId)) {
-            return false;
-        }
-
-        if (empty($customDimensionMap) || !is_array($customDimensionMap)) {
-            return false;
+        $invalidCustomDimensions = [];
+        $invalidPushApiParams = false;
+        if (!is_string($userId)  || empty($userId) || empty($customDimensionMap) || !is_array($customDimensionMap)) {
+            return [$invalidPushApiParams, $invalidCustomDimensions, []];
         }
 
         foreach ($customDimensionMap as $tagKey => $tagValue) {
-            if (!is_string($tagKey) || empty($tagKey)) {
-                return false;
-            }
-            if (strlen($tagKey) > 255) {
-                LoggerService::log(Logger::ERROR, 'TAG_KEY_LENGTH_EXCEEDED', ['{tagKey}' => $tagKey,'{userId}' => $userId], self::CLASSNAME);
-                return false;
-            }
-            if (!is_string($tagValue)  || empty($tagValue)) {
-                return false;
-            }
-            if (strlen($tagValue) > 255) {
-                LoggerService::log(Logger::ERROR, 'TAG_VALUE_LENGTH_EXCEEDED', ['{tagValue}' => $tagValue,'{userId}' => $userId], self::CLASSNAME);
-                return false;
+            if (self::validateTagKeyAndValue($userId, $tagKey, $tagValue)) {
+                $invalidPushApiParams = true;
+            } else {
+                $invalidCustomDimensions[$tagKey] = false;
+                unset($customDimensionMap[$tagKey]);
             }
         }
 
+        return [$invalidPushApiParams, $invalidCustomDimensions, $customDimensionMap];
+    }
+
+    /**
+     * Validate tagKey and TagValue
+     *
+     * @param  string $userId
+     * @param  string  $tagKey
+     * @param  string  $tagValue
+     * @return bool
+     */
+    private static function validateTagKeyAndValue($userId, $tagKey, $tagValue)
+    {
+        if (!is_string($tagKey) || empty($tagKey)) {
+            return false;
+        }
+        if (strlen($tagKey) > 255) {
+            LoggerService::log(Logger::ERROR, 'TAG_KEY_LENGTH_EXCEEDED', ['{tagKey}' => $tagKey,'{userId}' => $userId], self::CLASSNAME);
+            return false;
+        }
+        if (!is_string($tagValue)  || empty($tagValue)) {
+            return false;
+        }
+        if (strlen($tagValue) > 255) {
+            LoggerService::log(Logger::ERROR, 'TAG_VALUE_LENGTH_EXCEEDED', ['{tagValue}' => $tagValue,'{userId}' => $userId], self::CLASSNAME);
+            return false;
+        }
         return true;
     }
 
@@ -288,15 +305,16 @@ class Validations
     /**
      * user id should be string type
      *
-     * @param  string $userId
+     * @param string $userId
+     * @param bool $disableLogs
      * @return bool
      */
-    public static function validateUserId($userId)
+    public static function validateUserId($userId, $disableLogs = false)
     {
-        if (is_string($userId)) {
+        if (is_string($userId) && !empty($userId)) {
             return true;
         }
-        LoggerService::log(Logger::ERROR, 'USER_ID_INVALID', ['{userId}' => $userId], self::CLASSNAME);
+        LoggerService::log(Logger::ERROR, 'USER_ID_INVALID', ['{userId}' => $userId], self::CLASSNAME, $disableLogs);
         return false;
     }
 

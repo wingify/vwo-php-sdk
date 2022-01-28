@@ -47,7 +47,13 @@ class Urls
      */
     const PUSH_ENDPOINT = 'push';
     /**
-     * query string for event arch for track goal, track user and push api APIs
+     * query string for event arch for track goal, track user and push APIs
      */
     const EVENTS_ENDPOINT = 'events/t';
+
+    /**
+     * query string for batch events for track goal and push APIs
+     * using when tracking multiple goals or pushing multiple dimensions
+     */
+    const BATCH_EVENTS_ENDPOINT = 'batch-events';
 }

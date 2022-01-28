@@ -40,19 +40,34 @@ class ValidationsTest extends TestCase
         $this->assertEquals(false, $resultForRollout);
     }
 
-    public function testValidatePushApiParams()
+    public function testPushApiParams()
     {
         $userId = $this->users[rand(0, count($this->users) - 1)];
 
         $tagValue = 'qwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTest';
         $tagValue .= 'qwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTest';
         $tagValue .= 'qwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTestqwertyTest';
-        $useridError = ValidationsUtil::pushApiParams('', ['abc' => '']);
-        $tagValueEmpty = ValidationsUtil::pushApiParams($userId, ['abc' => '']);
-        $tagValueSizeError = ValidationsUtil::pushApiParams($userId, ['abc' => $tagValue]);
-        $this->assertEquals(false, $useridError);
-        $this->assertEquals(false, $tagValueEmpty);
-        $this->assertEquals(false, $tagValueSizeError);
+        list($invalidPushApiParams, $invalidDimensionsMap, $validCustomDimensionMap) = ValidationsUtil::pushApiParams('', ['abc' => '']);
+        $this->assertEquals(false, $invalidPushApiParams);
+        $this->assertEquals([], $invalidDimensionsMap);
+        $this->assertEquals([], $validCustomDimensionMap);
+
+        list($invalidPushApiParams, $invalidDimensionsMap, $validCustomDimensionMap) = ValidationsUtil::pushApiParams($userId, ['abc' => '']);
+        $this->assertEquals(false, $invalidPushApiParams);
+        $this->assertEquals(false, $invalidDimensionsMap['abc']);
+        $this->assertEquals([], $validCustomDimensionMap);
+
+        list($invalidPushApiParams, $invalidDimensionsMap, $validCustomDimensionMap) = ValidationsUtil::pushApiParams($userId, ['abc' => $tagValue]);
+        $this->assertEquals(false, $invalidPushApiParams);
+        $this->assertEquals(false, $invalidDimensionsMap['abc']);
+        $this->assertEquals([], $validCustomDimensionMap);
+
+        list($invalidPushApiParams, $invalidDimensionsMap, $validCustomDimensionMap) = ValidationsUtil::pushApiParams($userId, ['abc' => $tagValue, "xyz" => "demo"]);
+        $this->assertEquals(true, $invalidPushApiParams);
+        $this->assertEquals(false, $invalidDimensionsMap['abc']);
+        $this->assertEquals(false, isset($invalidDimensionsMap['xyz']));
+        $this->assertEquals(false, isset($validCustomDimensionMap['abc']));
+        $this->assertEquals("demo", $validCustomDimensionMap['xyz']);
     }
 
     public function testValidateCampaignKey()

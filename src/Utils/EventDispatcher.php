@@ -117,9 +117,9 @@ class EventDispatcher
      *
      * @param  array $params
      * @param  array $postData
-     * @return false|mixed|string
+     * @return bool
      */
-    public function sendPost($params = [], $postData = [])
+    public function sendEventRequest($params = [], $postData = [])
     {
         if (self::$isDevelopmentMode) {
             return false;
@@ -132,7 +132,43 @@ class EventDispatcher
         }
 
         if (isset($response['httpStatus']) && $response['httpStatus'] == 200) {
-            return $response;
+            return true;
+        }
+        LoggerService::log(Logger::ERROR, 'IMPRESSION_FAILED', ['{endPoint}' => $url, '{err}' => ''], self::CLASSNAME);
+        return false;
+    }
+
+    /**
+     * Send batch events call to the destination i.e. VWO server
+     *
+     * @param  string $sdkKey
+     * @param  array $params
+     * @param  array $postData
+     * @return bool
+     */
+    public function sendBatchEventRequest($sdkKey, $params, $postData)
+    {
+        if (self::$isDevelopmentMode) {
+            return false;
+        } else {
+            $connection = new Connection();
+
+            $url = Common::getBatchEventsUrl() . '?' . http_build_query($params);
+            $connection->addHeader('Authorization', $sdkKey);
+            $response = $connection->post($url, $postData);
+        }
+
+        if (isset($response['httpStatus']) && $response['httpStatus'] == 200) {
+            LoggerService::log(
+                Logger::INFO,
+                'IMPRESSION_BATCH_SUCCESS',
+                [
+                    '{endPoint}' => $url,
+                    '{accountId}' => $params['a']
+                ],
+                self::CLASSNAME
+            );
+            return true;
         }
         LoggerService::log(Logger::ERROR, 'IMPRESSION_FAILED', ['{endPoint}' => $url, '{err}' => ''], self::CLASSNAME);
         return false;

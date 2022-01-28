@@ -30,7 +30,7 @@ class ImpressionBuilder
     /**
      * sdk version for api hit
      */
-    const SDK_VERSION = '1.31.0';
+    const SDK_VERSION = '1.32.0';
     /**
      * sdk langauge for api hit
      */
@@ -308,7 +308,7 @@ class ImpressionBuilder
     }
 
     /**
-     * Builds payload to appply post segmentation on VWO campaign reports.
+     * Builds payload to apply post segmentation on VWO campaign reports.
      *
      * @param  array  $configObj          setting-file
      * @param  String $userId
@@ -338,5 +338,80 @@ class ImpressionBuilder
         );
 
         return $properties;
+    }
+
+    /**
+     * Builds postData for multiple custom dimension for batch events call
+     *
+     * @param  integer  $accountId
+     * @param  String   $userId
+     * @param  array    $customDimensionMap
+     * @return array
+     */
+    public static function getPushBatchEventData($accountId, $userId, $customDimensionMap)
+    {
+        $data = [];
+        $currentTimeStamp = time();
+        $uuid = UuidUtil::get($userId, $accountId, true);
+        foreach ($customDimensionMap as $tagKey => $tagValue) {
+            $data["ev"][] = [
+                "eT" => 3,
+                "u" => $uuid,
+                "t" => urlencode('{"u":{"' . $tagKey . '":"' . $tagValue . '"}}'),
+                "sId" => $currentTimeStamp
+            ];
+        }
+        return $data;
+    }
+
+    /**
+     * Builds query params for batch events call
+     *
+     * @param integer $accountId
+     * @param string $sdkKey
+     * @param array $usageStats
+     * @return array
+     */
+    public static function getBatchEventQueryParams($accountId, $sdkKey, $usageStats = [])
+    {
+        $params = [
+            "a" => $accountId,
+            "sd" => self::SDK_LANGUAGE,
+            "sv" => self::SDK_VERSION,
+            "env" => $sdkKey
+        ];
+
+        return array_merge($params, $usageStats);
+    }
+
+    /**
+     * Builds postData for tracking multiple goals for batch events call
+     *
+     * @param integer $accountId
+     * @param String  $userId
+     * @param integer $campaignId
+     * @param integer $variationId
+     * @param array   $goal
+     * @param string|float|integer|null $revenue
+     * @return array
+     */
+    public static function getTrackBatchEventData($accountId, $userId, $campaignId, $variationId, $goal, $revenue = null)
+    {
+        $currentTimeStamp = time();
+        $uuid = UuidUtil::get($userId, $accountId, true);
+        $data = [
+            "eT" => 2,
+            "e" => $campaignId,
+            "c" => $variationId,
+            "g" => $goal['id'],
+            "u" => $uuid,
+            "sId" => $currentTimeStamp
+        ];
+
+        if ($goal['type'] == "REVENUE_TRACKING" && $revenue) {
+            $data["r"] = $revenue;
+        }
+
+        return $data;
     }
 }

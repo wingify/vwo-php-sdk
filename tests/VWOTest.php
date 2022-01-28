@@ -486,7 +486,7 @@ class VWOTest extends TestCase
 
         foreach ($cases as $case) {
             $response = $this->vwoInstance->push($case['tagKey'], $case['tagValue'], $userId);
-            $this->assertEquals($case['expected'], $response);
+            $this->assertEquals($case['expected'], $response[$case['tagKey']]);
         }
 
         $this->vwoInstance = TestUtil::instantiateSdk($this->settings8, ['isUserStorage' => 1, 'isDevelopmentMode' => 1]);
@@ -494,13 +494,13 @@ class VWOTest extends TestCase
 
         foreach ($cases as $case) {
             $response = $this->vwoInstance->push($case['tagKey'], $case['tagValue'], $userId);
-            $this->assertEquals($case['expected'], $response);
+            $this->assertEquals($case['expected'], $response[$case['tagKey']]);
         }
 
         //pass tagKey & tagValue as pair in associative array for multiple Custom Dimension
         foreach ($cases as $case) {
             $response = $this->vwoInstance->push([$case['tagKey'] => $case['tagValue']], $userId);
-            $this->assertEquals($case['expected'], $response);
+            $this->assertEquals($case['expected'], $response[$case['tagKey']]);
         }
     }
 
@@ -759,13 +759,21 @@ class VWOTest extends TestCase
         $this->vwoInstance = TestUtil::instantiateSdk($settings, ['isUserStorage' => 1, "isDevelopmentMode" => 1]);
         foreach ($cases as $case) {
             $response = $this->vwoInstance->push($case['tagKey'], $case['tagValue'], $userId);
-            $this->assertEquals($case['expected'], $response);
+            if (is_array($response)) {
+                $this->assertEquals($case['expected'], $response[$case['tagKey']]);
+            } else {
+                $this->assertEquals($case['expected'], $response);
+            }
         }
 
         //pass tagKey & tagValue as pair in associative array for multiple Custom Dimension
         foreach ($cases as $case) {
             $response = $this->vwoInstance->push([$case['tagKey'] => $case['tagValue']], $userId);
-            $this->assertEquals($case['expected'], $response);
+            if (is_array($response)) {
+                $this->assertEquals($case['expected'], $response[$case['tagKey']]);
+            } else {
+                $this->assertEquals($case['expected'], $response);
+            }
         }
     }
 
@@ -912,7 +920,7 @@ class VWOTest extends TestCase
         $response = $sdkInstance->getFeatureVariableValue("DEV_TEST_1", "variable1", $userId, []);
         $this->assertEquals(false, $response);
         $response = $sdkInstance->push("tagKey", "tagValue", $userId);
-        $this->assertEquals(false, $response);
+        $this->assertEquals([], $response);
     }
 
     public function testAPIsWhenOptOutCalledTwoTimes()
@@ -968,5 +976,20 @@ class VWOTest extends TestCase
         $settings = ["dataResidencyLocation" => 'eu'];
         DataLocationManager::instance()->setSettings($settings);
         $this->assertEquals(Urls::BASE_URL . 'eu/' . Urls::EVENTS_ENDPOINT, Common::getEventsUrl());
+    }
+
+    public function testPushApiForMultipleCustomDimension()
+    {
+        $userId = $this->users[rand(0, count($this->users) - 1)];
+
+        $customDimensionMap = ['foo' => 'bar', 'foo1' => 'bar1'];
+
+        $this->vwoInstance = TestUtil::instantiateSdk($this->settings8, ['isUserStorage' => 1]);
+        $this->vwoInstance->eventDispatcher = TestUtil::mockEventDispatcher($this);
+
+        $response = $this->vwoInstance->push($customDimensionMap, $userId);
+        foreach ($customDimensionMap as $tagKey => $tagValue) {
+            $this->assertEquals(true, $response[$tagKey]);
+        }
     }
 }

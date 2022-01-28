@@ -291,7 +291,7 @@ class VWO
             if (isset($variationData) && $result['response'] == false) {
                 if ($this->isEligibleToSendImpressionToVWO()) {
                     if ($this->isEventArchEnabled()) {
-                        $response = $this->eventDispatcher->sendPost($parameters, $payload);
+                        $response = $this->eventDispatcher->sendEventRequest($parameters, $payload);
                     } else {
                         LoggerService::log(
                             Logger::DEBUG,
@@ -332,7 +332,7 @@ class VWO
             if ($result !== false && isset($result['response']) && $result['response'] == true && isset($variationData)) {
                 if ($this->isEligibleToSendImpressionToVWO()) {
                     if ($this->isEventArchEnabled()) {
-                        $response = $this->eventDispatcher->sendPost($parameters, $payload);
+                        $response = $this->eventDispatcher->sendEventRequest($parameters, $payload);
                     } else {
                         LoggerService::log(
                             Logger::DEBUG,
@@ -519,6 +519,7 @@ class VWO
         $metricMap = [];
         $revenueProps = [];
         $result = [];
+        $batchEventData = [];
         foreach ($campaigns as $campaign) {
             try {
                 if ($campaign['type'] == CampaignTypes::FEATURE_ROLLOUT) {
@@ -597,33 +598,37 @@ class VWO
                         }
                         $metricMap[$campaign['id']] = $goal["id"];
                     } else {
-                        $parameters = ImpressionBuilder::getConversionQueryParams(
-                            $this->settings['accountId'],
-                            $campaign,
-                            $userId,
-                            $bucketInfo['id'],
-                            $goal,
-                            $revenueValue,
-                            $this->getSDKKey()
-                        );
-                        LoggerService::log(
-                            Logger::DEBUG,
-                            'IMPRESSION_FOR_TRACK_GOAL',
-                            ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)],
-                            self::CLASSNAME
-                        );
-                        $resp = $this->eventDispatcher->sendAsyncRequest(CommonUtil::getUrl(Urls::TRACK_GOAL_ENDPOINT), 'GET', $parameters);
-                        if ($resp) {
+                        if (count($campaigns) == 1) {
+                            $parameters = ImpressionBuilder::getConversionQueryParams(
+                                $this->settings['accountId'],
+                                $campaign,
+                                $userId,
+                                $bucketInfo['id'],
+                                $goal,
+                                $revenueValue,
+                                $this->getSDKKey()
+                            );
                             LoggerService::log(
-                                Logger::INFO,
-                                'IMPRESSION_SUCCESS',
-                                [
-                                    '{endPoint}' => Urls::TRACK_GOAL_ENDPOINT,
-                                    '{mainKeys}' => json_encode(["campaignId" => $campaign['id'], "variationId" => $bucketInfo['id'], "goalId" => $goal['id']]),
-                                    '{accountId}' => $this->settings['accountId']
-                                ],
+                                Logger::DEBUG,
+                                'IMPRESSION_FOR_TRACK_GOAL',
+                                ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)],
                                 self::CLASSNAME
                             );
+                            $resp = $this->eventDispatcher->sendAsyncRequest(CommonUtil::getUrl(Urls::TRACK_GOAL_ENDPOINT), 'GET', $parameters);
+                            if ($resp) {
+                                LoggerService::log(
+                                    Logger::INFO,
+                                    'IMPRESSION_SUCCESS',
+                                    [
+                                        '{endPoint}' => Urls::TRACK_GOAL_ENDPOINT,
+                                        '{mainKeys}' => json_encode(["campaignId" => $campaign['id'], "variationId" => $bucketInfo['id'], "goalId" => $goal['id']]),
+                                        '{accountId}' => $this->settings['accountId']
+                                    ],
+                                    self::CLASSNAME
+                                );
+                            }
+                        } else {
+                            $batchEventData["ev"][] = ImpressionBuilder::getTrackBatchEventData($this->settings['accountId'], $userId, $campaign['id'], $bucketInfo['id'], $goal, $revenueValue);
                         }
                     }
 
@@ -658,8 +663,8 @@ class VWO
                 $metricMap,
                 $revenueProps
             );
-            $this->eventDispatcher->sendPost($parameters, $payload);
-            if ($this->isEligibleToSendImpressionToVWO()) {
+            $eventArchResponse = $this->eventDispatcher->sendEventRequest($parameters, $payload);
+            if ($eventArchResponse) {
                 LoggerService::log(
                     Logger::INFO,
                     'IMPRESSION_SUCCESS_FOR_EVENT_ARCH',
@@ -671,9 +676,18 @@ class VWO
                     self::CLASSNAME
                 );
             }
+        } elseif (count($batchEventData)) {
+            $parameters = ImpressionBuilder::getBatchEventQueryParams($this->settings['accountId'], $this->getSDKKey(), $this->usageStats->getUsageStats());
+            LoggerService::log(
+                Logger::DEBUG,
+                'IMPRESSION_FOR_TRACK_GOAL',
+                ['{properties}' => json_encode($batchEventData)],
+                self::CLASSNAME
+            );
+            $batchEventsResponse = $this->eventDispatcher->sendBatchEventRequest($this->getSDKKey(), $parameters, $batchEventData);
         }
 
-        if (count($result) == 0) {
+        if (count($result) == 0 || (count($batchEventData) && !$batchEventsResponse)) {
             return null;
         }
         if (is_string($campaignKey)) {
@@ -752,7 +766,7 @@ class VWO
                                 $campaign['id'],
                                 $bucketInfo['id']
                             );
-                            $this->eventDispatcher->sendPost($parameters, $payload);
+                            $this->eventDispatcher->sendEventRequest($parameters, $payload);
                         } else {
                             $parameters = ImpressionBuilder::getVisitorQueryParams(
                                 $this->settings['accountId'],
@@ -837,7 +851,7 @@ class VWO
      * @param  $tagKey
      * @param  $tagValue
      * @param  $userId
-     * @return bool
+     * @return array
      */
     public function push($tagKey, $tagValue, $userId = '')
     {
@@ -845,7 +859,7 @@ class VWO
         LoggerService::setApiName(self::$apiName);
 
         if ($this->isOptedOut()) {
-            return false;
+            return [];
         }
 
         $customDimensionMap = [];
@@ -858,9 +872,10 @@ class VWO
         }
 
         try {
-            if (!ValidationsUtil::pushApiParams($userId, $customDimensionMap)) {
+            list($validParams, $respResult, $customDimensionMap) = ValidationsUtil::pushApiParams($userId, $customDimensionMap);
+            if (!$validParams) {
                 LoggerService::log(Logger::ERROR, 'API_BAD_PARAMETERS', ['{api}' => self::$apiName], self::CLASSNAME);
-                return false;
+                return $respResult;
             }
 
             if ($this->isEventArchEnabled()) {
@@ -871,44 +886,68 @@ class VWO
                     EventEnum::VWO_SYNC_VISITOR_PROP,
                     $customDimensionMap
                 );
-                $result = $this->eventDispatcher->sendPost($parameters, $payload);
+                $result = $this->eventDispatcher->sendEventRequest($parameters, $payload);
             } else {
-                foreach ($customDimensionMap as $tagKey => $tagValue) {
-                    $parameters = ImpressionBuilder::getPushQueryParams($this->settings['accountId'], $userId, $this->getSDKKey(), $tagKey, $tagValue);
+                if (count($customDimensionMap) == 1) {
+                    foreach ($customDimensionMap as $tagKey => $tagValue) {
+                        $parameters = ImpressionBuilder::getPushQueryParams($this->settings['accountId'], $userId, $this->getSDKKey(), $tagKey, $tagValue);
+                        LoggerService::log(
+                            Logger::DEBUG,
+                            'IMPRESSION_FOR_PUSH',
+                            ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)],
+                            self::CLASSNAME
+                        );
+                        $result = $this->eventDispatcher->sendAsyncRequest(CommonUtil::getUrl(Urls::PUSH_ENDPOINT), 'GET', $parameters);
+                        if ($result) {
+                            LoggerService::log(
+                                Logger::INFO,
+                                'IMPRESSION_SUCCESS',
+                                [
+                                    '{endPoint}' => Urls::PUSH_ENDPOINT,
+                                    '{accountId}' => $this->settings['accountId'],
+                                    '{mainKeys}' => json_encode(["tags" => $parameters['tags']])
+                                ],
+                                self::CLASSNAME
+                            );
+                        }
+                    }
+                } else {
+                    $postData = ImpressionBuilder::getPushBatchEventData($this->settings['accountId'], $userId, $customDimensionMap);
                     LoggerService::log(
                         Logger::DEBUG,
                         'IMPRESSION_FOR_PUSH',
-                        ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)],
+                        ['{properties}' => json_encode($postData)],
                         self::CLASSNAME
                     );
-                    $this->eventDispatcher->sendAsyncRequest(CommonUtil::getUrl(Urls::PUSH_ENDPOINT), 'GET', $parameters);
-                    if (!$this->isDevelopmentMode) {
-                        LoggerService::log(
-                            Logger::INFO,
-                            'IMPRESSION_SUCCESS',
-                            [
-                                '{endPoint}' => Urls::PUSH_ENDPOINT,
-                                '{accountId}' => $this->settings['accountId'],
-                                '{mainKeys}' => json_encode(["tags" => $parameters['tags']])
-                            ],
-                            self::CLASSNAME
-                        );
-                        $result = true;
-                    }
+                    $parameters = ImpressionBuilder::getBatchEventQueryParams($this->settings['accountId'], $this->getSDKKey(), $this->usageStats->getUsageStats());
+                    $result = $this->eventDispatcher->sendBatchEventRequest($this->getSDKKey(), $parameters, $postData);
                 }
             }
 
             if ($this->isDevelopmentMode) {
-                return true;
+                return $this->preparePushResponse($customDimensionMap, true, $respResult);
             } elseif ($result) {
-                return $result;
+                return $this->preparePushResponse($customDimensionMap, $result, $respResult);
             }
-            LoggerService::log(Logger::ERROR, 'IMPRESSION_FAILED', ['{endPoint}' => 'push', '{err}' => ''], self::CLASSNAME);
         } catch (Exception $e) {
             LoggerService::log(Logger::ERROR, $e->getMessage(), [], self::CLASSNAME);
         }
 
-        return false;
+        return [];
+    }
+
+    /**
+     * @param array $customDimensionMap
+     * @param bool  $result
+     * @param array $respResult
+     * @return array
+     */
+    private function preparePushResponse($customDimensionMap, $result, $respResult)
+    {
+        foreach ($customDimensionMap as $tagKey => $tagValue) {
+            $respResult[$tagKey] = $result;
+        }
+        return $respResult;
     }
 
     public function getSDKKey()
