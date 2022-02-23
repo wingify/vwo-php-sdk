@@ -18,6 +18,8 @@
 
 namespace vwo\Utils;
 
+use vwo\VwoSdkLogMessages;
+
 class LogMessagesUtil
 {
     protected static $instance;
@@ -45,11 +47,11 @@ class LogMessagesUtil
      */
     private function setLogs()
     {
-        $path = __DIR__ . '/../../vendor/vwo/vwo-sdk-log-messages/src/';
-        $this->infoLogs = json_decode(file_get_contents($path . "info-messages.json"), true);
-        $this->debugLogs = json_decode(file_get_contents($path . "debug-messages.json"), true);
-        $this->errorLogs = json_decode(file_get_contents($path . "error-messages.json"), true);
-        $this->warnLogs = json_decode(file_get_contents($path . "warning-messages.json"), true);
+        $logs = VwoSdkLogMessages::get();
+        $this->infoLogs = $logs["infoLogs"];
+        $this->debugLogs = $logs["debugLogs"];
+        $this->errorLogs = $logs["errorLogs"];
+        $this->warnLogs = $logs["warnLogs"];
     }
 
     /**

@@ -108,7 +108,7 @@ class MutuallyExclusiveTest extends TestCase
     public function testVariationForCalledCampaignInStorageAndOtherCampaignSatisfiesWhitelisting()
     {
         $campaignKey = $this->settingsFileMEG['campaigns'][2]['key'];
-        $vwoInstance = TestUtil::instantiateSdk($this->settingsFileMEG, ['isUserStorage' => 1]);
+        $vwoInstance = TestUtil::instantiateSdk($this->settingsFileMEG, ['isUserStorage' => 1, 'isDevelopmentMode' => 1]);
 
         $options = [
             'variationTargetingVariables' => [
