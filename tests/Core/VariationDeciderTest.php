@@ -21,16 +21,23 @@ namespace vwo;
 use PHPUnit\Framework\TestCase;
 use Exception as Exception;
 use vwo\Core\VariationDecider as VariationDecider;
+use vwo\Services\HooksManager;
+use vwo\Utils\Campaign;
 
 class VariationDeciderTest extends TestCase
 {
+    /** @var VariationDecider $variationDecider */
+    private $variationDecider;
     protected function setUp()
     {
         $this->users = TestUtil::getUsers();
         $this->variationDecider = new VariationDecider();
+        $this->variationDecider->setHooksManager(new HooksManager([]));
 
         $settingsWithSegments = new SettingsWithPreSegmentation();
         $this->campaignWithSegments = $settingsWithSegments->setting['campaigns'][0];
+
+        $this->variationResults = new VariationResults();
     }
 
     public function testFetchVariationData()
@@ -74,6 +81,21 @@ class VariationDeciderTest extends TestCase
 
             $result = TestUtil::invokePrivateMethod($this->variationDecider, 'userStorageSet', array( new UserStorageTest(), $userId, 'RANDOM', ['name' => 'Variation-1'] ));
             $this->assertEquals(true, is_null($result));
+        }
+    }
+
+    public function testVariationDataForRealTimePreSegmentation()
+    {
+        $setting = Campaign::makeRanges((new SettingsWithPreSegmentation())->setting);
+        $campaign = $setting['campaigns'][0];
+        $campaign['isAlwaysCheckSegment'] = true;
+
+        $expected = $this->variationResults->results['REAL_TIME_PRE_SEGMENTATION'];
+
+        foreach ($this->users as $i => $userId) {
+            /** @var VariationDecider $variationDecider */
+            $result = $this->variationDecider->fetchVariationData('', $campaign, $userId, ['customVariables' => ['browser' => 'chrome']], 'testcases');
+            $this->assertEquals($expected[$userId], $result['name']);
         }
     }
 }

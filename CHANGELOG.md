@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.35.0] - 2022-23-02
+
+### Added
+
+- Always check targeting conditions
+
+  - The option `Once` is selected by default in the VWO Application, which means the user segment condition is only checked once and the same variation is served to the user on every subsequent call to the SDK's APIs.
+
+  - If you choose `Always`, the user is evaluated against the segment condition on every call to the SDK's APIs.
+
 ## [1.32.0] - 2022-28-01
 
 ### Changed

@@ -127,163 +127,119 @@ class VariationDecider
         $bucketInfo = CampaignUtil::findVariationFromWhiteListing($campaign, $userId, $options);
         // do murmur operations and get Variation for the userId
         if ($bucketInfo == null) {
-            $bucketInfo = $this->userStorageGet($userStorageObj, $userId, $campaign);
-            if ($bucketInfo == null) {
-                if (
-                    in_array($apiName, ['track', 'getVariationName', 'getFeatureVariableValue'])
-                    && !empty($userStorageObj)
-                ) {
-                    LoggerService::log(
-                        Logger::WARNING,
-                        'CAMPAIGN_NOT_ACTIVATED',
-                        ['{userId}' => $userId, '{campaignKey}' => $campaignKey, '{api}' => $apiName],
-                        self::CLASSNAME
-                    );
-                    LoggerService::log(
-                        Logger::INFO,
-                        'CAMPAIGN_NOT_ACTIVATED',
-                        [
-                            '{userId}' => $userId,
-                            '{campaignKey}' => $campaignKey,
-                            '{reason}' => $apiName === 'track' ? 'track it' : 'get the decision/value'
-                        ],
-                        self::CLASSNAME
-                    );
-                    return $bucketInfo;
-                }
-
-                $isPresegmentation = ValidationsUtil::checkPreSegmentation($campaign, $userId, $options);
-                $isPresegmentationAndTrafficPassed = $isPresegmentation && self::isUserPartOfCampaign($userId, $campaign['percentTraffic']);
-                if ($isPresegmentationAndTrafficPassed && $isCampaignPartOfGroup) {
-                    $groupCampaigns = CampaignUtil::getGroupCampaigns($this->settings, $groupId);
-
-                    if ($groupCampaigns) {
-                        $isAnyCampaignWhitelistedOrStored = $this->checkWhitelistingOrStorageForGroupedCampaigns($userStorageObj, $userId, $campaign, $groupCampaigns, $groupName, $options);
-
-                        // Return None as other campaign(s) is/are whitelisted or stored
-                        if ($isAnyCampaignWhitelistedOrStored) {
-                            LoggerService::log(
-                                Logger::INFO,
-                                'MEG_CALLED_CAMPAIGN_NOT_WINNER',
-                                [
-                                    '{userId}' => $userId,
-                                    '{campaignKey}' => $campaign["key"],
-                                    '{groupName}' => $groupName
-                                ],
-                                self::CLASSNAME
-                            );
-                            return null;
-                        }
-
-                        $eligibleCampaigns = self::getEligibleCampaigns($userId, $groupCampaigns, $campaign, $options);
-
-                        $nonEligibleCampaignsKey = self::getNonEligibleCampaignsKey($eligibleCampaigns, $groupCampaigns);
-                        LoggerService::log(
-                            Logger::DEBUG,
-                            'MEG_ELIGIBLE_CAMPAIGNS',
-                            [
-                                '{userId}' => $userId,
-                                '{eligibleCampaignKeys}' => implode(",", self::getEligibleCampaignsKey($eligibleCampaigns)),
-                                '{inEligibleText}' => "campaigns:" . ($nonEligibleCampaignsKey ? implode(",", $nonEligibleCampaignsKey) : "no campaigns"),
-                                '{groupName}' => $groupName
-                            ],
-                            self::CLASSNAME
-                        );
-
-                        LoggerService::log(
-                            Logger::INFO,
-                            'MEG_ELIGIBLE_CAMPAIGNS',
-                            [
-                                '{userId}' => $userId,
-                                '{noOfEligibleCampaigns}' => count($eligibleCampaigns),
-                                '{noOfGroupCampaigns}' => count($groupCampaigns),
-                                '{groupName}' => $groupName
-                            ],
-                            self::CLASSNAME
-                        );
-
-                        $winnerCampaign = $this->findWinnerCampaign($userId, $eligibleCampaigns);
-
-                        LoggerService::log(
-                            Logger::INFO,
-                            'MEG_GOT_WINNER_CAMPAIGN',
-                            [
-                                '{userId}' => $userId,
-                                '{campaignKey}' => $winnerCampaign["key"],
-                                '{groupName}' => $groupName
-                            ],
-                            self::CLASSNAME
-                        );
-                        if ($winnerCampaign && $winnerCampaign["id"] == $campaign["id"]) {
-                            $bucketInfo = Bucketer::getBucket($userId, $campaign);
-                            if ($bucketInfo == null) {
-                                return $bucketInfo;
-                            } else {
-                                $this->userStorageSet($userStorageObj, $userId, $campaign['key'], $bucketInfo, $goalIdentifier);
-                            }
-                        } else {
-                            // No winner/variation
-                            LoggerService::log(
-                                Logger::INFO,
-                                'MEG_CALLED_CAMPAIGN_NOT_WINNER',
-                                [
-                                    '{userId}' => $userId,
-                                    '{campaignKey}' => $campaign["key"],
-                                    '{groupName}' => $groupName
-                                ],
-                                self::CLASSNAME
-                            );
-                            return $bucketInfo;
-                        }
-                    }
-                }
-
+            if (isset($campaign['isAlwaysCheckSegment'])) {
+                $isPreSegmentation = ValidationsUtil::checkPreSegmentation($campaign, $userId, $options);
+                $bucketInfo = $this->getVariationIfPreSegmentationApplied($isPreSegmentation, $campaign, $userId, $userStorageObj, $goalIdentifier);
+            } else {
+                $bucketInfo = $this->userStorageGet($userStorageObj, $userId, $campaign);
                 if ($bucketInfo == null) {
-                    //check for pre-segmentation if applied
-                    if ($isPresegmentation == false) {
-                        LoggerService::log(
-                            Logger::INFO,
-                            'DECISION_NO_VARIATION_ALLOTED',
-                            [
-                                '{userId}' => $userId,
-                                '{campaignKey}' => $campaign['key']
-                            ],
-                            self::CLASSNAME
-                        );
-
+                    if (self::checkCampaignNotActivated($apiName, $userStorageObj, $userId, $campaignKey)) {
                         return $bucketInfo;
                     }
 
-                    $bucketInfo = Bucketer::getBucket($userId, $campaign);
+                    $isPresegmentation = ValidationsUtil::checkPreSegmentation($campaign, $userId, $options);
+                    $isPresegmentationAndTrafficPassed = $isPresegmentation && self::isUserPartOfCampaign($userId, $campaign['percentTraffic']);
+                    if ($isPresegmentationAndTrafficPassed && $isCampaignPartOfGroup) {
+                        $groupCampaigns = CampaignUtil::getGroupCampaigns($this->settings, $groupId);
+
+                        if ($groupCampaigns) {
+                            $isAnyCampaignWhitelistedOrStored = $this->checkWhitelistingOrStorageForGroupedCampaigns($userStorageObj, $userId, $campaign, $groupCampaigns, $groupName, $options);
+
+                            // Return None as other campaign(s) is/are whitelisted or stored
+                            if ($isAnyCampaignWhitelistedOrStored) {
+                                LoggerService::log(
+                                    Logger::INFO,
+                                    'MEG_CALLED_CAMPAIGN_NOT_WINNER',
+                                    [
+                                        '{userId}' => $userId,
+                                        '{campaignKey}' => $campaign["key"],
+                                        '{groupName}' => $groupName
+                                    ],
+                                    self::CLASSNAME
+                                );
+                                return null;
+                            }
+
+                            $eligibleCampaigns = self::getEligibleCampaigns($userId, $groupCampaigns, $campaign, $options);
+
+                            $nonEligibleCampaignsKey = self::getNonEligibleCampaignsKey($eligibleCampaigns, $groupCampaigns);
+                            LoggerService::log(
+                                Logger::DEBUG,
+                                'MEG_ELIGIBLE_CAMPAIGNS',
+                                [
+                                    '{userId}' => $userId,
+                                    '{eligibleCampaignKeys}' => implode(",", self::getEligibleCampaignsKey($eligibleCampaigns)),
+                                    '{inEligibleText}' => "campaigns:" . ($nonEligibleCampaignsKey ? implode(",", $nonEligibleCampaignsKey) : "no campaigns"),
+                                    '{groupName}' => $groupName
+                                ],
+                                self::CLASSNAME
+                            );
+
+                            LoggerService::log(
+                                Logger::INFO,
+                                'MEG_ELIGIBLE_CAMPAIGNS',
+                                [
+                                    '{userId}' => $userId,
+                                    '{noOfEligibleCampaigns}' => count($eligibleCampaigns),
+                                    '{noOfGroupCampaigns}' => count($groupCampaigns),
+                                    '{groupName}' => $groupName
+                                ],
+                                self::CLASSNAME
+                            );
+
+                            $winnerCampaign = $this->findWinnerCampaign($userId, $eligibleCampaigns);
+
+                            LoggerService::log(
+                                Logger::INFO,
+                                'MEG_GOT_WINNER_CAMPAIGN',
+                                [
+                                    '{userId}' => $userId,
+                                    '{campaignKey}' => $winnerCampaign["key"],
+                                    '{groupName}' => $groupName
+                                ],
+                                self::CLASSNAME
+                            );
+                            if ($winnerCampaign && $winnerCampaign["id"] == $campaign["id"]) {
+                                $bucketInfo = Bucketer::getBucket($userId, $campaign);
+                                if ($bucketInfo == null) {
+                                    return $bucketInfo;
+                                } else {
+                                    $this->userStorageSet($userStorageObj, $userId, $campaign['key'], $bucketInfo, $goalIdentifier);
+                                }
+                            } else {
+                                // No winner/variation
+                                LoggerService::log(
+                                    Logger::INFO,
+                                    'MEG_CALLED_CAMPAIGN_NOT_WINNER',
+                                    [
+                                        '{userId}' => $userId,
+                                        '{campaignKey}' => $campaign["key"],
+                                        '{groupName}' => $groupName
+                                    ],
+                                    self::CLASSNAME
+                                );
+                                return $bucketInfo;
+                            }
+                        }
+                    }
+
+                    if ($bucketInfo == null) {
+                        $bucketInfo = $this->getVariationIfPreSegmentationApplied($isPresegmentation, $campaign, $userId, $userStorageObj, $goalIdentifier);
+                    }
+                } else {
+                    $this->hasStoredVariation = true;
+                    $decision['fromUserStorageService'] = !!$bucketInfo['name'];
                     LoggerService::log(
                         Logger::INFO,
-                        'USER_VARIATION_ALLOCATION_STATUS',
+                        'GOT_STORED_VARIATION',
                         [
                             '{userId}' => $userId,
-                            '{status}' => $bucketInfo ? 'got variation:' . $bucketInfo['name'] : 'did not get any variation',
+                            '{variationName}' => $bucketInfo['name'],
                             '{campaignKey}' => $campaign['key']
                         ],
                         self::CLASSNAME
                     );
-                    if ($bucketInfo == null) {
-                        return $bucketInfo;
-                    }
-
-                    $this->userStorageSet($userStorageObj, $userId, $campaign['key'], $bucketInfo, $goalIdentifier);
                 }
-            } else {
-                $this->hasStoredVariation = true;
-                $decision['fromUserStorageService'] = !!$bucketInfo['name'];
-                LoggerService::log(
-                    Logger::INFO,
-                    'GOT_STORED_VARIATION',
-                    [
-                        '{userId}' => $userId,
-                        '{variationName}' => $bucketInfo['name'],
-                        '{campaignKey}' => $campaign['key']
-                    ],
-                    self::CLASSNAME
-                );
             }
         } else {
             $decision['isUserWhitelisted'] = true;
@@ -571,5 +527,88 @@ class VariationDecider
             }
         }
         return false;
+    }
+
+    /**
+     * Checks if campaign is activated for track, getVariationName, getFeatureVariableValue API when userStorage is used
+     *
+     * @param  string $apiName        api name
+     * @param  object $userStorageObj userStorage object
+     * @param  string $userId         the unique ID assigned to User
+     * @param  string $campaignKey    Campaign Key
+     * @return bool
+     */
+    private static function checkCampaignNotActivated($apiName, $userStorageObj, $userId, $campaignKey)
+    {
+        if (
+            in_array($apiName, ['track', 'getVariationName', 'getFeatureVariableValue'])
+            && !empty($userStorageObj)
+        ) {
+            LoggerService::log(
+                Logger::WARNING,
+                'CAMPAIGN_NOT_ACTIVATED',
+                ['{userId}' => $userId, '{campaignKey}' => $campaignKey, '{api}' => $apiName],
+                self::CLASSNAME
+            );
+            LoggerService::log(
+                Logger::INFO,
+                'CAMPAIGN_NOT_ACTIVATED',
+                [
+                    '{userId}' => $userId,
+                    '{campaignKey}' => $campaignKey,
+                    '{reason}' => $apiName === 'track' ? 'track it' : 'get the decision/value'
+                ],
+                self::CLASSNAME
+            );
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Get variation by murmur logic if pre segmentation pass
+     *
+     * @param  bool   $isPreSegmentation pre-segmentation flag
+     * @param  string $userId         the unique ID assigned to User
+     * @param  object $userStorageObj userStorage object
+     * @param  array  $campaign       campaign data
+     * @param  string $goalIdentifier goal Identifier used in track API
+     * @return array|null
+     */
+    private function getVariationIfPreSegmentationApplied($isPreSegmentation, $campaign, $userId, $userStorageObj = null, $goalIdentifier = '')
+    {
+        $bucketInfo = null;
+        //check for pre-segmentation if applied
+        if ($isPreSegmentation == false) {
+            LoggerService::log(
+                Logger::INFO,
+                'DECISION_NO_VARIATION_ALLOTED',
+                [
+                    '{userId}' => $userId,
+                    '{campaignKey}' => $campaign['key']
+                ],
+                self::CLASSNAME
+            );
+
+            return $bucketInfo;
+        }
+
+        $bucketInfo = Bucketer::getBucket($userId, $campaign);
+        LoggerService::log(
+            Logger::INFO,
+            'USER_VARIATION_ALLOCATION_STATUS',
+            [
+                '{userId}' => $userId,
+                '{status}' => $bucketInfo ? 'got variation:' . $bucketInfo['name'] : 'did not get any variation',
+                '{campaignKey}' => $campaign['key']
+            ],
+            self::CLASSNAME
+        );
+        if ($bucketInfo == null) {
+            return $bucketInfo;
+        }
+
+        $this->userStorageSet($userStorageObj, $userId, $campaign['key'], $bucketInfo, $goalIdentifier);
+        return $bucketInfo;
     }
 }

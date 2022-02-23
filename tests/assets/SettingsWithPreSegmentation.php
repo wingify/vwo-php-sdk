@@ -51,7 +51,9 @@ class SettingsWithPreSegmentation
         'status' => 'RUNNING',
         'type' => 'VISUAL_AB',
         'segments' => [
-            'browser' => 'chrome'
+            "custom_variable" => [
+                "browser" => "chrome"
+            ]
         ]
     ]
     ],

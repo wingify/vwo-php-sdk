@@ -71,7 +71,8 @@ class Validations
                 "key" => ["type" => "string"],
                 "status" => ["type" => "string"],
                 'name' => ["type" => "string"],
-                "isUserListEnabled" => ["type" => "boolean"]
+                "isUserListEnabled" => ["type" => "boolean"],
+                "isAlwaysCheckSegment" => ["type" => "boolean"]
             ],
         ],
 

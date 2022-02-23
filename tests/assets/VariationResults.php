@@ -928,6 +928,35 @@ class VariationResults
             'Xin' => false,
             'You' => false,
             'Zeba' => false
+        ],
+
+        'REAL_TIME_PRE_SEGMENTATION' => [
+            'Ashley' => 'Control',
+            'Bill' => 'Control',
+            'Chris' => 'Variation-1',
+            'Dominic' => 'Variation-1',
+            'Emma' => 'Control',
+            'Faizan' => 'Control',
+            'Gimmy' => 'Variation-1',
+            'Harry' => 'Control',
+            'Ian' => 'Control',
+            'John' => 'Control',
+            'King' => 'Variation-1',
+            'Lisa' => 'Control',
+            'Mona' => 'Control',
+            'Nina' => 'Variation-1',
+            'Olivia' => 'Control',
+            'Pete' => 'Variation-1',
+            'Queen' => 'Variation-1',
+            'Robert' => 'Control',
+            'Sarah' => 'Control',
+            'Tierra' => 'Variation-1',
+            'Una' => 'Control',
+            'Varun' => 'Control',
+            'Will' => 'Variation-1',
+            'Xin' => 'Control',
+            'You' => 'Variation-1',
+            'Zeba' => 'Control'
         ]
     ];
 }
