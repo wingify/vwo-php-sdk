@@ -950,30 +950,30 @@ class VWOTest extends TestCase
         $this->assertEquals(false, $response);
     }
 
-    public function testGetUrlWithoutDataResidencyLocation()
+    public function testGetUrlWithoutcollectionPrefix()
     {
         $settings = [];
         DataLocationManager::instance()->setSettings($settings);
         $this->assertEquals(Urls::BASE_URL . Urls::SERVER_SIDE_URI, Common::getUrl(''));
     }
 
-    public function testGetUrlWithDataResidencyLocation()
+    public function testGetUrlWithcollectionPrefix()
     {
-        $settings = ["dataResidencyLocation" => 'eu'];
+        $settings = ["collectionPrefix" => 'eu'];
         DataLocationManager::instance()->setSettings($settings);
         $this->assertEquals(Urls::BASE_URL . 'eu/' . Urls::SERVER_SIDE_URI, Common::getUrl(''));
     }
 
-    public function testGetEventsUrlWithoutDataResidencyLocation()
+    public function testGetEventsUrlWithoutcollectionPrefix()
     {
         $settings = [];
         DataLocationManager::instance()->setSettings($settings);
         $this->assertEquals(Urls::BASE_URL . Urls::EVENTS_ENDPOINT, Common::getEventsUrl());
     }
 
-    public function testGetEventsUrlWithDataResidencyLocation()
+    public function testGetEventsUrlWithcollectionPrefix()
     {
-        $settings = ["dataResidencyLocation" => 'eu'];
+        $settings = ["collectionPrefix" => 'eu'];
         DataLocationManager::instance()->setSettings($settings);
         $this->assertEquals(Urls::BASE_URL . 'eu/' . Urls::EVENTS_ENDPOINT, Common::getEventsUrl());
     }

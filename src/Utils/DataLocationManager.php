@@ -41,8 +41,8 @@ class DataLocationManager
     public function getDataLocation()
     {
         $url = Urls::BASE_URL;
-        if (isset($this->settings['dataResidencyLocation']) && $this->settings['dataResidencyLocation']) {
-            $url = $url . $this->settings['dataResidencyLocation'] . '/';
+        if (isset($this->settings['collectionPrefix']) && $this->settings['collectionPrefix']) {
+            $url = $url . $this->settings['collectionPrefix'] . '/';
         }
         return $url;
     }

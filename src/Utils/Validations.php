@@ -53,7 +53,7 @@ class Validations
             "sdkKey" => ["type" => "string"],
             "version" => ["type" => "number"],
             "isEventArchEnabled" => ["type" => "boolean"],
-            "dataResidencyLocation" => ["type" => "string"],
+            "collectionPrefix" => ["type" => "string"],
             "accountId" => ["type" => "number"],
             "campaigns" => [
                 'type' => 'array',
