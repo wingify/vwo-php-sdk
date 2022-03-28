@@ -86,7 +86,7 @@ class Bucketer
         if (!$isUserPart) {
             return null;
         }
-        $multiplier = self::getMultiplier($campaign['percentTraffic']);
+        $multiplier = self::getMultiplier($campaign['percentTraffic'], $disableLogs);
 
         $rangeForVariations = self::getRangeForVariations($bucketVal, $multiplier);
 
@@ -187,7 +187,7 @@ class Bucketer
      */
     public static function isUserPartofCampaign($bucketVal, $percentTraffic)
     {
-        if (floor($bucketVal * self::$MAX_CAMPAIGN_TRAFFIC) > $percentTraffic) {
+        if ($percentTraffic == 0 || floor($bucketVal * self::$MAX_CAMPAIGN_TRAFFIC) > $percentTraffic) {
             return false;
         }
         return true;
@@ -197,11 +197,25 @@ class Bucketer
      * to find out the value of multiplier
      *
      * @param  $traffic
+     * @param  bool $disableLogs
      * @return float|int
      */
-    public static function getMultiplier($traffic)
+    public static function getMultiplier($traffic, $disableLogs = false)
     {
-        return self::$MAX_CAMPAIGN_TRAFFIC / ($traffic);
+        $multiplier = 0;
+        if($traffic <= 0) {
+            LoggerService::log(
+                Logger::ERROR,
+                'Something went wrong. Traffic is ' . $traffic . ' and error is division by zero',
+                [],
+                self::CLASSNAME,
+                $disableLogs
+            );
+        } else {
+            $multiplier = self::$MAX_CAMPAIGN_TRAFFIC / ($traffic);
+        }
+
+        return $multiplier;
     }
 
     /**
