@@ -89,7 +89,7 @@ class VWOLogger extends AbstractLogger
     /**
      * @inheritdoc
      */
-    public function log($level, $message, array $context = array())
+    public function log($level, $message, $context = array())
     {
         $this->logger->addRecord($level, $message, $context);
     }
