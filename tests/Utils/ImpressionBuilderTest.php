@@ -1,0 +1,190 @@
+<?php
+
+/**
+ * Copyright 2019-2022 Wingify Software Pvt. Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+namespace vwo;
+
+use PHPUnit\Framework\TestCase;
+use vwo\Constants\EventEnum;
+use vwo\Utils\Common as CommonUtil;
+use vwo\Utils\ImpressionBuilder;
+
+class ImpressionBuilderTest extends TestCase
+{
+    const EVENT_ARCH_QUERY_PARAMS = ['a', 'en', 'eTime', 'random', 'env', 'p'];
+    public function testBuildEventArchPayloadForVisitor()
+    {
+        $accountId = 1;
+        $sdkKey = '12345';
+        $queryParams = ImpressionBuilder::getEventsBaseProperties($accountId, $sdkKey, EventEnum::VWO_VARIATION_SHOWN);
+        $properties = ImpressionBuilder::getTrackUserPayloadData(["accountId" => $accountId, "sdkKey" => $sdkKey], 'Ashley', EventEnum::VWO_VARIATION_SHOWN, 20, 3, ['_l' => 1, 'cl' => 1, 'll' => 1]);
+        $expectedProperties = [
+            "d" => [
+                "msgId" => "string",
+                "visId" => "string",
+                "sessionId" => 123,
+                "event" => [
+                    "props" => [
+                        'sdkName' => "string",
+                        'sdkVersion' => "string",
+                        'id' => 12,
+                        'isFirst' => 1233,
+                        'variation' => 2,
+                        '$visitor' => [
+                            'props' => [
+                                'vwo_fs_environment' => "string"
+                            ]
+                        ],
+                    ],
+                    'name' => "string",
+                    'time' => 123.45
+                ],
+                "visitor" => [
+                    "props" => [
+                        "vwo_fs_environment" => "string"
+                    ]
+                ]
+            ]
+        ];
+
+        $allPresent = $this->checkAllPropertiesPresent($queryParams, self::EVENT_ARCH_QUERY_PARAMS);
+        $this->assertEquals(true, $allPresent);
+        $allPresentAndValid = $this->checkAllPropertiesPresentAndTheirTypes($properties, $expectedProperties);
+        $this->assertEquals(true, $allPresentAndValid);
+    }
+
+    public function testBuildEventArchPayloadForGoal()
+    {
+        $accountId = 1;
+        $sdkKey = '12345';
+        $config = ["accountId" => 1, "sdkKey" => '12345'];
+        $goalIdentifier = 'goalIdentifier';
+        $metricMap = [
+            "1" => 10,
+            "2" => 20,
+            "5" => 30
+        ];
+        $dummyRevenueProperty = ['dummyRevenueProperty'];
+        $queryParams = ImpressionBuilder::getEventsBaseProperties($accountId, $sdkKey, $goalIdentifier);
+        $properties = ImpressionBuilder::getTrackGoalPayloadData($config, 'Ashley', $goalIdentifier, 20, $metricMap, $dummyRevenueProperty);
+        $expectedProperties = [
+            "d" => [
+                "msgId" => "string",
+                "visId" => "string",
+                "sessionId" => 123,
+                "event" => [
+                    "props" => [
+                        'sdkName' => "string",
+                        'sdkVersion' => "string",
+                        'vwoMeta' => [
+                            'metric' => [
+                                "id_1" => ["g_10"],
+                                "id_2" => ["g_20"],
+                                "id_5" => ["g_30"]
+                            ],
+                            $dummyRevenueProperty[0] => 12
+                        ],
+                        'isCustomEvent' => true,
+                        '$visitor' => [
+                            'props' => [
+                                'vwo_fs_environment' => "string"
+                            ]
+                        ],
+                    ],
+                    'name' => "string",
+                    'time' => 123.45
+                ],
+                "visitor" => [
+                    "props" => [
+                        "vwo_fs_environment" => "string"
+                    ]
+                ]
+            ]
+        ];
+        $allPresent = $this->checkAllPropertiesPresent($queryParams, self::EVENT_ARCH_QUERY_PARAMS);
+        $this->assertEquals(true, $allPresent);
+        $allPresentAndValid = $this->checkAllPropertiesPresentAndTheirTypes($properties, $expectedProperties);
+        $this->assertEquals(true, $allPresentAndValid);
+    }
+
+    public function testBuildEventArchPayloadForPush()
+    {
+        $accountId = 1;
+        $sdkKey = '12345';
+        $config = ["accountId" => 1, "sdkKey" => '12345'];
+        $queryParams = ImpressionBuilder::getEventsBaseProperties($accountId, $sdkKey, EventEnum::VWO_SYNC_VISITOR_PROP);
+        $properties = ImpressionBuilder::getPushPayloadData($config, 'Ashley', EventEnum::VWO_SYNC_VISITOR_PROP, ['tagKey' => 'tagValue']);
+        $expectedProperties = [
+            "d" => [
+                "msgId" => "string",
+                "visId" => "string",
+                "sessionId" => 123,
+                "event" => [
+                    "props" => [
+                        'sdkName' => "string",
+                        'sdkVersion' => "string",
+                        'isCustomEvent' => true,
+                        '$visitor' => [
+                            'props' => [
+                                'vwo_fs_environment' => "string",
+                                'tagKey' => 'tagValue'
+                            ]
+                        ],
+                    ],
+                    'name' => "string",
+                    'time' => 123.45
+                ],
+                "visitor" => [
+                    "props" => [
+                        "vwo_fs_environment" => "string",
+                        'tagKey' => 'tagValue'
+                    ]
+                ]
+            ]
+        ];
+
+        $allPresent = $this->checkAllPropertiesPresent($queryParams, self::EVENT_ARCH_QUERY_PARAMS);
+        $this->assertEquals(true, $allPresent);
+        $allPresentAndValid = $this->checkAllPropertiesPresentAndTheirTypes($properties, $expectedProperties);
+        $this->assertEquals(true, $allPresentAndValid);
+    }
+
+    public function checkAllPropertiesPresent($properties, $expectedProperties)
+    {
+        foreach ($expectedProperties as $field) {
+            if (!isset($properties[$field])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public function checkAllPropertiesPresentAndTheirTypes($properties, $expectedProperties)
+    {
+        foreach ($expectedProperties as $key => $value) {
+            if (!isset($properties[$key]) || (gettype($properties[$key]) != gettype($expectedProperties[$key]))) {
+                return false;
+            } elseif (is_array($properties[$key])) {
+                $allPresent = $this->checkAllPropertiesPresentAndTheirTypes($properties[$key], $expectedProperties[$key]);
+                if (!$allPresent) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+}

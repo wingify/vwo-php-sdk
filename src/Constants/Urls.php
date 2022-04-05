@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright 2019-2021 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,25 +23,37 @@ class Urls
     /**
      * base url for api hit
      */
-    const BASE_URL = 'https://dev.visualwebsiteoptimizer.com/server-side/';
+    const BASE_URL = 'https://dev.visualwebsiteoptimizer.com/';
+
+    const SERVER_SIDE_URI = 'server-side/';
     /**
      * query string to fetch settings
      */
-    const SETTINGS_URL = self::BASE_URL . 'settings';
+    const SETTINGS_URL = self::BASE_URL . self:: SERVER_SIDE_URI . 'settings';
     /**
      * query string to fetch settings once webhook is triggered
      */
-    const WEBHOOK_SETTINGS_URL = self::BASE_URL . 'pull';
+    const WEBHOOK_SETTINGS_URL = self::BASE_URL . self:: SERVER_SIDE_URI . 'pull';
     /**
      * query string to track goal
      */
-    const TRACK_GOAL_URL = self::BASE_URL . 'track-goal';
+    const TRACK_GOAL_ENDPOINT = 'track-goal';
     /**
      * query string to track user
      */
-    const TRACK_USER_URL = self::BASE_URL . 'track-user';
+    const TRACK_USER_ENDPOINT = 'track-user';
     /**
      * query string to push api
      */
-    const PUSH_URL = self::BASE_URL . 'push';
+    const PUSH_ENDPOINT = 'push';
+    /**
+     * query string for event arch for track goal, track user and push APIs
+     */
+    const EVENTS_ENDPOINT = 'events/t';
+
+    /**
+     * query string for batch events for track goal and push APIs
+     * using when tracking multiple goals or pushing multiple dimensions
+     */
+    const BATCH_EVENTS_ENDPOINT = 'batch-events';
 }

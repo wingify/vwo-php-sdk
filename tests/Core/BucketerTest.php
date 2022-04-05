@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright 2019-2021 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,12 +64,12 @@ class BucketerTest extends TestCase
     public function testGetBucketValue()
     {
         $campaign = ["id" => 1, "isBucketingSeedEnabled" => true];
-        $bucketValue = Bucketer::getBucketVal("someone@mail.com", $campaign);
+        list($bucketValue, $hashValue) = Bucketer::getBucketVal("someone@mail.com", $campaign);
         $bucketValue = Bucketer::getRangeForVariations($bucketValue);
         $this->assertEquals($bucketValue, 2444);
 
         $campaign["isBucketingSeedEnabled"] = false;
-        $bucketValue = Bucketer::getBucketVal("someone@mail.com", $campaign);
+        list($bucketValue, $hashValue) = Bucketer::getBucketVal("someone@mail.com", $campaign);
         $bucketValue = Bucketer::getRangeForVariations($bucketValue);
         $this->assertEquals($bucketValue, 6361);
     }
@@ -77,14 +77,13 @@ class BucketerTest extends TestCase
     public function testGetBucketValueForUser1111111111111111()
     {
         $campaign = ["id" => 1, "isBucketingSeedEnabled" => true];
-        $bucketValue = Bucketer::getBucketVal("1111111111111111", $campaign);
+        list($bucketValue, $hashValue) = Bucketer::getBucketVal("1111111111111111", $campaign);
         $bucketValue = Bucketer::getRangeForVariations($bucketValue);
         $this->assertEquals($bucketValue, 8177);
 
         $campaign["isBucketingSeedEnabled"] = false;
-        $bucketValue = Bucketer::getBucketVal("1111111111111111", $campaign);
+        list($bucketValue, $hashValue) = Bucketer::getBucketVal("1111111111111111", $campaign);
         $bucketValue = Bucketer::getRangeForVariations($bucketValue);
         $this->assertEquals($bucketValue, 4987);
     }
-
 }

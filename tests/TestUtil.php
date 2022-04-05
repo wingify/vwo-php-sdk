@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright 2019-2021 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ use vwo\Storage\UserStorageInterface;
 
 class TestUtil
 {
+    const TEST_ACCOUNT_ID = 88888888;
+
     public static function getUsers()
     {
         $users = [
@@ -81,14 +83,15 @@ class TestUtil
 
     public static function mockEventDispatcher($obj, $status = 200)
     {
-        $mockEventDispatcher = $obj->getMockBuilder('EventDispatcher')->setMethods(['send', 'sendAsyncRequest'])->getMock();
+        $mockEventDispatcher = $obj->getMockBuilder('EventDispatcher')->setMethods(['send', 'sendAsyncRequest', 'sendBatchEventRequest'])->getMock();
         $mockEventDispatcher->method('send')->will($obj->returnValue(['httpStatus' => $status]));
-        $mockEventDispatcher->method('sendAsyncRequest')->will($obj->returnValue(['httpStatus' => $status]));
+        $mockEventDispatcher->method('sendAsyncRequest')->will($obj->returnValue($status == 200));
+        $mockEventDispatcher->method('sendBatchEventRequest')->will($obj->returnValue($status == 200));
 
         return $mockEventDispatcher;
     }
 
-    public static function mockMethodToThrowEception($obj, $className, $method)
+    public static function mockMethodToThrowException($obj, $className, $method)
     {
         $mock = $obj->getMockBuilder($className)->setMethods([$method])->getMock();
         $mock->expects($obj->any())->method($method)->will($obj->throwException(new Exception()));
@@ -122,10 +125,6 @@ class TestUtil
             $config['goalTypeToTrack'] =  $options['goalTypeToTrack'];
         }
 
-        if (isset($options['shouldTrackReturningUser'])) {
-            $config['shouldTrackReturningUser'] =  $options['shouldTrackReturningUser'];
-        }
-
         if (isset($options['integrations'])) {
             $config['integrations'] = $options['integrations'];
         }
@@ -151,7 +150,6 @@ class CustomLogger extends AbstractLogger
 
 class UserStorageTest implements UserStorageInterface
 {
-
     private $goalIdentifier = '';
 
     /**
@@ -192,7 +190,6 @@ class UserStorageTest implements UserStorageInterface
 
 class UserStorageGetCorruptedTest implements UserStorageInterface
 {
-
     /**
      * @param  $userId
      * @param  $campaignKey

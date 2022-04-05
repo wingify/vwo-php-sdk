@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright 2019-2021 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,15 @@
 namespace vwo\Utils;
 
 use Monolog\Logger as Logger;
+use vwo\Constants\FileNameEnum;
+use vwo\Constants\Urls;
 use vwo\Services\LoggerService;
-use vwo\Constants\LogMessages as LogMessages;
 use vwo\HttpHandler\Connection as Connection;
 
 class EventDispatcher
 {
     static $isDevelopmentMode;
+    const CLASSNAME = FileNameEnum::EVENT_DISPATCHER;
 
     function __construct($isDevelopmentMode)
     {
@@ -55,10 +57,8 @@ class EventDispatcher
 
         if (isset($response['httpStatus']) && $response['httpStatus'] == 200) {
             return $response;
-        } else {
-            return false;
         }
-        LoggerService::log(Logger::ERROR, LogMessages::ERROR_MESSAGES['IMPRESSION_FAILED'], ['{endPoint}' => $url, '{reason}' => '']);
+        LoggerService::log(Logger::ERROR, 'IMPRESSION_FAILED', ['{endPoint}' => $url, '{err}' => ''], self::CLASSNAME);
 
         return false;
     }
@@ -70,13 +70,13 @@ class EventDispatcher
      * @param string $method
      * @param array  $params
      *
-     * @return void
+     * @return int|false
      */
     public function sendAsyncRequest($url, $method, $params = [])
     {
         // If in DEV mode, do not send any call
         if (self::$isDevelopmentMode) {
-            return;
+            return false;
         }
 
         // Parse url and extract information
@@ -89,13 +89,15 @@ class EventDispatcher
         if (!$socketConnection) {
             LoggerService::log(
                 Logger::ERROR,
-                LogMessages::ERROR_MESSAGES['IMPRESSION_FAILED'],
+                'IMPRESSION_FAILED',
                 [
                     '{endPoint}' => $url,
-                    '{reason}' => 'Unable to connect to ' . $host . '. Error: ' . $errstr . ' ' . ($errno)]
+                    '{err}' => 'Unable to connect to ' . $host . '. Error: ' . $errstr . ' ' . ($errno)
+                ],
+                self::CLASSNAME
             );
 
-            return;
+            return false;
         }
 
         // Build request
@@ -105,7 +107,70 @@ class EventDispatcher
         $request .= 'Connection: Close' . "\r\n\r\n";
 
         // Send Request
-        fwrite($socketConnection, $request);
+        $result = fwrite($socketConnection, $request);
         fclose($socketConnection);
+        return $result;
+    }
+
+    /**
+     * Send call to the destination i.e. VWO server
+     *
+     * @param  array $params
+     * @param  array $postData
+     * @return bool
+     */
+    public function sendEventRequest($params = [], $postData = [])
+    {
+        if (self::$isDevelopmentMode) {
+            return false;
+        } else {
+            $connection = new Connection();
+
+            $url = Common::getEventsUrl() . '?' . http_build_query($params);
+            $connection->addHeader('User-Agent', ImpressionBuilder::SDK_LANGUAGE);
+            $response = $connection->post($url, $postData);
+        }
+
+        if (isset($response['httpStatus']) && $response['httpStatus'] == 200) {
+            return true;
+        }
+        LoggerService::log(Logger::ERROR, 'IMPRESSION_FAILED', ['{endPoint}' => $url, '{err}' => ''], self::CLASSNAME);
+        return false;
+    }
+
+    /**
+     * Send batch events call to the destination i.e. VWO server
+     *
+     * @param  string $sdkKey
+     * @param  array $params
+     * @param  array $postData
+     * @return bool
+     */
+    public function sendBatchEventRequest($sdkKey, $params, $postData)
+    {
+        if (self::$isDevelopmentMode) {
+            return false;
+        } else {
+            $connection = new Connection();
+
+            $url = Common::getBatchEventsUrl() . '?' . http_build_query($params);
+            $connection->addHeader('Authorization', $sdkKey);
+            $response = $connection->post($url, $postData);
+        }
+
+        if (isset($response['httpStatus']) && $response['httpStatus'] == 200) {
+            LoggerService::log(
+                Logger::INFO,
+                'IMPRESSION_BATCH_SUCCESS',
+                [
+                    '{endPoint}' => $url,
+                    '{accountId}' => $params['a']
+                ],
+                self::CLASSNAME
+            );
+            return true;
+        }
+        LoggerService::log(Logger::ERROR, 'IMPRESSION_FAILED', ['{endPoint}' => $url, '{err}' => ''], self::CLASSNAME);
+        return false;
     }
 }

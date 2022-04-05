@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright 2019-2021 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -430,7 +430,7 @@ class Settings8
                                             'id' => 1,
                                         ],
                                         [
-                                            'value' => ["a"=>3],
+                                            'value' => ["a" => 3],
                                             'type' => 'json',
                                             'key' => 'V1',
                                             'id' => 1,

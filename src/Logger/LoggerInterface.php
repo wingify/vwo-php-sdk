@@ -1,4 +1,5 @@
-#!/usr/bin/env node
+<?php
+
 /**
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
@@ -15,19 +16,21 @@
  * limitations under the License.
  */
 
-const run = require('./utils/run').run;
+namespace vwo\Logger;
 
-require('./utils/check-license');
-
-function runAll() {
-  const tasks = [{
-    name: 'Test Cases',
-    command: 'composer run-script test',
-  }];
-
-  for (let i = 0; i < tasks.length; i++) {
-    run(tasks[i]);
-  }
+/***
+ * Interface LoggerInterface
+ *
+ * @package vwo\Logger
+ */
+interface LoggerInterface
+{
+    /**
+     * logger function which helps in adding log to the third party
+     *
+     * @param  $msg
+     * @param  $level
+     * @return mixed
+     */
+    public function log($msg, $level);
 }
-
-runAll();

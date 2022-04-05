@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright 2019-2021 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ namespace vwo\Services;
  */
 class HooksManager
 {
-
     function __construct($config)
     {
         $this->init($config);
@@ -37,7 +36,8 @@ class HooksManager
      */
     public function init($config = [])
     {
-        if (isset($config['integrations'])
+        if (
+            isset($config['integrations'])
             && isset($config['integrations']['callback'])
             && is_callable($config['integrations']['callback'])
         ) {

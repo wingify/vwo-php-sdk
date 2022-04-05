@@ -18,21 +18,20 @@
 
 namespace vwo;
 
-class Settings10
+class FRWhitelistingSettings
 {
     public static function setup()
     {
         return array(
             'sdkKey' => 'loremipsum123456',
             'campaigns' =>
-                   array(
-                    6 =>
+                array(
+                    0 =>
                         [
-                            'id' => 92,
-                            "name" => "Campaign-92",
-                            'segments' => [],
+                            'id' => 93,
+                            "name" => "Campaign-93",
                             'status' => 'RUNNING',
-                            'percentTraffic' => 0,
+                            'percentTraffic' => 100,
                             'type' => 'FEATURE_ROLLOUT',
                             'variables' => [
                                 [
@@ -40,35 +39,38 @@ class Settings10
                                     'type' => 'integer',
                                     'key' => 'V1',
                                     'id' => 1,
-                                ],
-                                [
-                                    'value' => "jdhgf",
-                                    'type' => 'json',
-                                    'key' => 'V1',
-                                    'id' => 1,
                                 ]
                             ],
-                            'key' => 'FEATURE_ROLLOUT_ZERO_TRAFFIC',
+                            'key' => 'FEATURE_ROLLOUT_KEY',
                             'variations' => [
                                 [
                                     'id' => 1,
-                                    'name' => 'website',
+                                    'name' => 'Feature-Rollout',
                                     'changes' => [],
                                     'weight' => 100,
+                                    'segments' =>
+                                        [
+                                            'or' =>
+                                                [
+                                                    [
+                                                        "custom_variable" =>
+                                                            [
+                                                                "chrome" => "false"
+                                                            ]
+                                                    ]
+                                                ]
+                                        ]
                                 ],
                             ],
                             'goals' => [
                                 [
-                                    'identifier' => 'h',
-                                    'id' => 209,
-                                    'type' => 'CUSTOM_GOAL',
-                                ],
-                                [
-                                    'identifier' => 'jk',
-                                    'id' => 210,
-                                    'type' => 'CUSTOM_GOAL',
+                                    'type' => 'ON_PAGE',
+                                    'id' => 1,
+                                    'identifier' => 'http://vwo_d_feature-rollout',
                                 ]
                             ],
+                            'isBucketingSeedEnabled' => true,
+                            'isForcedVariationEnabled' => true,
                         ],
                 ),
             'accountId' => 0,

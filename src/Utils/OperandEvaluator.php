@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright 2019-2021 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 namespace vwo\Utils;
 
+use vwo\Constants\FileNameEnum;
 use vwo\Utils\Common as CommonUtil;
 use vwo\Constants\Segments as SegmentConstants;
 use vwo\Constants\Constants;
@@ -30,7 +31,7 @@ use Monolog\Logger as Logger;
  */
 class OperandEvaluator
 {
-    static $CLASSNAME = '/Utils/OperandEvaluator';
+    static $CLASSNAME = FileNameEnum::OPERAND_EVALUATOR;
 
     /**
      * @param  $operand
