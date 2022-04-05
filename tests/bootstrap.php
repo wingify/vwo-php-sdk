@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright 2019-2021 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,5 +31,6 @@ require 'assets/SettingsFileMEG.php';
 require 'assets/SettingsWithPreSegmentation.php';
 require 'assets/SegmentEvaluatorJson.php';
 require 'assets/WhitelistingJson.php';
+require 'assets/FRWhitelistingSettings.php';
 require 'assets/VariationResults.php';
 require 'TestUtil.php';

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright 2019-2021 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@
 
 namespace vwo\Utils;
 
+use vwo\Constants\FileNameEnum;
+use vwo\Constants\Urls;
+
 /***
  * All the common function will be invoked from common  class
  *
@@ -27,8 +30,7 @@ namespace vwo\Utils;
  */
 class Common
 {
-
-    private static $CLASSNAME = 'vwo\Utils\Common';
+    private static $CLASSNAME = FileNameEnum::COMMON;
 
     /***
      * basic creation of log message from constants.php
@@ -118,16 +120,16 @@ class Common
     public static function typeCast($value, $type)
     {
         switch ($type) {
-        case 'double':
-            return (float)$value;
-        case 'string':
-            return (string)$value;
-        case 'boolean':
-            return (bool)$value;
-        case 'integer':
-            return (int)$value;
-        case 'json':
-            return $value;
+            case 'double':
+                return (float)$value;
+            case 'string':
+                return (string)$value;
+            case 'boolean':
+                return (bool)$value;
+            case 'integer':
+                return (int)$value;
+            case 'json':
+                return $value;
         }
     }
 
@@ -176,10 +178,10 @@ class Common
             return $options[$optionName];
         }
         switch ($optionName) {
-        case 'customVariables':
-            return [];
-        case 'variationTargetingVariables':
-            return [];
+            case 'customVariables':
+                return [];
+            case 'variationTargetingVariables':
+                return [];
         }
         return null;
     }
@@ -187,5 +189,41 @@ class Common
     public static function getRandomNumber()
     {
         return (time() / 10);
+    }
+
+    public static function getCurrentUnixTimestampInMillis()
+    {
+        return round(microtime(true) * 1000);
+    }
+
+    /**
+     * get URL
+     *
+     * @param  string $endPoint
+     * @return string
+     */
+    public static function getUrl($endPoint)
+    {
+        return DataLocationManager::instance()->getDataLocation() . Urls::SERVER_SIDE_URI . $endPoint;
+    }
+
+    /**
+     * get events URL
+     *
+     * @return string
+     */
+    public static function getEventsUrl()
+    {
+        return DataLocationManager::instance()->getDataLocation() . Urls::EVENTS_ENDPOINT;
+    }
+
+    /**
+     * get batch events URL
+     *
+     * @return string
+     */
+    public static function getBatchEventsUrl()
+    {
+        return DataLocationManager::instance()->getDataLocation() . Urls::SERVER_SIDE_URI . Urls::BATCH_EVENTS_ENDPOINT;
     }
 }

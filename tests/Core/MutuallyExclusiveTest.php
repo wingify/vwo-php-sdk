@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright 2019-2021 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ class MutuallyExclusiveTest extends TestCase
     public function testVariationReturnAsWhitelisting()
     {
         $campaignKey = $this->settingsFileMEG['campaigns'][2]['key'];
-        $vwoInstance = TestUtil::instantiateSdk($this->settingsFileMEG);
+        $vwoInstance = TestUtil::instantiateSdk($this->settingsFileMEG, ['isDevelopmentMode' => 1]);
         $options = [
             'variationTargetingVariables' => [
             'chrome' => false
@@ -66,7 +66,7 @@ class MutuallyExclusiveTest extends TestCase
     public function testVariationForCalledCampaign()
     {
         $campaignKey = $this->settingsFileMEG['campaigns'][2]['key'];
-        $vwoInstance = TestUtil::instantiateSdk($this->settingsFileMEG, ['isUserStorage' => 1]);
+        $vwoInstance = TestUtil::instantiateSdk($this->settingsFileMEG, ['isUserStorage' => 1, 'isDevelopmentMode' => 1]);
 
         $variation = $vwoInstance->activate($campaignKey, 'Ashley');
         $isGoalTracked = $vwoInstance->track($campaignKey, 'Ashley', 'CUSTOM');
@@ -79,7 +79,7 @@ class MutuallyExclusiveTest extends TestCase
     public function testNullVariationAsOtherCampaignSatisfiesStorage()
     {
         $campaignKey = $this->settingsFileMEG['campaigns'][2]['key'];
-        $vwoInstance = TestUtil::instantiateSdk($this->settingsFileMEG);
+        $vwoInstance = TestUtil::instantiateSdk($this->settingsFileMEG, ['isDevelopmentMode' => 1]);
 
         $variationInfo = [
             'userId' => 'Ashley',
@@ -108,7 +108,7 @@ class MutuallyExclusiveTest extends TestCase
     public function testVariationForCalledCampaignInStorageAndOtherCampaignSatisfiesWhitelisting()
     {
         $campaignKey = $this->settingsFileMEG['campaigns'][2]['key'];
-        $vwoInstance = TestUtil::instantiateSdk($this->settingsFileMEG, ['isUserStorage' => 1]);
+        $vwoInstance = TestUtil::instantiateSdk($this->settingsFileMEG, ['isUserStorage' => 1, 'isDevelopmentMode' => 1]);
 
         $options = [
             'variationTargetingVariables' => [
@@ -233,7 +233,7 @@ class MutuallyExclusiveTest extends TestCase
     public function testOnlyCalledCampaignSatisfyPresegmentation()
     {
         $campaignKey = $this->settingsFileMEG['campaigns'][0]['key'];
-        $vwoInstance = TestUtil::instantiateSdk($this->settingsFileMEG);
+        $vwoInstance = TestUtil::instantiateSdk($this->settingsFileMEG, ['isDevelopmentMode' => 1]);
 
         $options = [
             'customVariables' => [
@@ -280,7 +280,7 @@ class MutuallyExclusiveTest extends TestCase
     public function testCalledCampaignWinnerCampaign()
     {
         $campaignKey = $this->settingsFileMEG['campaigns'][0]['key'];
-        $vwoInstance = TestUtil::instantiateSdk($this->settingsFileMEG);
+        $vwoInstance = TestUtil::instantiateSdk($this->settingsFileMEG, ['isDevelopmentMode' => 1]);
 
         // implementing the same condition with different traffic distribution
         $vwoInstance->settings['campaigns'][0]['percentTraffic'] = 100;
@@ -318,7 +318,7 @@ class MutuallyExclusiveTest extends TestCase
     public function testWhenEqualTrafficAmongEligibleCampaigns()
     {
         $campaignKey = $this->settingsFileMEG['campaigns'][2]['key'];
-        $vwoInstance = TestUtil::instantiateSdk($this->settingsFileMEG);
+        $vwoInstance = TestUtil::instantiateSdk($this->settingsFileMEG, ['isDevelopmentMode' => 1]);
 
         // implementing the same condition with different traffic distribution
         $vwoInstance->settings['campaigns'][2]['percentTraffic'] = 80;
@@ -329,7 +329,7 @@ class MutuallyExclusiveTest extends TestCase
 
     public function testWhenBothCampaignsNewToUser()
     {
-        $vwoInstance = TestUtil::instantiateSdk($this->settingsFileMEG);
+        $vwoInstance = TestUtil::instantiateSdk($this->settingsFileMEG, ['isDevelopmentMode' => 1]);
 
         // campaigns are newly added to MEG.
         // user could be a part of any one of the campaign.

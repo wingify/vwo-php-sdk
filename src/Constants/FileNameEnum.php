@@ -1,4 +1,5 @@
-#!/usr/bin/env node
+<?php
+
 /**
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
@@ -15,19 +16,18 @@
  * limitations under the License.
  */
 
-const run = require('./utils/run').run;
+namespace vwo\Constants;
 
-require('./utils/check-license');
-
-function runAll() {
-  const tasks = [{
-    name: 'Test Cases',
-    command: 'composer run-script test',
-  }];
-
-  for (let i = 0; i < tasks.length; i++) {
-    run(tasks[i]);
-  }
+class FileNameEnum
+{
+    const VWO = 'vwo\VWO';
+    const BUCKETER = 'vwo\Core\Bucketer';
+    const VARIATION_DECIDER = 'vwo\Core\VariationDecider';
+    const CAMPAIGN = 'vwo\Utils\Campaign';
+    const COMMON = 'vwo\Utils\Common';
+    const EVENT_DISPATCHER = 'vwo\Utils\EventDispatcher';
+    const IMPRESSION_BUILDER = 'vwo\Utils\ImpressionBuilder';
+    const OPERAND_EVALUATOR = 'vwo\Utils\OperandEvaluator';
+    const UUID_UTIL = 'vwo\Utils\UuidUtil';
+    const VALIDATIONS = 'vwo\Utils\Validations';
 }
-
-runAll();

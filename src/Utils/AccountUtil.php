@@ -1,4 +1,5 @@
-#!/usr/bin/env node
+<?php
+
 /**
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
@@ -15,19 +16,33 @@
  * limitations under the License.
  */
 
-const run = require('./utils/run').run;
+namespace vwo\Utils;
 
-require('./utils/check-license');
+class AccountUtil
+{
+    protected static $instance;
 
-function runAll() {
-  const tasks = [{
-    name: 'Test Cases',
-    command: 'composer run-script test',
-  }];
+    private $accountId;
 
-  for (let i = 0; i < tasks.length; i++) {
-    run(tasks[i]);
-  }
+    private function __construct()
+    {
+    }
+
+    public static function instance()
+    {
+        if (!self::$instance) {
+            self::$instance = new AccountUtil();
+        }
+        return self::$instance;
+    }
+
+    public function getAccountId()
+    {
+        return $this->accountId;
+    }
+
+    public function setAccountId($accountId)
+    {
+        $this->accountId = $accountId;
+    }
 }
-
-runAll();

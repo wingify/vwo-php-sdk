@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright 2019-2021 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -871,5 +871,92 @@ class VariationResults
                 'Zeba'
                 => 'Variation-1'
             ],
+
+        'FEATURE_TEST' => [
+            'Ashley' => true,
+            'Bill' => true,
+            'Chris' => false,
+            'Dominic' => false,
+            'Emma' => true,
+            'Faizan' => true,
+            'Gimmy' => false,
+            'Harry' => true,
+            'Ian' => true,
+            'John' => true,
+            'King' => false,
+            'Lisa' => true,
+            'Mona' => true,
+            'Nina' => false,
+            'Olivia' => true,
+            'Pete' => false,
+            'Queen' => false,
+            'Robert' => true,
+            'Sarah' => true,
+            'Tierra' => false,
+            'Una' => true,
+            'Varun' => true,
+            'Will' => false,
+            'Xin' => true,
+            'You' => false,
+            'Zeba' => true
+        ],
+
+        'FR_T_10_WHITELISTING_FAIL' => [
+            'Ashley' => false,
+            'Bill' => false,
+            'Chris' => false,
+            'Dominic' => false,
+            'Emma' => false,
+            'Faizan' => true,
+            'Gimmy' => false,
+            'Harry' => false,
+            'Ian' => false,
+            'John' => false,
+            'King' => false,
+            'Lisa' => true,
+            'Mona' => true,
+            'Nina' => true,
+            'Olivia' => false,
+            'Pete' => false,
+            'Queen' => true,
+            'Robert' => false,
+            'Sarah' => false,
+            'Tierra' => false,
+            'Una' => false,
+            'Varun' => false,
+            'Will' => false,
+            'Xin' => false,
+            'You' => false,
+            'Zeba' => false
+        ],
+
+        'REAL_TIME_PRE_SEGMENTATION' => [
+            'Ashley' => 'Control',
+            'Bill' => 'Control',
+            'Chris' => 'Variation-1',
+            'Dominic' => 'Variation-1',
+            'Emma' => 'Control',
+            'Faizan' => 'Control',
+            'Gimmy' => 'Variation-1',
+            'Harry' => 'Control',
+            'Ian' => 'Control',
+            'John' => 'Control',
+            'King' => 'Variation-1',
+            'Lisa' => 'Control',
+            'Mona' => 'Control',
+            'Nina' => 'Variation-1',
+            'Olivia' => 'Control',
+            'Pete' => 'Variation-1',
+            'Queen' => 'Variation-1',
+            'Robert' => 'Control',
+            'Sarah' => 'Control',
+            'Tierra' => 'Variation-1',
+            'Una' => 'Control',
+            'Varun' => 'Control',
+            'Will' => 'Variation-1',
+            'Xin' => 'Control',
+            'You' => 'Variation-1',
+            'Zeba' => 'Control'
+        ]
     ];
 }

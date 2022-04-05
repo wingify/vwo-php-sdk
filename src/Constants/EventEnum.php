@@ -1,4 +1,5 @@
-#!/usr/bin/env node
+<?php
+
 /**
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
@@ -15,19 +16,10 @@
  * limitations under the License.
  */
 
-const run = require('./utils/run').run;
+namespace vwo\Constants;
 
-require('./utils/check-license');
-
-function runAll() {
-  const tasks = [{
-    name: 'Test Cases',
-    command: 'composer run-script test',
-  }];
-
-  for (let i = 0; i < tasks.length; i++) {
-    run(tasks[i]);
-  }
+class EventEnum
+{
+    const VWO_VARIATION_SHOWN = 'vwo_variationShown';
+    const VWO_SYNC_VISITOR_PROP = 'vwo_syncVisitorProp';
 }
-
-runAll();

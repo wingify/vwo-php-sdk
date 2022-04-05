@@ -4,6 +4,121 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.36.2] - 2022-03-28
+
+### Changed
+
+- Handle Divide by zero error when campaign traffic is zero.
+
+## [1.36.1] - 2022-14-03
+
+### Changed
+
+- Update key for reading Data Residency Location from `dataResidencyLocation` to `collectionPrefix`
+
+## [1.36.0] - 2022-24-02
+
+### Changed
+
+- Removed the dependency of hard-coding paths for reading the log messages. Moved the file reading logic to vwo-sdk-log-messages repo.
+
+## [1.35.0] - 2022-23-02
+
+### Added
+
+- Always check targeting conditions
+
+  - The option `Once` is selected by default in the VWO Application, which means the user segment condition is only checked once and the same variation is served to the user on every subsequent call to the SDK's APIs.
+
+  - If you choose `Always`, the user is evaluated against the segment condition on every call to the SDK's APIs.
+
+## [1.32.0] - 2022-28-01
+
+### Changed
+
+- Instead of multiple tracking calls in case of global goals, now one single batch call will be made to track different goals of different campaigns having same goal-identifier.
+- Instead of multiple tracking calls in case of pushing more than one custom dimension, now one single batch call will be made to push custom dimension map.
+
+## [1.31.0] - 2022-17-01
+
+### Changed
+
+- Integrated VWO SDK Log Messages repo instead of hardcoding messages in every VWO server-side SDK.
+- Old logs are revamped. New logs that would help in better debugging are added.
+
+## [1.30.0] - 2022-11-01
+
+### Changed
+
+- Tracking data for the `Data Residency` enabled VWO accounts will be sent to the configured location
+- Update year in all the copyright and liense headers
+
+## [1.28.0] - 2021-12-09
+
+### Changed
+
+- In case you want to opt out of tracking by VWO, simply call the `setOptOut` API. This will exclude all the users from any kind of tracking by VWO. This is useful when you just want to make the VWO SDK ineffective without actually removing the associated code.
+
+  `setOptOut` API will also remove unwanted memory footprint by destructing all the instance variables. Calling any other API after this will not be effective i.e. no decision-making or impression would be made to VWO.
+
+  ```php
+  $vwoClientInstance->setOptOut();
+  ```
+
+  If you want to opt-in again for tracking by VWO SDK, reinitialize the SDK with the latest settings.
+
+## [1.25.0] - 2021-12-08
+
+### Added
+
+- Support for pushing multiple custom dimensions at once. Earlier, you had to call push API multiple times for tracking multiple custom dimensions as follows:
+
+    ```php
+    $vwoInstance->push('browser', 'chrome', $userId);
+    $vwoInstance->push('price', '20', $userId);
+    ```
+
+    Now, you can pass an associative array
+
+    ```php
+    $customDimensionMap = [
+    "browser" => 'chrome',
+    "price" => '20'
+    ];
+    $vwoInstance->push($customDimensionMap, $userId);
+    ```
+
+    Multiple asynchronous tracking calls would be initiated in this case.
+
+### Changed
+
+- If Events Architecture is enabled for your VWO account, all the tracking calls being initiated from SDK would now be `POST` instead of `GET` and there would be single endpoint i.e. `/events/t`. This is done in order to bring events support and building advanced capabilities in future.
+
+- For events architecture accounts, tracking same goal across multiple campaigns will not send multiple tracking calls. Instead, one single `POST` call would be made to track the same goal across multiple different campaigns running on the same environment.
+
+- Multiple custom dimension can be pushed via `push` API. For events architecture enabled account, only one single asynchronous call would be made to track multiple custom dimensions.
+
+```php
+$customDimensionMap = [
+  "browser" => 'chrome',
+  "price" => '20'
+];
+$vwoInstance->push($customDimensionMap, $userId);
+```
+
+## [1.24.0] - 2020-12-08
+
+### Changed
+
+- User IDs passed while applying whitelisting in a campaign from VWO Application will now be hashed. Inside settings-file, all User IDs will be hashed for security reasons. SDK will hash the User ID passed in the different APIs before matching it with the campaigns settings. This is feature-controlled from VWO i.e. we are only rolling this functionality gradually. Please reach out to the support team in case you want to opt-in early for this feature for your VWO account.
+
+## [1.23.2] - 2020-10-21
+
+### Changed
+
+- Updated whitelisting logs for Feature Rollout campaign
+- Test cases added to verify whitelisting cases in Feature Rollout campaign
+
 ## [1.23.1] - 2021-10-07
 
 ### Changed
