@@ -85,6 +85,7 @@ class ImpressionBuilderTest extends TestCase
                     "props" => [
                         'vwo_sdkName' => "string",
                         'vwo_sdkVersion' => "string",
+                        "vwo_envKey" => "string",
                         'vwoMeta' => [
                             'metric' => [
                                 "id_1" => ["g_10"],
