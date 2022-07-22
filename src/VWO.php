@@ -499,7 +499,6 @@ class VWO
         $revenueValue = CommonUtil::getValueFromOptions($options, 'revenueValue');
         $bucketInfo = null;
 
-
         if (
             empty($userId)
             || empty($goalIdentifier)
@@ -520,6 +519,8 @@ class VWO
         $revenueProps = [];
         $result = [];
         $batchEventData = [];
+        $eventProperties = CommonUtil::getValueFromOptions($options, 'eventProperties') || [];
+
         foreach ($campaigns as $campaign) {
             try {
                 if ($campaign['type'] == CampaignTypes::FEATURE_ROLLOUT) {
@@ -546,20 +547,53 @@ class VWO
 
                 $goal = CommonUtil::getGoalFromGoals($campaign['goals'], $goalIdentifier);
                 $goalId = isset($goal['id']) ? $goal['id'] : 0;
+                $mca = isset($goal['mca']) ? $goal['mca'] : NULL;
+
                 if ($goalId && isset($bucketInfo['id']) && $bucketInfo['id'] > 0) {
-                    if ($goal['type'] == "REVENUE_TRACKING" && is_null($revenueValue)) {
-                        LoggerService::log(
-                            Logger::ERROR,
-                            'TRACK_API_REVENUE_NOT_PASSED_FOR_REVENUE_GOAL',
-                            [
-                                '{goalIdentifier}' => $goalIdentifier,
-                                '{campaignKey}' => $campaign['key'],
-                                '{userId}' => $userId
-                            ],
-                            self::CLASSNAME
-                        );
-                        $result[$campaign['key']] = null;
-                        continue;
+                    if ($goal['type'] == "REVENUE_TRACKING") {
+                        if ($this->isEventArchEnabled()) {
+                            $doesRevenuePropExist = false;
+
+                            foreach ($eventProperties as $eventProp => $eventValue) {
+                                if ($eventProp == $goal['revenueProp']) {
+                                    $doesRevenuePropExist = true;
+                                    break;
+                                }
+                            }
+
+                            if (!$doesRevenuePropExist) {
+                                if (is_null($revenueValue)) {
+                                    LoggerService::log(
+                                        Logger::ERROR,
+                                        'TRACK_API_EVENTS_REVENUE_NOT_PASSED',
+                                        [
+                                            '{goalIdentifier}' => $goalIdentifier,
+                                            '{campaignKey}' => $campaign['key'],
+                                            '{userId}' => $userId
+                                        ],
+                                        self::CLASSNAME
+                                    );
+                                    $result[$campaign['key']] = null;
+                                    continue;
+                                } else {
+                                    $revProp = $goal['revenueProp'];
+                                    $eventProperties[$revProp] = $revenueValue;
+                                }
+                            }
+                         } elseif (is_null($revenueValue)) {
+                            LoggerService::log(
+                                Logger::ERROR,
+                                'TRACK_API_REVENUE_NOT_PASSED_FOR_REVENUE_GOAL',
+                                [
+                                    '{goalIdentifier}' => $goalIdentifier,
+                                    '{campaignKey}' => $campaign['key'],
+                                    '{userId}' => $userId
+                                ],
+                                self::CLASSNAME
+                            );
+                            $result[$campaign['key']] = null;
+                            continue;
+                        }
                     }
 
                     if (isset($goalIdentifier)) {
@@ -576,7 +610,7 @@ class VWO
                             if (!empty($this->_userStorageObj)) {
                                 $this->variationDecider->userStorageSet($this->_userStorageObj, $userId, $campaign['key'], $bucketInfo, $bucketInfo['goalIdentifier']);
                             }
-                        } else {
+                        } else if ($mca != -1) {
                             LoggerService::log(
                                 Logger::INFO,
                                 'CAMPAIGN_GOAL_ALREADY_TRACKED',
@@ -661,6 +695,7 @@ class VWO
                 $goalIdentifier,
                 $revenueValue,
                 $metricMap,
+                $eventProperties,
                 $revenueProps
             );
             $eventArchResponse = $this->eventDispatcher->sendEventRequest($parameters, $payload);

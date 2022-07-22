@@ -30,7 +30,7 @@ class ImpressionBuilder
     /**
      * sdk version for api hit
      */
-    const SDK_VERSION = '1.37.0';
+    const SDK_VERSION = '1.41.0';
     /**
      * sdk langauge for api hit
      */
@@ -192,13 +192,9 @@ class ImpressionBuilder
         $sdkKey = $configObj["sdkKey"];
 
         $props = [
-            'sdkName' => self::SDK_LANGUAGE,
-            'sdkVersion' => self::SDK_VERSION,
-            '$visitor' => [
-                'props' => [
-                  'vwo_fs_environment' => $sdkKey
-                ]
-            ]
+            'vwo_sdkName' => self::SDK_LANGUAGE,
+            'vwo_sdkVersion' => self::SDK_VERSION,
+            'vwo_envKey' => $sdkKey
         ];
 
         //        if ($usageStats) {
@@ -272,7 +268,14 @@ class ImpressionBuilder
      * @param  array  $revenueProps
      * @return array $properties
      */
-    public static function getTrackGoalPayloadData($configObj, $userId, $eventName, $revenueValue, $metricMap, $revenueProps = [])
+    public static function getTrackGoalPayloadData(
+        $configObj,
+        $userId,
+        $eventName,
+        $revenueValue,
+        $metricMap,
+        $eventProperties,
+        $revenueProps = [])
     {
         $properties = self::getEventBasePayload($configObj, $userId, $eventName);
 
@@ -296,11 +299,15 @@ class ImpressionBuilder
             "metric" => $metric
         ];
 
-        if (count($revenueProps) && $revenueValue) {
+        foreach ($eventProperties as $eventProp => $eventValue) {
+            $properties["d"]["event"]["props"][$eventProp] = $eventValue;
+        }
+
+        /* if (count($revenueProps) && $revenueValue) {
             foreach ($revenueProps as $revenueProp) {
                 $properties["d"]["event"]["props"]["vwoMeta"][$revenueProp] = $revenueValue;
             }
-        }
+        } */
 
         $properties['d']['event']['props']['isCustomEvent'] = true;
 
@@ -322,7 +329,6 @@ class ImpressionBuilder
 
         $properties['d']['event']['props']['isCustomEvent'] = true;
         foreach ($customDimensionMap as $key => $value) {
-            $properties['d']['event']['props']['$visitor']['props'][$key] = $value;
             $properties['d']['visitor']['props'][$key] = $value;
         }
 

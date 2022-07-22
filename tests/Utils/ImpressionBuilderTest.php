@@ -39,16 +39,11 @@ class ImpressionBuilderTest extends TestCase
                 "sessionId" => 123,
                 "event" => [
                     "props" => [
-                        'sdkName' => "string",
-                        'sdkVersion' => "string",
+                        'vwo_sdkName' => "string",
+                        'vwo_sdkVersion' => "string",
                         'id' => 12,
                         'isFirst' => 1233,
                         'variation' => 2,
-                        '$visitor' => [
-                            'props' => [
-                                'vwo_fs_environment' => "string"
-                            ]
-                        ],
                     ],
                     'name' => "string",
                     'time' => 123.45
@@ -80,7 +75,7 @@ class ImpressionBuilderTest extends TestCase
         ];
         $dummyRevenueProperty = ['dummyRevenueProperty'];
         $queryParams = ImpressionBuilder::getEventsBaseProperties($accountId, $sdkKey, $goalIdentifier);
-        $properties = ImpressionBuilder::getTrackGoalPayloadData($config, 'Ashley', $goalIdentifier, 20, $metricMap, $dummyRevenueProperty);
+        $properties = ImpressionBuilder::getTrackGoalPayloadData($config, 'Ashley', $goalIdentifier, 20, $metricMap, [], $dummyRevenueProperty);
         $expectedProperties = [
             "d" => [
                 "msgId" => "string",
@@ -88,8 +83,8 @@ class ImpressionBuilderTest extends TestCase
                 "sessionId" => 123,
                 "event" => [
                     "props" => [
-                        'sdkName' => "string",
-                        'sdkVersion' => "string",
+                        'vwo_sdkName' => "string",
+                        'vwo_sdkVersion' => "string",
                         'vwoMeta' => [
                             'metric' => [
                                 "id_1" => ["g_10"],
@@ -99,11 +94,6 @@ class ImpressionBuilderTest extends TestCase
                             $dummyRevenueProperty[0] => 12
                         ],
                         'isCustomEvent' => true,
-                        '$visitor' => [
-                            'props' => [
-                                'vwo_fs_environment' => "string"
-                            ]
-                        ],
                     ],
                     'name' => "string",
                     'time' => 123.45
@@ -135,15 +125,9 @@ class ImpressionBuilderTest extends TestCase
                 "sessionId" => 123,
                 "event" => [
                     "props" => [
-                        'sdkName' => "string",
-                        'sdkVersion' => "string",
+                        'vwo_sdkName' => "string",
+                        'vwo_sdkVersion' => "string",
                         'isCustomEvent' => true,
-                        '$visitor' => [
-                            'props' => [
-                                'vwo_fs_environment' => "string",
-                                'tagKey' => 'tagValue'
-                            ]
-                        ],
                     ],
                     'name' => "string",
                     'time' => 123.45

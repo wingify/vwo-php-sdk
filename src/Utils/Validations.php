@@ -61,12 +61,14 @@ class Validations
                     "identifier" => ["type" => "string"],
                     "type" => ["type" => "string"],
                     "id" => ["type" => "number"],
+                    "mca" => ["type" => "number"],
                 ],
                 "variations" => [
                     "type" => "array",
                     "name" => ["type" => "string"],
                     "weight" => ["type" => "number"],
-                    "id" => ["type" => "number"],],
+                    "id" => ["type" => "number"],
+                ],
                 "percentTraffic" => ["type" => "number"],
                 "key" => ["type" => "string"],
                 "status" => ["type" => "string"],
@@ -75,8 +77,6 @@ class Validations
                 "isAlwaysCheckSegment" => ["type" => "boolean"]
             ],
         ],
-
-
     ];
 
     /**
