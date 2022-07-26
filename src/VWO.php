@@ -519,7 +519,11 @@ class VWO
         $revenueProps = [];
         $result = [];
         $batchEventData = [];
-        $eventProperties = CommonUtil::getValueFromOptions($options, 'eventProperties') || [];
+        $eventProperties = CommonUtil::getValueFromOptions($options, 'eventProperties');
+
+        if (!$eventProperties) {
+            $eventProperties = [];
+        }
 
         foreach ($campaigns as $campaign) {
             try {
@@ -551,6 +555,7 @@ class VWO
 
                 if ($goalId && isset($bucketInfo['id']) && $bucketInfo['id'] > 0) {
                     if ($goal['type'] == "REVENUE_TRACKING") {
+
                         if ($this->isEventArchEnabled()) {
                             $doesRevenuePropExist = false;
 
@@ -693,10 +698,8 @@ class VWO
                 $this->settings,
                 $userId,
                 $goalIdentifier,
-                $revenueValue,
                 $metricMap,
-                $eventProperties,
-                $revenueProps
+                $eventProperties
             );
             $eventArchResponse = $this->eventDispatcher->sendEventRequest($parameters, $payload);
             if ($eventArchResponse) {

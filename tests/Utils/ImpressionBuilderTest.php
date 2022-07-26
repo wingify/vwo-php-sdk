@@ -75,7 +75,7 @@ class ImpressionBuilderTest extends TestCase
         ];
         $dummyRevenueProperty = ['dummyRevenueProperty'];
         $queryParams = ImpressionBuilder::getEventsBaseProperties($accountId, $sdkKey, $goalIdentifier);
-        $properties = ImpressionBuilder::getTrackGoalPayloadData($config, 'Ashley', $goalIdentifier, 20, $metricMap, [], $dummyRevenueProperty);
+        $properties = ImpressionBuilder::getTrackGoalPayloadData($config, 'Ashley', $goalIdentifier, $metricMap, [ "dummyRevenueProperty" => 12 ]);
         $expectedProperties = [
             "d" => [
                 "msgId" => "string",
@@ -91,9 +91,9 @@ class ImpressionBuilderTest extends TestCase
                                 "id_1" => ["g_10"],
                                 "id_2" => ["g_20"],
                                 "id_5" => ["g_30"]
-                            ],
-                            $dummyRevenueProperty[0] => 12
+                            ]
                         ],
+                        $dummyRevenueProperty[0] => 12,
                         'isCustomEvent' => true,
                     ],
                     'name' => "string",
@@ -128,6 +128,7 @@ class ImpressionBuilderTest extends TestCase
                     "props" => [
                         'vwo_sdkName' => "string",
                         'vwo_sdkVersion' => "string",
+                        "vwo_envKey" => "string",
                         'isCustomEvent' => true,
                     ],
                     'name' => "string",
@@ -144,6 +145,7 @@ class ImpressionBuilderTest extends TestCase
 
         $allPresent = $this->checkAllPropertiesPresent($queryParams, self::EVENT_ARCH_QUERY_PARAMS);
         $this->assertEquals(true, $allPresent);
+
         $allPresentAndValid = $this->checkAllPropertiesPresentAndTheirTypes($properties, $expectedProperties);
         $this->assertEquals(true, $allPresentAndValid);
     }
