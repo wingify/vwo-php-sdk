@@ -136,7 +136,7 @@ Refer [CHANGELOG.md](https://github.com/wingify/vwo-php-sdk/blob/master/CHANGELO
 
 ## Development and Test Cases
 
-1. Set dev environment
+1. Set development environment
 
 ```bash
 composer run-script start
