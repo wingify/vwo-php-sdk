@@ -507,8 +507,15 @@ class VWOTest extends TestCase
     public function testSegmentEvaluator()
     {
         $whitlistingEvaluatorJson = new SegmentEvaluatorJson();
+
+        var_dump('TEST_VWO_1');
+        var_dump($whitlistingEvaluatorJson);
+
         $segmentData = json_decode(str_replace('\\', '\\\\', $whitlistingEvaluatorJson->setting), 1);
         AccountUtil::instance()->setAccountId(null);
+
+        var_dump('TEST_VWO_2');
+        var_dump($segmentData);
 
         foreach ($segmentData as $key => $segments) {
             foreach ($segments as $segment) {
