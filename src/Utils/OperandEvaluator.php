@@ -71,6 +71,22 @@ class OperandEvaluator
             $operandType = SegmentConstants::OPERAND_ALL_SEARCH;
             preg_match(SegmentConstants::REGEX_ALL_SEARCH, $operand, $matches);
             $operandValue = isset($matches[1]) ? $matches[1] : '';
+        } elseif (preg_match(SegmentConstants::REGEX_GREATER_THAN, $operand)) {
+            $operandType = SegmentConstants::OPERAND_GREATER_THAN;
+            preg_match(SegmentConstants::REGEX_GREATER_THAN, $operand, $matches);
+            $operandValue = isset($matches[1]) ? $matches[1] : '';
+        } elseif (preg_match(SegmentConstants::REGEX_LESS_THAN, $operand)) {
+            $operandType = SegmentConstants::OPERAND_LESS_THAN;
+            preg_match(SegmentConstants::REGEX_LESS_THAN, $operand, $matches);
+            $operandValue = isset($matches[1]) ? $matches[1] : '';
+        } elseif (preg_match(SegmentConstants::REGEX_GREATER_THAN_EQUAL_TO, $operand)) {
+            $operandType = SegmentConstants::OPERAND_GREATER_THAN_EQUAL_TO;
+            preg_match(SegmentConstants::REGEX_GREATER_THAN_EQUAL_TO, $operand, $matches);
+            $operandValue = isset($matches[1]) ? $matches[1] : '';
+        } elseif (preg_match(SegmentConstants::REGEX_LESS_THAN_EQUAL_TO, $operand)) {
+            $operandType = SegmentConstants::OPERAND_LESS_THAN_EQUAL_TO;
+            preg_match(SegmentConstants::REGEX_LESS_THAN_EQUAL_TO, $operand, $matches);
+            $operandValue = isset($matches[1]) ? $matches[1] : '';
         } else {
             $operandType = SegmentConstants::OPERAND_EQUALS;
             $operandValue = $operand;
@@ -109,9 +125,17 @@ class OperandEvaluator
         } elseif ($operandType == SegmentConstants::OPERAND_ALL_SEARCH) {
             try {
                 $result = @preg_match('/' . $operandValue . '/', $customVariable);
-            } catch (Exception $err) {
+            } catch (Exception $err) {   
                 $result = false;
             }
+        } elseif ($operandType == SegmentConstants::OPERAND_GREATER_THAN) {
+            $result = $operandValue < $customVariable;
+        } elseif ($operandType == SegmentConstants::OPERAND_LESS_THAN) {
+            $result = $operandValue > $customVariable;
+        } elseif ($operandType == SegmentConstants::OPERAND_GREATER_THAN_EQUAL_TO) {
+            $result = $operandValue <= $customVariable;
+        } elseif ($operandType == SegmentConstants::OPERAND_LESS_THAN_EQUAL_TO) {
+            $result = $operandValue >= $customVariable;
         } else {
             $result = $customVariable === $operandValue;
         }
