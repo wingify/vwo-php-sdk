@@ -272,10 +272,8 @@ class ImpressionBuilder
         $configObj,
         $userId,
         $eventName,
-        $revenueValue,
         $metricMap,
-        $eventProperties,
-        $revenueProps = [])
+        $eventProperties)
     {
         $properties = self::getEventBasePayload($configObj, $userId, $eventName);
 
@@ -299,8 +297,10 @@ class ImpressionBuilder
             "metric" => $metric
         ];
 
-        foreach ($eventProperties as $eventProp => $eventValue) {
-            $properties["d"]["event"]["props"][$eventProp] = $eventValue;
+        if (is_array($eventProperties) || is_object($eventProperties)) {
+            foreach ($eventProperties as $eventProp => $eventValue) {
+                $properties["d"]["event"]["props"][$eventProp] = $eventValue;
+            }
         }
 
         /* if (count($revenueProps) && $revenueValue) {

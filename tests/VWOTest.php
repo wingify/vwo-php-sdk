@@ -786,6 +786,7 @@ class VWOTest extends TestCase
             $this->vwoInstance = TestUtil::instantiateSdk($settingsFile, ['isDevelopmentMode' => 1]);
             $campaignKey = 'DEV_TEST_' . $devtest;
             $options = [];
+
             foreach ($this->users as $userId) {
                 foreach ($settingsFile['campaigns'] as $index => $campaign) {
                     if ($campaign['key'] == $campaignKey) {
@@ -798,14 +799,16 @@ class VWOTest extends TestCase
                         break;
                     }
                 }
-                $result = $this->vwoInstance->track($campaignKey, $userId, $goalName, $options);
 
+                $result = $this->vwoInstance->track($campaignKey, $userId, $goalName, $options);
                 $expected = ucfirst($this->variationResults[$campaignKey][$userId]);
+
                 if ($expected == null) {
                     $expected = false;
                 } else {
                     $expected = true;
                 }
+
                 $this->assertEquals($expected, $result);
             }
         }
