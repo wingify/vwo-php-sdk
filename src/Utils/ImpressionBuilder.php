@@ -30,7 +30,7 @@ class ImpressionBuilder
     /**
      * sdk version for api hit
      */
-    const SDK_VERSION = '1.41.0';
+    const SDK_VERSION = '1.42.0';
     /**
      * sdk langauge for api hit
      */
@@ -273,8 +273,8 @@ class ImpressionBuilder
         $userId,
         $eventName,
         $metricMap,
-        $eventProperties)
-    {
+        $eventProperties
+    ) {
         $properties = self::getEventBasePayload($configObj, $userId, $eventName);
 
         $metric = [];

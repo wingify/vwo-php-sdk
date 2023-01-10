@@ -71,6 +71,22 @@ class OperandEvaluator
             $operandType = SegmentConstants::OPERAND_ALL_SEARCH;
             preg_match(SegmentConstants::REGEX_ALL_SEARCH, $operand, $matches);
             $operandValue = isset($matches[1]) ? $matches[1] : '';
+        } elseif (preg_match(SegmentConstants::REGEX_GREATER_THAN, $operand)) {
+            $operandType = SegmentConstants::OPERAND_GREATER_THAN;
+            preg_match(SegmentConstants::REGEX_GREATER_THAN, $operand, $matches);
+            $operandValue = isset($matches[1]) ? $matches[1] : '';
+        } elseif (preg_match(SegmentConstants::REGEX_LESS_THAN, $operand)) {
+            $operandType = SegmentConstants::OPERAND_LESS_THAN;
+            preg_match(SegmentConstants::REGEX_LESS_THAN, $operand, $matches);
+            $operandValue = isset($matches[1]) ? $matches[1] : '';
+        } elseif (preg_match(SegmentConstants::REGEX_GREATER_THAN_EQUAL_TO, $operand)) {
+            $operandType = SegmentConstants::OPERAND_GREATER_THAN_EQUAL_TO;
+            preg_match(SegmentConstants::REGEX_GREATER_THAN_EQUAL_TO, $operand, $matches);
+            $operandValue = isset($matches[1]) ? $matches[1] : '';
+        } elseif (preg_match(SegmentConstants::REGEX_LESS_THAN_EQUAL_TO, $operand)) {
+            $operandType = SegmentConstants::OPERAND_LESS_THAN_EQUAL_TO;
+            preg_match(SegmentConstants::REGEX_LESS_THAN_EQUAL_TO, $operand, $matches);
+            $operandValue = isset($matches[1]) ? $matches[1] : '';
         } else {
             $operandType = SegmentConstants::OPERAND_EQUALS;
             $operandValue = $operand;
@@ -86,6 +102,9 @@ class OperandEvaluator
                 $customVariable = "false";
             }
         }
+
+        $isCustomVariabbleNumeric = is_numeric($customVariable);
+
         if ($operandType == SegmentConstants::OPERAND_LOWER) {
             $result = strtolower($operandValue) === strtolower($customVariable);
         } elseif ($operandType == SegmentConstants::OPERAND_CONTAINS) {
@@ -112,6 +131,14 @@ class OperandEvaluator
             } catch (Exception $err) {
                 $result = false;
             }
+        } elseif ($operandType == SegmentConstants::OPERAND_GREATER_THAN) {
+                $result = $isCustomVariabbleNumeric ? (float)$operandValue < (float)$customVariable : false;
+        } elseif ($operandType == SegmentConstants::OPERAND_LESS_THAN ) {
+                $result = $isCustomVariabbleNumeric ? (float)$operandValue > (float)$customVariable : false;
+        } elseif ($operandType == SegmentConstants::OPERAND_GREATER_THAN_EQUAL_TO ) {
+                $result = $isCustomVariabbleNumeric ? (float)$operandValue <= (float)$customVariable : false;
+        } elseif ($operandType == SegmentConstants::OPERAND_LESS_THAN_EQUAL_TO ) {
+                $result = $isCustomVariabbleNumeric ? (float)$operandValue >= (float)$customVariable : false;
         } else {
             $result = $customVariable === $operandValue;
         }

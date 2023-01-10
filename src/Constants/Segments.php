@@ -31,7 +31,7 @@ class Segments
     const OPERAND_OR = 'or';
     const CUSTOM_VARIABLE = 'custom_variable';
     const USER = 'user';
-
+    
     /**
      * REGEX CONSTANTS
      */
@@ -40,6 +40,10 @@ class Segments
     const REGEX_START_WITH_STAR = '/^\*/';
     const REGEX_END_WITH_STAR = '/\*$/';
     const REGEX_ALL_SEARCH = '/^regex\((.*)\)/';
+    const REGEX_GREATER_THAN = '/^gt\(((\d+\.?\d*)|(\.\d+))\)/';
+    const REGEX_LESS_THAN = '/^lt\(((\d+\.?\d*)|(\.\d+))\)/';
+    const REGEX_GREATER_THAN_EQUAL_TO = '/^gte\(((\d+\.?\d*)|(\.\d+))\)/';
+    const REGEX_LESS_THAN_EQUAL_TO = '/^lte\(((\d+\.?\d*)|(\.\d+))\)/';
     /**
      * OPERAND CONSTANTS
      */
@@ -49,4 +53,8 @@ class Segments
     const OPERAND_ENDS_WITH = 4;
     const OPERAND_ALL_SEARCH = 5;
     const OPERAND_EQUALS = 6;
+    const OPERAND_GREATER_THAN = 7;
+    const OPERAND_LESS_THAN = 8;
+    const OPERAND_GREATER_THAN_EQUAL_TO = 9;
+    const OPERAND_LESS_THAN_EQUAL_TO = 10;
 }
