@@ -393,7 +393,7 @@ class MutuallyExclusiveTest extends TestCase
     {
         $campaignKey = $this->settingsFileNewMEG2['campaigns'][0]['key'];
         $vwoInstance = TestUtil::instantiateSdk($this->settingsFileNewMEG2, ['isDevelopmentMode' => 1]);
-        
+
         $variation = $vwoInstance->activate($campaignKey, 'George');
         $variationName = $vwoInstance->getVariationName($campaignKey, 'George');
         $isGoalTracked = $vwoInstance->track($campaignKey, 'George', 'CUSTOM');
@@ -423,17 +423,17 @@ class MutuallyExclusiveTest extends TestCase
         $vwoInstance = TestUtil::instantiateSdk($this->settingsFileNewMEG3);
 
 
-        $iterations = 100; // number of times to call the function
+        $iterations = 1000; // number of times to call the function
         $expectedRatio = 0.2; // expected ratio for campaignId - 33 (20%)
         $allowedError = 0.05; // allowed error range (5%)
-    
+
         $winners = 0;
         for ($i = 0; $i < $iterations; $i++) {
             $variation = $vwoInstance->getVariationName($campaignKey, 'George');
             if($variation != null)
                 $winners = $winners+1;
         }
-    
+
         $actualRatio = $winners / $iterations;
         $this->assertGreaterThanOrEqual($expectedRatio - $allowedError, $actualRatio);
         $this->assertLessThanOrEqual($expectedRatio + $allowedError, $actualRatio);
@@ -456,8 +456,8 @@ class MutuallyExclusiveTest extends TestCase
     {
         $campaignKey = $this->settingsFileNewMEG2['campaigns'][1]['key'];
         $vwoInstance = TestUtil::instantiateSdk($this->settingsFileNewMEG2, ['isDevelopmentMode' => 1]);
-        
-        $iterations = 100; // number of times to call the function
+
+        $iterations = 1000; // number of times to call the function
         $expectedRatio = 0.8; // expected ratio for campaignId - 31 (80%)
         $allowedError = 0.05; // allowed error range (5%)
 
