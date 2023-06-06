@@ -25,6 +25,9 @@ class MutuallyExclusiveTest extends TestCase
     protected function setUp()
     {
         $this->settingsFileMEG = SettingsFileMEG::setup();
+        $this->settingsFileNewMEG1 = SettingsFileNewMEG1::setup();
+        $this->settingsFileNewMEG2 = SettingsFileNewMEG2::setup();
+        $this->settingsFileNewMEG3 = SettingsFileNewMEG3::setup();
     }
 
     public function testVariationReturnAsWhitelisting()
@@ -384,5 +387,88 @@ class MutuallyExclusiveTest extends TestCase
         // since user has already seen that campaign, they will continue to become part of that campaign
         $variation = $vwoInstance->activate($campaignKey, 'Ashley');
         $this->assertEquals($variation, 'Control');
+    }
+
+    public function testEmptyObjectReturnedWhenNoWinnerCampaignIsFoundInAdvancedOption()
+    {
+        $campaignKey = $this->settingsFileNewMEG2['campaigns'][0]['key'];
+        $vwoInstance = TestUtil::instantiateSdk($this->settingsFileNewMEG2, ['isDevelopmentMode' => 1]);
+        
+        $variation = $vwoInstance->activate($campaignKey, 'George');
+        $variationName = $vwoInstance->getVariationName($campaignKey, 'George');
+        $isGoalTracked = $vwoInstance->track($campaignKey, 'George', 'CUSTOM');
+        $this->assertEquals($variation, null);
+        $this->assertEquals($variationName, null);
+        $this->assertEquals($isGoalTracked, false);
+    }
+
+    public function testWinnerCampaignIsNotTheCalledCampaignAfterPriority()
+    {
+
+        $campaignKey = $this->settingsFileNewMEG1['campaigns'][0]['key'];
+        $vwoInstance = TestUtil::instantiateSdk($this->settingsFileNewMEG1, ['isDevelopmentMode' => 1]);
+
+        $variation = $vwoInstance->activate($campaignKey, 'George');
+        $variationName = $vwoInstance->getVariationName($campaignKey, 'George');
+        $isGoalTracked = $vwoInstance->track($campaignKey, 'George', 'CUSTOM');
+        $this->assertEquals($variation, null);
+        $this->assertEquals($variationName, null);
+        $this->assertEquals($isGoalTracked, false);
+    }
+
+    public function testWinnerCampaignIsNotTheCalledCampaignAfterRandomWeightageDistribution()
+    {
+
+        $campaignKey = $this->settingsFileNewMEG3['campaigns'][3]['key'];
+        $vwoInstance = TestUtil::instantiateSdk($this->settingsFileNewMEG3);
+
+
+        $iterations = 100; // number of times to call the function
+        $expectedRatio = 0.2; // expected ratio for campaignId - 33 (20%)
+        $allowedError = 0.05; // allowed error range (5%)
+    
+        $winners = 0;
+        for ($i = 0; $i < $iterations; $i++) {
+            $variation = $vwoInstance->getVariationName($campaignKey, 'George');
+            if($variation != null)
+                $winners = $winners+1;
+        }
+    
+        $actualRatio = $winners / $iterations;
+        $this->assertGreaterThanOrEqual($expectedRatio - $allowedError, $actualRatio);
+        $this->assertLessThanOrEqual($expectedRatio + $allowedError, $actualRatio);
+    }
+
+    public function testWinnerCampaignFoundThroughPriority()
+    {
+        $campaignKey = $this->settingsFileNewMEG1['campaigns'][4]['key'];
+        $vwoInstance = TestUtil::instantiateSdk($this->settingsFileNewMEG1, ['isDevelopmentMode' => 1]);
+
+        $variation = $vwoInstance->activate($campaignKey, 'George');
+        $variationName = $vwoInstance->getVariationName($campaignKey, 'George');
+        $isGoalTracked = $vwoInstance->track($campaignKey, 'George', 'CUSTOM');
+        $this->assertEquals($variation, 'Control');
+        $this->assertEquals($variationName, 'Control');
+        $this->assertEquals($isGoalTracked, true);
+    }
+
+    public function testWinnerCampaignFoundThroughWeightage()
+    {
+        $campaignKey = $this->settingsFileNewMEG2['campaigns'][1]['key'];
+        $vwoInstance = TestUtil::instantiateSdk($this->settingsFileNewMEG2, ['isDevelopmentMode' => 1]);
+        
+        $iterations = 100; // number of times to call the function
+        $expectedRatio = 0.8; // expected ratio for campaignId - 31 (80%)
+        $allowedError = 0.05; // allowed error range (5%)
+
+        $winners = 0;
+        for ($i = 0; $i < $iterations; $i++) {
+            $variation = $vwoInstance->getVariationName($campaignKey, 'George');
+            $winners = $variation == 'Control' ? $winners + 1 : $winners;
+        }
+
+        $actualRatio = $winners / $iterations;
+        $this->assertGreaterThanOrEqual($expectedRatio - $allowedError, $actualRatio);
+        $this->assertLessThanOrEqual($expectedRatio + $allowedError, $actualRatio);
     }
 }

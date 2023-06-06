@@ -28,6 +28,9 @@ require 'assets/Settings9.php';
 require 'assets/Settings10.php';
 
 require 'assets/SettingsFileMEG.php';
+require 'assets/SettingsFileNewMEG1.php';
+require 'assets/SettingsFileNewMEG2.php';
+require 'assets/SettingsFileNewMEG3.php';
 require 'assets/SettingsWithPreSegmentation.php';
 require 'assets/SegmentEvaluatorJson.php';
 require 'assets/WhitelistingJson.php';

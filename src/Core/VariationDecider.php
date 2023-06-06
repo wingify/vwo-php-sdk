@@ -39,6 +39,7 @@ class VariationDecider
     private $settings;
 
     const CLASSNAME = 'vwo\Core\VariationDecider';
+    const RandomAlgo = 1;
 
     function __construct($settings = null)
     {
@@ -161,6 +162,7 @@ class VariationDecider
                             }
 
                             $eligibleCampaigns = self::getEligibleCampaigns($userId, $groupCampaigns, $campaign, $options);
+                            $megAlgoNumber = isset($this->settings["groups"][$groupId]["et"]) ? $this->settings["groups"][$groupId]["et"] : self::RandomAlgo ;
 
                             $nonEligibleCampaignsKey = self::getNonEligibleCampaignsKey($eligibleCampaigns, $groupCampaigns);
                             LoggerService::log(
@@ -186,8 +188,7 @@ class VariationDecider
                                 ],
                                 self::CLASSNAME
                             );
-
-                            $winnerCampaign = $this->findWinnerCampaign($userId, $eligibleCampaigns);
+                            $winnerCampaign = $this->findWinnerCampaign($userId, $eligibleCampaigns, $megAlgoNumber, $groupId, $this->settings);
 
                             LoggerService::log(
                                 Logger::INFO,
@@ -426,19 +427,76 @@ class VariationDecider
      * @param  array  $eligibleCampaigns campaigns part of group which were eligible to be winner
      * @return array  winner campaign from eligible_campaigns
      */
-    private static function findWinnerCampaign($userId, $eligibleCampaigns)
+    private static function findWinnerCampaign($userId, $eligibleCampaigns, $megAlgoNumber, $groupId, $settingsFile)
     {
         if (count($eligibleCampaigns) == 1) {
             return  $eligibleCampaigns[0];
-        }
+        } else {
+            if ($megAlgoNumber == self::RandomAlgo) {
+            //Scale the traffic percent of each campaign
+                $eligibleCampaigns = CampaignUtil::scaleCampaigns($eligibleCampaigns);
+            //Allocate new range for campaigns
+                $eligibleCampaigns = Bucketer::addRangesToCampaigns($eligibleCampaigns);
+            //Now retrieve the campaign from the modified_campaign_for_whitelisting
+                list($bucketVal, $hashValue) = Bucketer::getBucketVal($userId, [], true);
+                return Bucketer::getCampaignUsingRange($bucketVal, $eligibleCampaigns);
+            } else {
+                $winnerCampaign = null;
 
-        //Scale the traffic percent of each campaign
-        $eligibleCampaigns = CampaignUtil::scaleCampaigns($eligibleCampaigns);
-        //Allocate new range for campaigns
-        $eligibleCampaigns = Bucketer::addRangesToCampaigns($eligibleCampaigns);
-        //Now retrieve the campaign from the modified_campaign_for_whitelisting
-        list($bucketVal, $hashValue) = Bucketer::getBucketVal($userId, [], true);
-        return Bucketer::getCampaignUsingRange($bucketVal, $eligibleCampaigns);
+                $found = false; // flag to check whether winnerCampaign has been found or not and helps to break from the outer loop
+                $priorityOrder = isset($settingsFile['groups'][$groupId]['p']) ? $settingsFile['groups'][$groupId]['p'] : [];
+                $wt = isset($settingsFile['groups'][$groupId]['wt']) ? $settingsFile['groups'][$groupId]['wt'] : [];
+
+                for ($i = 0; $i < count($priorityOrder); $i++) {
+                    for ($j = 0; $j < count($eligibleCampaigns); $j++) {
+                        if ($eligibleCampaigns[$j]['id'] == $priorityOrder[$i]) {
+                            $winnerCampaign = $eligibleCampaigns[$j];
+                            $found = true;
+                            break;
+                        }
+                    }
+                    if ($found == true) {
+                        break;
+                    }
+                }
+
+                // If winnerCampaign not found through Priority, then go for weighted Random distribution and for that,
+                // Store the list of campaigns (participatingCampaigns) out of eligibleCampaigns and their corresponding weights which are present in weightage distribution array (wt) in 2 different lists
+                if ($winnerCampaign == null) {
+                    $weights = array();
+                    $partipatingCampaignList = array();
+
+                    for ($i = 0; $i < count($eligibleCampaigns); $i++) {
+                        $campaignId = $eligibleCampaigns[$i]['id'];
+                        if (isset($wt[$campaignId])) {
+                            $weights[] = $wt[$campaignId];
+                            $partipatingCampaignList[] = $eligibleCampaigns[$i];
+                        }
+                    }
+
+                    /*
+                    * Finding winner campaign using weighted random distribution :
+                    1. Calculate the sum of all weights
+                    2. Generate a random number between 0 and the weight sum:
+                    3. Iterate over the weights array and subtract each weight from the random number until the random number becomes negative. The corresponding ith value is the required value
+                    4. Set the ith campaign as WinnerCampaign
+                    */
+                    $weightSum = array_sum($weights);
+                    $randomNumber = rand(1, $weightSum);
+
+                    $sum = 0;
+                    for ($i = 0; $i < count($weights); $i++) {
+                        $sum += $weights[$i];
+                        if ($randomNumber < $sum) {
+                            $winnerCampaign = $partipatingCampaignList[$i];
+                            break;
+                        }
+                    }
+                }
+
+                return $winnerCampaign;
+            }
+        }
     }
 
     /**
