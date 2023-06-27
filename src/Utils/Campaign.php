@@ -65,12 +65,12 @@ class Campaign
      * @param  bool $disableLogs disable logs if True
      * @return array|null
      */
-    public static function findVariationFromWhiteListing($campaign, $userId, $options, $disableLogs = false)
+    public static function findVariationFromWhiteListing($campaign, $userId, $options, $is_new_bucketing_enabled, $disableLogs = false)
     {
         $bucketInfo = null;
         if (isset($campaign['isForcedVariationEnabled']) && $campaign['isForcedVariationEnabled'] == true) {
             $variationTargetingVariables = CommonUtil::getValueFromOptions($options, 'variationTargetingVariables');
-            $bucketInfo = self::getForcedBucket($campaign, $userId, $variationTargetingVariables, $disableLogs);
+            $bucketInfo = self::getForcedBucket($campaign, $userId, $variationTargetingVariables, $is_new_bucketing_enabled, $disableLogs);
             $status = $bucketInfo != null ? 'satisfy' : "didn't satisfy";
 
             LoggerService::log(
@@ -103,7 +103,7 @@ class Campaign
      * @param  bool $disableLogs                 disable logs if True
      * @return array|null
      */
-    private static function getForcedBucket($campaign, $userId, $variationTargetingVariables, $disableLogs = false)
+    private static function getForcedBucket($campaign, $userId, $variationTargetingVariables, $is_new_bucketing_enabled, $disableLogs = false)
     {
         if (isset($campaign["isUserListEnabled"]) && $campaign["isUserListEnabled"]) {
             $variationTargetingVariables['_vwoUserId'] = UuidUtil::get($userId, AccountUtil::instance()->getAccountId(), true);
@@ -169,7 +169,7 @@ class Campaign
         if ($totalValidVariations == 1) {
             return $validVariations[0];
         } elseif ($totalValidVariations > 1) {
-            return self::evaluateBestVariation($validVariations, $totalVariationTraffic, $userId, $campaign, $disableLogs);
+            return self::evaluateBestVariation($validVariations, $totalVariationTraffic, $userId, $campaign, $is_new_bucketing_enabled, $disableLogs);
         }
         return null;
     }
@@ -182,13 +182,13 @@ class Campaign
      * @param  bool $disableLogs
      * @return null| array of variation
      */
-    private static function evaluateBestVariation($validVariations, $totalVariationTraffic, $userId, $campaign, $disableLogs = false)
+    private static function evaluateBestVariation($validVariations, $totalVariationTraffic, $userId, $campaign, $is_new_bucketing_enabled, $disableLogs = false)
     {
         //scale and assign ranges to the variations
         $validVariations = self::scaleVariations($validVariations, $totalVariationTraffic);
         $validVariations = Bucketer::addRangesToVariations($validVariations, $campaign['key']);
         //find murmur
-        list($bucketVal, $hashValue) = Bucketer::getBucketVal($userId, $campaign, $disableLogs);
+        list($bucketVal, $hashValue) = Bucketer::getBucketVal($userId, $campaign, $is_new_bucketing_enabled, $disableLogs);
         //get range according to murmur
         $rangeForVariation = Bucketer::getRangeForVariations($bucketVal);
         //get variation

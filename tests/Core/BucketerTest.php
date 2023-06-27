@@ -22,16 +22,24 @@ use PHPUnit\Framework\TestCase;
 use Exception as Exception;
 use vwo\Core\Bucketer as Bucketer;
 use vwo\Utils\Campaign as CampaignUtil;
+use vwo\Core\VariationDecider as VariationDecider;
 
 class BucketerTest extends TestCase
 {
+    private $variationDecider;
     protected function setUp()
     {
         $this->users = TestUtil::getUsers();
+        $this->variationDecider = new VariationDecider();
 
         $this->settingsWithSegments = new SettingsWithPreSegmentation();
 
         $this->campaign = $this->settingsWithSegments->setting['campaigns'][0];
+
+        $this->settingsFileBucketing = new SettingsFileBucketing();
+        $this->variationResults = new VariationResults();
+        
+
     }
 
     public function testGetBucketVariationId()
@@ -46,7 +54,7 @@ class BucketerTest extends TestCase
         $campaign = $settingsFile['campaigns'][0];
 
         foreach ($this->users as $userId) {
-            $result = Bucketer::getBucket($userId, $campaign);
+            $result = Bucketer::getBucket($userId, $campaign, false);
 
             $this->assertEquals(true, is_string($result['name']));
             $this->assertEquals(true, $result['name'] === 'Control' || $result['name'] === 'Variation-1');
@@ -56,7 +64,7 @@ class BucketerTest extends TestCase
     public function testGetBucketWithoutVariationRanges()
     {
         foreach ($this->users as $userId) {
-            $result = Bucketer::getBucket($userId, $this->campaign);
+            $result = Bucketer::getBucket($userId, $this->campaign, false);
             $this->assertEquals(true, is_null($result));
         }
     }
@@ -64,12 +72,12 @@ class BucketerTest extends TestCase
     public function testGetBucketValue()
     {
         $campaign = ["id" => 1, "isBucketingSeedEnabled" => true];
-        list($bucketValue, $hashValue) = Bucketer::getBucketVal("someone@mail.com", $campaign);
+        list($bucketValue, $hashValue) = Bucketer::getBucketVal("someone@mail.com", $campaign, false);
         $bucketValue = Bucketer::getRangeForVariations($bucketValue);
         $this->assertEquals($bucketValue, 2444);
 
         $campaign["isBucketingSeedEnabled"] = false;
-        list($bucketValue, $hashValue) = Bucketer::getBucketVal("someone@mail.com", $campaign);
+        list($bucketValue, $hashValue) = Bucketer::getBucketVal("someone@mail.com", $campaign, false);
         $bucketValue = Bucketer::getRangeForVariations($bucketValue);
         $this->assertEquals($bucketValue, 6361);
     }
@@ -77,13 +85,101 @@ class BucketerTest extends TestCase
     public function testGetBucketValueForUser1111111111111111()
     {
         $campaign = ["id" => 1, "isBucketingSeedEnabled" => true];
-        list($bucketValue, $hashValue) = Bucketer::getBucketVal("1111111111111111", $campaign);
+        list($bucketValue, $hashValue) = Bucketer::getBucketVal("1111111111111111", $campaign, false);
         $bucketValue = Bucketer::getRangeForVariations($bucketValue);
         $this->assertEquals($bucketValue, 8177);
 
         $campaign["isBucketingSeedEnabled"] = false;
-        list($bucketValue, $hashValue) = Bucketer::getBucketVal("1111111111111111", $campaign);
+        list($bucketValue, $hashValue) = Bucketer::getBucketVal("1111111111111111", $campaign, false);
         $bucketValue = Bucketer::getRangeForVariations($bucketValue);
         $this->assertEquals($bucketValue, 4987);
+    }
+
+    public function testWithNewBucketingLogicAndSeedNotEnabled()
+    {
+        // initializations
+        $settings = new SettingsFileBucketing();
+        $settingsFile = $settings->setting_without_seed_and_without_isOB;
+        $vwoInstance = TestUtil::instantiateSdk($settingsFile, ['isDevelopmentMode' => 1]);
+        $campaignKey = $settingsFile['campaigns'][0]['key'];
+
+        //expected result array
+        $expected = $this->variationResults->results['BUCKET_ALGO_WITHOUT_SEED'];
+
+        foreach($this->users as $i => $userId){
+            $result = $vwoInstance->activate($campaignKey, $userId);
+            $this->assertEquals($expected[$userId], $result);
+        }
+    }
+
+   
+    public function testWithNewBucketingLogicAndSeedEnabled()
+    {
+        // initializations
+        $settings = new SettingsFileBucketing();
+        $settingsFile = $settings->setting_with_seed_and_without_isOB;
+        $vwoInstance = TestUtil::instantiateSdk($settingsFile, ['isDevelopmentMode' => 1]);
+        $campaignKey = $settingsFile['campaigns'][0]['key'];
+
+        //expected result array
+        $expected = $this->variationResults->results['BUCKET_ALGO_WITH_SEED'];
+        
+        foreach($this->users as $i => $userId){
+            $result = $vwoInstance->activate($campaignKey, $userId);
+            $this->assertEquals($expected[$userId], $result);
+        }
+    }
+
+    
+    public function testWithIsNBAndisOBWithOldBucketingLogic()
+    {
+        // initializations
+        $settings = new SettingsFileBucketing();
+        $settingsFile = $settings->setting_with_isNB_and_with_isOB;
+        $vwoInstance = TestUtil::instantiateSdk($settingsFile, ['isDevelopmentMode' => 1]);
+        $campaignKey = $settingsFile['campaigns'][0]['key'];
+
+        //expected result array
+        $expected = $this->variationResults->results['BUCKET_ALGO_WITH_SEED_WITH_isNB_WITH_isOB'];
+
+        foreach($this->users as $i => $userId){
+            $result = $vwoInstance->activate($campaignKey, $userId);
+            $this->assertEquals($expected[$userId], $result);
+        }
+    }
+    
+    public function testWithIsNBAndNewBucketingLogicWithoutIsOB()
+    {
+        // initializations
+        $settings = new SettingsFileBucketing();
+        $settingsFile = $settings->setting_with_isNB_and_without_isOB;
+        $vwoInstance = TestUtil::instantiateSdk($settingsFile, ['isDevelopmentMode' => 1]);
+        $campaignKey = $settingsFile['campaigns'][0]['key'];
+
+        //expected result array
+        $expected = $this->variationResults->results['BUCKET_ALGO_WITH_SEED_WITH_isNB_WITHOUT_isOB'];
+
+
+        foreach($this->users as $i => $userId){
+            $result = $vwoInstance->activate($campaignKey, $userId);
+            $this->assertEquals($expected[$userId], $result);
+        }
+    }
+
+    public function testWithIsNBAndNewBucketingLogicWithoutIsOBAndSeedFlag()
+    {
+        // initializations
+        $settings = new SettingsFileBucketing();
+        $settingsFile = $settings->setting_with_isNB_and_without_isOB_and_without_seed_flag;
+        $vwoInstance = TestUtil::instantiateSdk($settingsFile, ['isDevelopmentMode' => 1]);
+        $campaignKey = $settingsFile['campaigns'][0]['key'];
+
+        //expected result array
+        $expected = $this->variationResults->results['BUCKET_ALGO_WITHOUT_SEED_FLAG_WITH_isNB_WITHOUT_isOB'];
+
+        foreach($this->users as $i => $userId){
+            $result = $vwoInstance->activate($campaignKey, $userId);
+            $this->assertEquals($expected[$userId], $result);
+        }
     }
 }

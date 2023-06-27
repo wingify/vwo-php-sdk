@@ -18,50 +18,9 @@
 
 namespace vwo;
 
-class SettingsWithPreSegmentation
+class SettingsFileBucketing
 {
-    var $setting = [
-    'sdkKey' => 'loremipsum123456',
-    'campaigns' => [
-    [
-        'goals' => [
-        [
-            'identifier' => 'CUSTOM',
-            'id' => 213,
-            'type' => 'CUSTOM_GOAL'
-        ]
-        ],
-        'variations' => [
-        [
-            'id' => 1,
-            'name' => 'Control',
-            'changes' => [],
-            'weight' => 50
-        ],
-        [
-            'id' => 2,
-            'name' => 'Variation-1',
-            'changes' => [],
-            'weight' => 50
-        ]
-        ],
-        'id' => 230,
-        'percentTraffic' => 100,
-        'key' => 'CAMPAIGN_WITH_SEGMENTS',
-        'status' => 'RUNNING',
-        'type' => 'VISUAL_AB',
-        'segments' => [
-            "custom_variable" => [
-                "browser" => "chrome"
-            ]
-        ]
-    ]
-    ],
-    'accountId' => 123456,
-    'version' => 1
-    ];
-
-    var $setting_new_bucket_algo = [
+    var $setting_with_extra_params = [
         'sdkKey' => 'loremipsum123456',
         'isNB' => true,
         'campaigns' => [
@@ -76,26 +35,29 @@ class SettingsWithPreSegmentation
             'variations' => [
             [
                 'id' => 1,
-                'name' => 'Control-New',
+                'name' => 'Control',
                 'changes' => [],
                 'weight' => 50
             ],
             [
                 'id' => 2,
-                'name' => 'Variation-1-New',
+                'name' => 'Variation-1',
                 'changes' => [],
                 'weight' => 50
             ]
             ],
             'id' => 230,
-            'percentTraffic' => 50,
-            'key' => 'CAMPAIGN_NEW_BUCKET_ALGO',
+            'percentTraffic' => 100,
+            'key' => 'bucket_algo_without_seed',
+            'name' => 'bucket_algo_without_seed',
             'status' => 'RUNNING',
             'type' => 'VISUAL_AB',
-            'segments' => []
+            'segments' => [],
+            'isExtraParamsPresent' => true
         ]
         ],
         'accountId' => 123456,
-        'version' => 1
-        ];
+        'version' => 1,
+        'isExtraFlag' => 'test'
+    ];
 }

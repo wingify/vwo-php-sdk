@@ -77,16 +77,32 @@ class Bucketer
      * @param  bool $disableLogs optional: disable logs if True
      * @return array|null
      */
-    public static function getBucket($userId, $campaign, $disableLogs = false)
+    public static function getBucket($userId, $campaign, $is_new_bucketing_enabled, $disableLogs = false)
     {
-        // if bucketing to be done
-        list($bucketVal, $hashValue) = self::getBucketVal($userId, $campaign, $disableLogs);
+        // if bucketing to be done - check first if user is part of campaign
+        list($bucketVal, $hashValue) = self::getBucketVal($userId, $campaign, $is_new_bucketing_enabled, $disableLogs);
         $isUserPart = self::isUserPartofCampaign($bucketVal, $campaign['percentTraffic']);
         LoggerService::log(Logger::INFO, 'USER_CAMPAIGN_ELIGIBILITY', ['{userId}' => $userId, '{status}' => $isUserPart ? 'eligible' : 'not eligible', '{campaignKey}' => $campaign['key']], self::CLASSNAME, $disableLogs);
         if (!$isUserPart) {
             return null;
         }
-        $multiplier = self::getMultiplier($campaign['percentTraffic'], $disableLogs);
+
+        // based on bucketing algo flag, determine bucket value
+        if(!$is_new_bucketing_enabled || (isset($campaign["isOB"]) && $campaign["isOB"])){
+            // old algo
+            $multiplier = self::getMultiplier($campaign['percentTraffic'], $disableLogs);
+            list($bucketVal, $hashValue) = self::getBucketVal($userId, $campaign, $is_new_bucketing_enabled, $disableLogs);
+
+            // log for type of algo
+            LoggerService::log(Logger::INFO, 'Using Old Algo!');
+        } else {
+            // new algo
+            $multiplier = 1;
+            list($bucketVal, $hashValue) = self::getBucketVal($userId, null, $is_new_bucketing_enabled, $disableLogs);
+
+            // log for type of algo
+            LoggerService::log(Logger::INFO, 'Using New Algo!');
+        }
 
         $rangeForVariations = self::getRangeForVariations($bucketVal, $multiplier);
 
@@ -142,11 +158,13 @@ class Bucketer
     * Copyright 2016-2019, Optimizely, used under Apache 2.0 License.
     * Source - https://github.com/optimizely/php-sdk/blob/master/src/Optimizely/Bucketer.php
     */
-    public static function getBucketVal($userId, $campaign = [], $disableLogs = false)
+    public static function getBucketVal($userId, $campaign = [], $is_new_bucketing_enabled, $disableLogs = false)
     {
-        if (isset($campaign["isBucketingSeedEnabled"]) && $campaign["isBucketingSeedEnabled"]) {
+        # if (isset($campaign["isBucketingSeedEnabled"]) && $campaign["isBucketingSeedEnabled"]) {
+        if ($campaign!=null && ($is_new_bucketing_enabled || (isset($campaign["isBucketingSeedEnabled"]) && $campaign["isBucketingSeedEnabled"]))) {
             $userId = $campaign["id"] . '_' . $userId;
         }
+
         $code = self::getmurmurHash_Int($userId);
         $range = $code / self::$MAX_VALUE;
         if ($range < 0) {

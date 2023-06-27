@@ -112,6 +112,13 @@ class VariationDecider
         $decision['isUserWhitelisted'] = false;
         $decision['fromUserStorageService'] = false;
 
+        # get new bucketing enabled flag from settings
+        if ($this->settings!=null && isset($this->settings["isNB"]) && $this->settings["isNB"]) {
+            $is_new_bucketing_enabled = true;
+        } else {
+            $is_new_bucketing_enabled = false;
+        }
+
         // VWO generated UUID based on passed UserId and Account ID
         if (isset($this->accountId)) {
             $decision['vwoUserId'] = UuidUtil::get($userId, $this->accountId);
@@ -125,7 +132,7 @@ class VariationDecider
         }
 
         //check for whitelisting if applied and get Variation Info
-        $bucketInfo = CampaignUtil::findVariationFromWhiteListing($campaign, $userId, $options);
+        $bucketInfo = CampaignUtil::findVariationFromWhiteListing($campaign, $userId, $options, $is_new_bucketing_enabled);
         // do murmur operations and get Variation for the userId
         if ($bucketInfo == null) {
             if (isset($campaign['isAlwaysCheckSegment'])) {
@@ -139,7 +146,7 @@ class VariationDecider
                     }
 
                     $isPresegmentation = ValidationsUtil::checkPreSegmentation($campaign, $userId, $options);
-                    $isPresegmentationAndTrafficPassed = $isPresegmentation && self::isUserPartOfCampaign($userId, $campaign['percentTraffic']);
+                    $isPresegmentationAndTrafficPassed = $isPresegmentation && self::isUserPartOfCampaign($userId, $campaign['percentTraffic'], $campaign, $is_new_bucketing_enabled);
                     if ($isPresegmentationAndTrafficPassed && $isCampaignPartOfGroup) {
                         $groupCampaigns = CampaignUtil::getGroupCampaigns($this->settings, $groupId);
 
@@ -161,7 +168,7 @@ class VariationDecider
                                 return null;
                             }
 
-                            $eligibleCampaigns = self::getEligibleCampaigns($userId, $groupCampaigns, $campaign, $options);
+                            $eligibleCampaigns = self::getEligibleCampaigns($userId, $groupCampaigns, $campaign, $options, $is_new_bucketing_enabled);
                             $megAlgoNumber = isset($this->settings["groups"][$groupId]["et"]) ? $this->settings["groups"][$groupId]["et"] : self::RandomAlgo ;
 
                             $nonEligibleCampaignsKey = self::getNonEligibleCampaignsKey($eligibleCampaigns, $groupCampaigns);
@@ -201,7 +208,7 @@ class VariationDecider
                                 self::CLASSNAME
                             );
                             if ($winnerCampaign && $winnerCampaign["id"] == $campaign["id"]) {
-                                $bucketInfo = Bucketer::getBucket($userId, $campaign);
+                                $bucketInfo = Bucketer::getBucket($userId, $campaign, $is_new_bucketing_enabled);
                                 if ($bucketInfo == null) {
                                     return $bucketInfo;
                                 } else {
@@ -396,11 +403,11 @@ class VariationDecider
      * @param  array  $options        contains variables for segmentation
      * @return array  eligible campaigns from which winner campaign is to be selected
      */
-    private static function getEligibleCampaigns($userId, $groupCampaigns, $calledCampaign, $options)
+    private static function getEligibleCampaigns($userId, $groupCampaigns, $calledCampaign, $options, $is_new_bucketing_enabled)
     {
         $eligibleCampaigns = [];
         foreach ($groupCampaigns as $campaign) {
-            if ($calledCampaign["id"] == $campaign["id"] || ValidationsUtil::checkPreSegmentation($campaign, $userId, $options, true) && self::isUserPartOfCampaign($userId, $campaign['percentTraffic'])) {
+            if ($calledCampaign["id"] == $campaign["id"] || ValidationsUtil::checkPreSegmentation($campaign, $userId, $options, true) && self::isUserPartOfCampaign($userId, $campaign['percentTraffic'], $campaign, $is_new_bucketing_enabled)) {
                 $eligibleCampaigns[] = $campaign;
             }
         }
@@ -414,9 +421,9 @@ class VariationDecider
      * @param  int|float $percentTraffic traffic for a campaign in which user is participating
      * @return bool
      */
-    private static function isUserPartOfCampaign($userId, $percentTraffic)
+    private static function isUserPartOfCampaign($userId, $percentTraffic, $campaign, $is_new_bucketing_enabled)
     {
-        list($bucketVal, $hashValue) = Bucketer::getBucketVal($userId, [], true);
+        list($bucketVal, $hashValue) = Bucketer::getBucketVal($userId, $campaign, $is_new_bucketing_enabled, true);
         return Bucketer::isUserPartofCampaign($bucketVal, $percentTraffic);
     }
 
@@ -429,6 +436,13 @@ class VariationDecider
      */
     private static function findWinnerCampaign($userId, $eligibleCampaigns, $megAlgoNumber, $groupId, $settingsFile)
     {
+        # get new bucketing enabled flag from settings
+        if ($settingsFile!=null && isset($settingsFile["isNB"]) && $settingsFile["isNB"]) {
+            $is_new_bucketing_enabled = true;
+        } else {
+            $is_new_bucketing_enabled = false;
+        }
+
         if (count($eligibleCampaigns) == 1) {
             return  $eligibleCampaigns[0];
         } else {
@@ -438,7 +452,7 @@ class VariationDecider
             //Allocate new range for campaigns
                 $eligibleCampaigns = Bucketer::addRangesToCampaigns($eligibleCampaigns);
             //Now retrieve the campaign from the modified_campaign_for_whitelisting
-                list($bucketVal, $hashValue) = Bucketer::getBucketVal($userId, [], true);
+                list($bucketVal, $hashValue) = Bucketer::getBucketVal($userId, [], false, true);
                 return Bucketer::getCampaignUsingRange($bucketVal, $eligibleCampaigns);
             } else {
                 $winnerCampaign = null;
@@ -545,9 +559,16 @@ class VariationDecider
      */
     private function checkWhitelistingOrStorageForGroupedCampaigns($userStorageObj, $userId, $calledCampaign, $groupCampaigns, $groupName, $options)
     {
+        # get new bucketing enabled flag from settings
+        if ($this->settings!=null && isset($this->settings["isNB"]) && $this->settings["isNB"]) {
+            $is_new_bucketing_enabled = true;
+        } else {
+            $is_new_bucketing_enabled = false;
+        }
+
         foreach ($groupCampaigns as $campaign) {
             if ($calledCampaign["id"] != $campaign["id"]) {
-                $targetedVariation = CampaignUtil::findVariationFromWhiteListing($campaign, $userId, $options, true);
+                $targetedVariation = CampaignUtil::findVariationFromWhiteListing($campaign, $userId, $options, $is_new_bucketing_enabled, true);
                 if ($targetedVariation) {
                     LoggerService::log(
                         Logger::INFO,
@@ -651,7 +672,14 @@ class VariationDecider
             return $bucketInfo;
         }
 
-        $bucketInfo = Bucketer::getBucket($userId, $campaign);
+        # get new bucketing enabled flag from settings
+        if ($this->settings!=null && isset($this->settings["isNB"]) && $this->settings["isNB"]) {
+            $is_new_bucketing_enabled = true;
+        } else {
+            $is_new_bucketing_enabled = false;
+        }
+
+        $bucketInfo = Bucketer::getBucket($userId, $campaign, $is_new_bucketing_enabled);
         LoggerService::log(
             Logger::INFO,
             'USER_VARIATION_ALLOCATION_STATUS',

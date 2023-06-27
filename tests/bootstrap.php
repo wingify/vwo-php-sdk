@@ -37,3 +37,4 @@ require 'assets/WhitelistingJson.php';
 require 'assets/FRWhitelistingSettings.php';
 require 'assets/VariationResults.php';
 require 'TestUtil.php';
+require 'assets/SettingsFileBucketing.php';
