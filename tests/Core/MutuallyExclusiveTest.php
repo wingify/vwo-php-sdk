@@ -430,8 +430,9 @@ class MutuallyExclusiveTest extends TestCase
         $winners = 0;
         for ($i = 0; $i < $iterations; $i++) {
             $variation = $vwoInstance->getVariationName($campaignKey, 'George');
-            if($variation != null)
-                $winners = $winners+1;
+            if ($variation != null) {
+                $winners = $winners + 1;
+            }
         }
 
         $actualRatio = $winners / $iterations;

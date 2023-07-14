@@ -221,7 +221,7 @@ class Bucketer
     public static function getMultiplier($traffic, $disableLogs = false)
     {
         $multiplier = 0;
-        if($traffic <= 0) {
+        if ($traffic <= 0) {
             LoggerService::log(
                 Logger::ERROR,
                 'Something went wrong. Traffic is ' . $traffic . ' and error is division by zero',

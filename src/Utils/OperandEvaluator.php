@@ -133,11 +133,11 @@ class OperandEvaluator
             }
         } elseif ($operandType == SegmentConstants::OPERAND_GREATER_THAN) {
                 $result = $isCustomVariabbleNumeric ? (float)$operandValue < (float)$customVariable : false;
-        } elseif ($operandType == SegmentConstants::OPERAND_LESS_THAN ) {
+        } elseif ($operandType == SegmentConstants::OPERAND_LESS_THAN) {
                 $result = $isCustomVariabbleNumeric ? (float)$operandValue > (float)$customVariable : false;
-        } elseif ($operandType == SegmentConstants::OPERAND_GREATER_THAN_EQUAL_TO ) {
+        } elseif ($operandType == SegmentConstants::OPERAND_GREATER_THAN_EQUAL_TO) {
                 $result = $isCustomVariabbleNumeric ? (float)$operandValue <= (float)$customVariable : false;
-        } elseif ($operandType == SegmentConstants::OPERAND_LESS_THAN_EQUAL_TO ) {
+        } elseif ($operandType == SegmentConstants::OPERAND_LESS_THAN_EQUAL_TO) {
                 $result = $isCustomVariabbleNumeric ? (float)$operandValue >= (float)$customVariable : false;
         } else {
             $result = $customVariable === $operandValue;

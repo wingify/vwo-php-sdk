@@ -51,6 +51,7 @@ class VWOTest extends TestCase
         $this->settings7 = Settings7::setup();
         $this->settings8 = Settings8::setup();
         $this->settings9 = Settings9::setup();
+        $this->settingsFileEventProperties = SettingsFileEventProperties::setup();
         $segmentEvaluatorJson = new SegmentEvaluatorJson();
         $results = new VariationResults();
 
@@ -786,14 +787,22 @@ class VWOTest extends TestCase
             $this->vwoInstance = TestUtil::instantiateSdk($settingsFile, ['isDevelopmentMode' => 1]);
             $campaignKey = 'DEV_TEST_' . $devtest;
             $options = [];
+            //$options['eventProperties']
+            $eventProperties = [
+                'numberProperty' => 100,
+                'textProperty' => 'abc',
+                'booleanProperty' => true
+              ];
 
             foreach ($this->users as $userId) {
                 foreach ($settingsFile['campaigns'] as $index => $campaign) {
                     if ($campaign['key'] == $campaignKey) {
                         $goalName = $campaign['goals'][0]['identifier'];
                         if ($campaign['goals'][0]['type'] == 'REVENUE_TRACKING') {
-                            $options['revenueValue'] = 10;
-                            $settingsFile['campaigns'][$index]['goals'][0]['revenueProp'] = 'dummyRevenueProperty';
+                            $options = [
+                                'eventProperties' => $eventProperties
+                            ];
+                            $settingsFile['campaigns'][$index]['goals'][0]['revenueProp'] = 'numberProperty';
                             $this->vwoInstance = TestUtil::instantiateSdk($settingsFile, ['isDevelopmentMode' => 1]);
                         }
                         break;
@@ -994,5 +1003,49 @@ class VWOTest extends TestCase
         foreach ($customDimensionMap as $tagKey => $tagValue) {
             $this->assertEquals(true, $response[$tagKey]);
         }
+    }
+    public function testWhenRevenueValueNotPassedInTheGoal(){
+
+        $settingsFileEventProperties = SettingsFileEventProperties::setUp();
+        $campaignKey = $settingsFileEventProperties['campaigns'][0]['key'];
+        $vwoInstance = TestUtil::instantiateSdk($settingsFileEventProperties);
+        $response = $vwoInstance->track($campaignKey,'Abby','Track3');
+        $this->assertEquals(false, $response);
+    }
+
+    public function testWhenRevenueValueIsNotPassedForMetricOfTypeNumberOfTimesEventIsTriggered(){
+        $settingsFileEventProperties = SettingsFileEventProperties::setUp();
+        $campaignKey = $settingsFileEventProperties['campaigns'][0]['key'];
+        $vwoInstance = TestUtil::instantiateSdk($settingsFileEventProperties);
+        $response = $vwoInstance->track($campaignKey,'Abby','Track4');
+        $this->assertEquals(true, $response);
+    }
+
+    public function testIfEventPropertiesIsPassedInsteadOfRevenueValue(){
+        $settingsFileEventProperties = SettingsFileEventProperties::setUp();
+        $campaignKey = $settingsFileEventProperties['campaigns'][0]['key'];
+        $vwoInstance = TestUtil::instantiateSdk($settingsFileEventProperties);
+        $eventProperties = [
+            'abcd' => 100
+        ];
+        $options = [
+            'eventProperties' => $eventProperties
+        ];
+        $response = $vwoInstance->track($campaignKey,'Abby','Track3',$options);
+        $this->assertEquals(true, $response);
+    }
+
+    public function testIfEventPropertiesDoNotHaveRevenuePropAndItIsPassedInsteadOfRevenueValue(){
+        $settingsFileEventProperties = SettingsFileEventProperties::setUp();
+        $campaignKey = $settingsFileEventProperties['campaigns'][0]['key'];
+        $vwoInstance = TestUtil::instantiateSdk($settingsFileEventProperties);
+        $eventProperties = [
+            'abcde' => 100
+        ];
+        $options = [
+            'eventProperties' => $eventProperties
+        ];
+        $response = $vwoInstance->track($campaignKey,'Abby','Track3',$options);
+        $this->assertEquals(false, $response);
     }
 }

@@ -31,7 +31,7 @@ class Segments
     const OPERAND_OR = 'or';
     const CUSTOM_VARIABLE = 'custom_variable';
     const USER = 'user';
-    
+
     /**
      * REGEX CONSTANTS
      */

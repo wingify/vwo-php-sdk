@@ -551,41 +551,66 @@ class VWO
 
                 $goal = CommonUtil::getGoalFromGoals($campaign['goals'], $goalIdentifier);
                 $goalId = isset($goal['id']) ? $goal['id'] : 0;
-                $mca = isset($goal['mca']) ? $goal['mca'] : NULL;
-
+                $mca = isset($goal['mca']) ? $goal['mca'] : null;
                 if ($goalId && isset($bucketInfo['id']) && $bucketInfo['id'] > 0) {
                     if ($goal['type'] == "REVENUE_TRACKING") {
-
                         if ($this->isEventArchEnabled()) {
-                            $doesRevenuePropExist = false;
+                            if (!$revenueValue) {
+                                $doesRevenuePropExist = false;
 
-                            foreach ($eventProperties as $eventProp => $eventValue) {
-                                if ($eventProp == $goal['revenueProp']) {
+                                if (isset($goal['revenueProp'])) {
                                     $doesRevenuePropExist = true;
-                                    break;
                                 }
-                            }
 
-                            if (!$doesRevenuePropExist) {
-                                if (is_null($revenueValue)) {
-                                    LoggerService::log(
-                                        Logger::ERROR,
-                                        'TRACK_API_EVENTS_REVENUE_NOT_PASSED',
-                                        [
-                                            '{goalIdentifier}' => $goalIdentifier,
-                                            '{campaignKey}' => $campaign['key'],
-                                            '{userId}' => $userId
-                                        ],
-                                        self::CLASSNAME
-                                    );
-                                    $result[$campaign['key']] = null;
-                                    continue;
+                                //If it's a metric of type - value of an event property and calculation logic is first Value (mca doesn't exist)
+                                if (!isset($mca)) {
+                                    /*
+                                    In this case it is expected that goal will have revenueProp
+                                    Error should be logged if eventProperties is not Defined ` OR ` eventProperties does not have revenueProp key
+                                */
+                                    if (!isset($eventProperties) || !array_key_exists($goal['revenueProp'], $eventProperties)) {
+                                        LoggerService::log(
+                                            Logger::ERROR,
+                                            'TRACK_API_REVENUE_NOT_PASSED_FOR_REVENUE_GOAL',
+                                            [
+                                                '{goalIdentifier}' => $goalIdentifier,
+                                                '{campaignKey}' => $campaign['key'],
+                                                '{userId}' => $userId
+                                            ],
+                                            self::CLASSNAME
+                                        );
+                                        $result[$campaign['key']] = null;
+                                        continue;
+                                    }
                                 } else {
-                                    $revProp = $goal['revenueProp'];
-                                    $eventProperties[$revProp] = $revenueValue;
+                                    /*
+                                here mca == -1 so there could only be 2 scenarios,
+                                1. If revenueProp is defined then eventProperties should have revenueProp key
+                                2. if revenueProp is not defined then it's a metric of type - Number of times an event has been triggered.
+                                */
+                                    if ($doesRevenuePropExist) {
+                                        // Error should be logged if eventProperties is not Defined ` OR ` eventProperties does not have revenueProp key
+                                        if (!isset($eventProperties) || !array_key_exists($goal['revenueProp'], $eventProperties)) {
+                                            LoggerService::log(
+                                                Logger::ERROR,
+                                                'TRACK_API_REVENUE_NOT_PASSED_FOR_REVENUE_GOAL',
+                                                [
+                                                    '{goalIdentifier}' => $goalIdentifier,
+                                                    '{campaignKey}' => $campaign['key'],
+                                                    '{userId}' => $userId
+                                                ],
+                                                self::CLASSNAME
+                                            );
+                                            $result[$campaign['key']] = null;
+                                            continue;
+                                        }
+                                    }
                                 }
+                            } else {
+                                $revProp = $goal['revenueProp'];
+                                $eventProperties[$revProp] = $revenueValue;
                             }
-                         } elseif (is_null($revenueValue)) {
+                        } elseif (is_null($revenueValue)) {
                             LoggerService::log(
                                 Logger::ERROR,
                                 'TRACK_API_REVENUE_NOT_PASSED_FOR_REVENUE_GOAL',
@@ -598,7 +623,7 @@ class VWO
                             );
                             $result[$campaign['key']] = null;
                             continue;
-                        }
+                         }
                     }
 
                     if (isset($goalIdentifier)) {
@@ -615,7 +640,7 @@ class VWO
                             if (!empty($this->_userStorageObj)) {
                                 $this->variationDecider->userStorageSet($this->_userStorageObj, $userId, $campaign['key'], $bucketInfo, $bucketInfo['goalIdentifier']);
                             }
-                        } else if ($mca != -1) {
+                        } elseif ($mca != -1) {
                             LoggerService::log(
                                 Logger::INFO,
                                 'CAMPAIGN_GOAL_ALREADY_TRACKED',
@@ -632,7 +657,7 @@ class VWO
                     }
 
                     if ($this->isEventArchEnabled()) {
-                        if ($goal['type'] == "REVENUE_TRACKING" && !in_array($goal['revenueProp'], $revenueProps)) {
+                        if ($goal['type'] == "REVENUE_TRACKING" && isset($goal['revenueProp']) && !in_array($goal['revenueProp'], $revenueProps)) {
                             $revenueProps[] = $goal['revenueProp'];
                         }
                         $metricMap[$campaign['id']] = $goal["id"];
@@ -701,6 +726,7 @@ class VWO
                 $metricMap,
                 $eventProperties
             );
+
             $eventArchResponse = $this->eventDispatcher->sendEventRequest($parameters, $payload);
             if ($eventArchResponse) {
                 LoggerService::log(
@@ -999,8 +1025,7 @@ class VWO
 
     private function isEligibleToSendImpressionToVWO()
     {
-        return (
-            empty($this->_userStorageObj) ||
+        return (empty($this->_userStorageObj) ||
             !$this->variationDecider->hasStoredVariation
         );
     }
