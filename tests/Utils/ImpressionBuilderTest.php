@@ -174,4 +174,64 @@ class ImpressionBuilderTest extends TestCase
         }
         return true;
     }
+
+    public function testgetEventsBasePropertiesArchEnabledWithUAAndIPTest(){
+        $accountId = 1;
+        $sdkKey = '12345';
+        $queryParams = ImpressionBuilder::getEventsBaseProperties($accountId, $sdkKey, EventEnum::VWO_SYNC_VISITOR_PROP,"abcBot","123.10.234");
+        
+        $containsVisitorUa = array_key_exists("visitor_ua", $queryParams);
+        $containsVisitorIp = array_key_exists("visitor_ip", $queryParams);
+        $this->assertEquals(true, $containsVisitorUa);
+        $this->assertEquals(true, $containsVisitorIp);
+    }
+
+    public function testgetVisitorQueryParamsWithUAAndIPTest(){
+        $settingsFileEventProperties = SettingsFileEventProperties::setUp();
+        $campaign = $settingsFileEventProperties['campaigns'][0];
+        $visitorUserAgent = "abcBot";
+        $userIpAddress = "123.10.123";
+        
+        $parameters = ImpressionBuilder::getVisitorQueryParams(
+            $settingsFileEventProperties['accountId'],
+            $campaign,
+            '123',
+            '2',
+            $settingsFileEventProperties['sdkKey'],
+            $visitorUserAgent,
+            $userIpAddress
+        );
+
+        $containsVisitorUa = array_key_exists("visitor_ua", $parameters);
+        $containsVisitorIp = array_key_exists("visitor_ip", $parameters);
+        $this->assertEquals(true, $containsVisitorUa);
+        $this->assertEquals(true, $containsVisitorIp);
+    }
+
+    public function testgetConversionQueryParamsArchEnabledWithUAAndIPTest(){
+        $settingsFileEventProperties = SettingsFileEventProperties::setUp();
+        $campaign = $settingsFileEventProperties['campaigns'][0];
+        $visitorUserAgent = "abcBot";
+        $userIpAddress = "123.10.123";
+        
+        $parameters = ImpressionBuilder::getConversionQueryParams(
+            $settingsFileEventProperties['accountId'],
+            $campaign,
+            '123',
+            '2',
+            $settingsFileEventProperties['campaigns'][0]['goals'][0],
+            '100',
+            $settingsFileEventProperties['sdkKey'],
+            $visitorUserAgent,
+            $userIpAddress
+        );
+
+        $containsVisitorUa = array_key_exists("visitor_ua", $parameters);
+        $containsVisitorIp = array_key_exists("visitor_ip", $parameters);
+        $this->assertEquals(true, $containsVisitorUa);
+        $this->assertEquals(true, $containsVisitorIp);
+    }
+    
+
+
 }

@@ -24,13 +24,14 @@ use vwo\Constants\FileNameEnum;
 use vwo\Services\LoggerService as LoggerService;
 use vwo\Utils\UuidUtil;
 use vwo\Utils\Common as CommonUtil;
+use vwo\Constants\Visitor as VisitorConstants;
 
 class ImpressionBuilder
 {
     /**
      * sdk version for api hit
      */
-    const SDK_VERSION = '1.55.0';
+    const SDK_VERSION = '1.58.0';
     /**
      * sdk langauge for api hit
      */
@@ -38,7 +39,7 @@ class ImpressionBuilder
 
     const CLASSNAME = FileNameEnum::IMPRESSION_BUILDER;
 
-    public static function getVisitorQueryParams($accountId, $campaign, $userId, $combination, $sdkKey)
+    public static function getVisitorQueryParams($accountId, $campaign, $userId, $combination, $sdkKey, $visitorUserAgent = '', $userIpAddress = '')
     {
         $params = array(
             'ed' => '{"p":"server"}',
@@ -50,13 +51,15 @@ class ImpressionBuilder
             $userId,
             $combination,
             $params,
-            $sdkKey
+            $sdkKey,
+            $visitorUserAgent,
+            $userIpAddress
         );
 
         return $params;
     }
 
-    public static function getConversionQueryParams($accountId, $campaign, $userId, $combination, $goal, $revenueValue, $sdkKey)
+    public static function getConversionQueryParams($accountId, $campaign, $userId, $combination, $goal, $revenueValue, $sdkKey, $visitorUserAgent = '', $userIpAddress = '')
     {
         $params = array(
             'goal_id' => $goal['id']
@@ -76,7 +79,9 @@ class ImpressionBuilder
             $userId,
             $combination,
             $params,
-            $sdkKey
+            $sdkKey,
+            $visitorUserAgent,
+            $userIpAddress
         );
 
         return $params;
@@ -118,11 +123,13 @@ class ImpressionBuilder
      *
      * @return array
      */
-    public static function mergeCommonTrackingQueryParams($accountId, $campaign, $userId, $combination, $params = [], $sdkKey = '')
+    public static function mergeCommonTrackingQueryParams($accountId, $campaign, $userId, $combination, $params = [], $sdkKey = '', $visitorUserAgent = '', $userIpAddress = '')
     {
         $params['experiment_id'] = $campaign['id'];
         $params['combination'] = $combination; // variation id
         $params['ap'] = 'server';
+        $params[VisitorConstants::USER_AGENT] = $visitorUserAgent;
+        $params[VisitorConstants::IP] = $userIpAddress;
 
         $params = self::mergeTrackingCallParams($accountId, $userId, $params);
         $params = self::mergeCommonQueryParams($params, $sdkKey);
@@ -161,7 +168,7 @@ class ImpressionBuilder
      * @param  array  $usageStats
      * @return array $properties
      */
-    public static function getEventsBaseProperties($accountId, $sdkKey, $eventName, $usageStats = [])
+    public static function getEventsBaseProperties($accountId, $sdkKey, $eventName, $visitorUserAgent = '', $userIpAddress = '', $usageStats = [])
     {
          $properties = [
              "en" => $eventName,
@@ -169,7 +176,9 @@ class ImpressionBuilder
              "env" => $sdkKey,
              "eTime" => CommonUtil::getCurrentUnixTimestampInMillis(),
              "random" => CommonUtil::getRandomNumber(),
-             "p" => "FS"
+             "p" => "FS",
+             VisitorConstants::USER_AGENT => $visitorUserAgent,
+             VisitorConstants::IP => $userIpAddress
          ];
          if ($eventName == EventEnum::VWO_VARIATION_SHOWN) {
              $properties = array_merge($properties, $usageStats);

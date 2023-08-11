@@ -234,6 +234,8 @@ class VWO
     {
         self::$apiName = 'isFeatureEnabled';
         LoggerService::setApiName(self::$apiName);
+        $visitorUserAgent = CommonUtil::getValueFromOptions($options, 'userAgent');
+        $userIpAddress = CommonUtil::getValueFromOptions($options, 'userIpAddress');
 
         if ($this->isOptedOut()) {
             return false;
@@ -268,7 +270,7 @@ class VWO
 
             if ($variationData) {
                 if ($this->isEventArchEnabled()) {
-                    $parameters = ImpressionBuilder::getEventsBaseProperties($this->settings['accountId'], $this->getSDKKey(), EventEnum::VWO_VARIATION_SHOWN, $this->usageStats->getUsageStats());
+                    $parameters = ImpressionBuilder::getEventsBaseProperties($this->settings['accountId'], $this->getSDKKey(), EventEnum::VWO_VARIATION_SHOWN, $visitorUserAgent, $userIpAddress, $this->usageStats->getUsageStats());
                     $payload = ImpressionBuilder::getTrackUserPayloadData(
                         $this->settings,
                         $userId,
@@ -282,7 +284,9 @@ class VWO
                         $campaign,
                         $userId,
                         $variationData['id'],
-                        $this->getSDKKey()
+                        $this->getSDKKey(),
+                        $visitorUserAgent,
+                        $userIpAddress
                     );
                     $parameters = array_merge($parameters, $this->usageStats->getUsageStats());
                 }
@@ -520,6 +524,8 @@ class VWO
         $result = [];
         $batchEventData = [];
         $eventProperties = CommonUtil::getValueFromOptions($options, 'eventProperties');
+        $visitorUserAgent = CommonUtil::getValueFromOptions($options, 'userAgent');
+        $userIpAddress = CommonUtil::getValueFromOptions($options, 'userIpAddress');
 
         if (!$eventProperties) {
             $eventProperties = [];
@@ -670,7 +676,9 @@ class VWO
                                 $bucketInfo['id'],
                                 $goal,
                                 $revenueValue,
-                                $this->getSDKKey()
+                                $this->getSDKKey(),
+                                $visitorUserAgent,
+                                $userIpAddress
                             );
                             LoggerService::log(
                                 Logger::DEBUG,
@@ -718,7 +726,7 @@ class VWO
         }
 
         if ($this->isEventArchEnabled()) {
-            $parameters = ImpressionBuilder::getEventsBaseProperties($this->settings['accountId'], $this->getSDKKey(), $goalIdentifier);
+            $parameters = ImpressionBuilder::getEventsBaseProperties($this->settings['accountId'], $this->getSDKKey(), $goalIdentifier, $visitorUserAgent, $userIpAddress);
             $payload = ImpressionBuilder::getTrackGoalPayloadData(
                 $this->settings,
                 $userId,
@@ -796,6 +804,8 @@ class VWO
             LoggerService::log(Logger::ERROR, 'API_BAD_PARAMETERS', ['{api}' => self::$apiName], self::CLASSNAME);
             return null;
         }
+        $visitorUserAgent = CommonUtil::getValueFromOptions($options, 'userAgent');
+        $userIpAddress = CommonUtil::getValueFromOptions($options, 'userIpAddress');
         $bucketInfo = null;
         try {
             $campaign = ValidationsUtil::getCampaignFromCampaignKey($campaignKey, $this->settings, $apiName);
@@ -822,7 +832,7 @@ class VWO
                 if ($trackVisitor) {
                     if ($this->isEligibleToSendImpressionToVWO()) {
                         if ($this->isEventArchEnabled()) {
-                            $parameters = ImpressionBuilder::getEventsBaseProperties($this->settings['accountId'], $this->getSDKKey(), EventEnum::VWO_VARIATION_SHOWN, $this->usageStats->getUsageStats());
+                            $parameters = ImpressionBuilder::getEventsBaseProperties($this->settings['accountId'], $this->getSDKKey(), EventEnum::VWO_VARIATION_SHOWN, $visitorUserAgent, $userIpAddress, $this->usageStats->getUsageStats());
                             $payload = ImpressionBuilder::getTrackUserPayloadData(
                                 $this->settings,
                                 $userId,
@@ -837,7 +847,9 @@ class VWO
                                 $campaign,
                                 $userId,
                                 $bucketInfo['id'],
-                                $this->getSDKKey()
+                                $this->getSDKKey(),
+                                $visitorUserAgent,
+                                $userIpAddress
                             );
 
                             $parameters =  array_merge($parameters, $this->usageStats->getUsageStats());
