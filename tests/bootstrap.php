@@ -39,3 +39,4 @@ require 'assets/VariationResults.php';
 require 'TestUtil.php';
 require 'assets/SettingsFileBucketing.php';
 require 'assets/SettingsFileEventProperties.php';
+require 'assets/MABTrueSettingsFile.php';

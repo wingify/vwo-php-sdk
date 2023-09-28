@@ -52,6 +52,7 @@ class VWOTest extends TestCase
         $this->settings8 = Settings8::setup();
         $this->settings9 = Settings9::setup();
         $this->settingsFileEventProperties = SettingsFileEventProperties::setup();
+        $this->MABTrueSettingsFile = MABTrueSettingsFile::setup();
         $segmentEvaluatorJson = new SegmentEvaluatorJson();
         $results = new VariationResults();
 
@@ -1047,5 +1048,19 @@ class VWOTest extends TestCase
         ];
         $response = $vwoInstance->track($campaignKey,'Abby','Track3',$options);
         $this->assertEquals(false, $response);
+    }
+
+    public function testWhenMABTrueButNoUserStorage(){
+        $campaignKey = $this->MABTrueSettingsFile['campaigns'][0]['key'];
+        $vwoInstance = TestUtil::instantiateSdk($this->MABTrueSettingsFile, ['isDevelopmentMode' => 1]);
+        $variation = $vwoInstance->activate($campaignKey, 'George');
+        $this->assertEquals($variation, null);
+    }
+
+    public function testWhenMABTrueWithUserStorageEnabled(){
+        $campaignKey = $this->MABTrueSettingsFile['campaigns'][0]['key'];
+        $vwoInstance = TestUtil::instantiateSdk($this->MABTrueSettingsFile, ['isUserStorage' => 1, 'isDevelopmentMode' => 1]);
+        $variation = $vwoInstance->activate($campaignKey, 'George');
+        $this->assertEquals($variation, 'Control');
     }
 }

@@ -31,7 +31,7 @@ class ImpressionBuilder
     /**
      * sdk version for api hit
      */
-    const SDK_VERSION = '1.58.0';
+    const SDK_VERSION = '1.60.0';
     /**
      * sdk langauge for api hit
      */
@@ -212,7 +212,7 @@ class ImpressionBuilder
 
         $properties = [
             "d" => [
-                "msgId" => $uuid . "-" . time(),
+                "msgId" => $uuid . "-" . CommonUtil::getCurrentUnixTimestampInMillis(),
                 "visId" => $uuid,
                 "sessionId" => time(),
                 "event" => [

@@ -248,6 +248,13 @@ class VWO
             }
             // get campaigns
             $campaign = ValidationsUtil::getCampaignFromCampaignKey($campaignKey, $this->settings, self::$apiName);
+            // Check if MAB enabled, if yes, then userStorage must be defined
+            if ($campaign != null && isset($campaign['isMAB']) && $campaign['isMAB']) {
+                if ($this->_userStorageObj == null) {
+                    LoggerService::log(Logger::ERROR, 'This campaign: ' .$campaignKey. ' has MAB configured. Please configure User Storage to proceed.', [], self::CLASSNAME);
+                    return null;
+                }
+            }
             if ($campaign == null) {
                 return null;
             }
@@ -532,6 +539,13 @@ class VWO
         }
 
         foreach ($campaigns as $campaign) {
+            // Check if MAB enabled, if yes, then userStorage must be defined
+            if ($campaign != null && isset($campaign['isMAB']) && $campaign['isMAB']) {
+                if ($this->_userStorageObj == null) {
+                    LoggerService::log(Logger::ERROR, 'This campaign: ' .$campaignKey. ' has MAB configured. Please configure User Storage to proceed.', [], self::CLASSNAME);
+                    return null;
+                }
+            }
             try {
                 if ($campaign['type'] == CampaignTypes::FEATURE_ROLLOUT) {
                     LoggerService::log(
@@ -809,6 +823,13 @@ class VWO
         $bucketInfo = null;
         try {
             $campaign = ValidationsUtil::getCampaignFromCampaignKey($campaignKey, $this->settings, $apiName);
+            // Check if MAB enabled, if yes, then userStorage must be defined
+            if ($campaign != null && isset($campaign['isMAB']) && $campaign['isMAB']) {
+                if ($this->_userStorageObj == null) {
+                    LoggerService::log(Logger::ERROR, 'This campaign: ' .$campaignKey. ' has MAB configured. Please configure User Storage to proceed.', [], self::CLASSNAME);
+                    return null;
+                }
+            }
             if ($campaign !== null) {
                 if (($campaign['type'] == CampaignTypes::FEATURE_ROLLOUT) || ($campaign['type'] == CampaignTypes::FEATURE_TEST && $trackVisitor == 1)) {
                     LoggerService::log(
