@@ -77,7 +77,7 @@ class Bucketer
      * @param  bool $disableLogs optional: disable logs if True
      * @return array|null
      */
-    public static function getBucket($userId, $campaign, $is_new_bucketing_enabled, $disableLogs = false)
+    public static function getBucket($userId, $campaign, $is_new_bucketing_enabled, $is_new_bucketing_v2_enabled = false, $accountId=null, $disableLogs = false)
     {
         // if bucketing to be done - check first if user is part of campaign
         list($bucketVal, $hashValue) = self::getBucketVal($userId, $campaign, $is_new_bucketing_enabled, $disableLogs);
@@ -88,20 +88,27 @@ class Bucketer
         }
 
         // based on bucketing algo flag, determine bucket value
-        if(!$is_new_bucketing_enabled || (isset($campaign["isOB"]) && $campaign["isOB"])){
+        if((!$is_new_bucketing_enabled && !$is_new_bucketing_v2_enabled)|| ($is_new_bucketing_enabled && isset($campaign["isOB"]) && $campaign["isOB"])){
             // old algo
             $multiplier = self::getMultiplier($campaign['percentTraffic'], $disableLogs);
             list($bucketVal, $hashValue) = self::getBucketVal($userId, $campaign, $is_new_bucketing_enabled, $disableLogs);
 
             // log for type of algo
             LoggerService::log(Logger::INFO, 'Using Old Algo!');
-        } else {
+        } else if (($is_new_bucketing_enabled && !isset($campaign["isOB"]) && !$is_new_bucketing_v2_enabled) || ($is_new_bucketing_v2_enabled && isset($campaign["isOBv2"]) && $campaign["isOBv2"])){
             // new algo
             $multiplier = 1;
             list($bucketVal, $hashValue) = self::getBucketVal($userId, null, $is_new_bucketing_enabled, $disableLogs);
 
             // log for type of algo
             LoggerService::log(Logger::INFO, 'Using New Algo!');
+        } else {
+            // new v2 algo
+            $multiplier = 1;
+            list($bucketVal, $hashValue) = self::getBucketVal($userId = strval($accountId) . "_" . strval($userId), $campaign, $is_new_bucketing_enabled = true, $disableLogs);
+
+            // log for type of algo
+            LoggerService::log(Logger::INFO, 'Using New V2 Algo!');
         }
 
         $rangeForVariations = self::getRangeForVariations($bucketVal, $multiplier);

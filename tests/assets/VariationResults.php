@@ -1102,7 +1102,16 @@ class VariationResults
             'Xin' => 'Control' ,
             'You' => 'Variation-1' ,
             'Zeba' => 'Control' 
+          ],
+
+          'BUCKET_ALGO_WITHOUT_SEED_FLAG_WITH_isNBV2_WITHOUT_isOBV2' => [
+            'Control','Variation-1','Control'
+          ],
+
+          'BUCKET_ALGO_WITHOUT_SEED_FLAG_WITH_isNBV2_WITH_isOBV2' => [
+            'Control','Control','Control'
           ]
+          
 
     ];
 }

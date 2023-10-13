@@ -218,4 +218,205 @@ class SettingsFileBucketing
         'accountId' => 123456,
         'version' => 1
     ];
+
+    var $setting_with_isNBv2_and_without_isOBv2_and_without_seed_flag = [
+        'sdkKey' => 'loremipsum123456',
+        'isNBv2' => true,
+        'campaigns' => [
+        [
+            'goals' => [
+            [
+                'identifier' => 'CUSTOM',
+                'id' => 213,
+                'type' => 'CUSTOM_GOAL'
+            ]
+            ],
+            'variations' => [
+            [
+                'id' => 1,
+                'name' => 'Control',
+                'changes' => [],
+                'weight' => 50
+            ],
+            [
+                'id' => 2,
+                'name' => 'Variation-1',
+                'changes' => [],
+                'weight' => 50
+            ]
+            ],
+            'id' => 230,
+            'percentTraffic' => 100,
+            'key' => 'testKey1',
+            'name' => 'bucket_algo_without_seed_with_isNB_and_without_isOB',
+            'status' => 'RUNNING',
+            'type' => 'VISUAL_AB',
+            'segments' => [],
+        ],
+        [
+            'goals' => [
+            [
+                'identifier' => 'CUSTOM',
+                'id' => 213,
+                'type' => 'CUSTOM_GOAL'
+            ]
+            ],
+            'variations' => [
+            [
+                'id' => 1,
+                'name' => 'Control',
+                'changes' => [],
+                'weight' => 50
+            ],
+            [
+                'id' => 2,
+                'name' => 'Variation-1',
+                'changes' => [],
+                'weight' => 50
+            ]
+            ],
+            'id' => 231,
+            'percentTraffic' => 100,
+            'key' => 'testKey2',
+            'name' => 'bucket_algo_without_seed_with_isNB_and_without_isOB_2',
+            'status' => 'RUNNING',
+            'type' => 'VISUAL_AB',
+            'segments' => [],
+        ],
+        [
+            'goals' => [
+            [
+                'identifier' => 'CUSTOM',
+                'id' => 213,
+                'type' => 'CUSTOM_GOAL'
+            ]
+            ],
+            'variations' => [
+            [
+                'id' => 1,
+                'name' => 'Control',
+                'changes' => [],
+                'weight' => 50
+            ],
+            [
+                'id' => 2,
+                'name' => 'Variation-1',
+                'changes' => [],
+                'weight' => 50
+            ]
+            ],
+            'id' => 232,
+            'percentTraffic' => 100,
+            'key' => 'testKey3',
+            'name' => 'bucket_algo_without_seed_with_isNB_and_without_isOB_3',
+            'status' => 'RUNNING',
+            'type' => 'VISUAL_AB',
+            'segments' => [],
+        ]
+        ],
+        'accountId' => 123456,
+        'version' => 1
+    ];
+
+    var $setting_with_isNBv2_and_with_isOBv2_and_without_seed_flag = [
+        'sdkKey' => 'loremipsum123456',
+        'isNBv2' => true,
+        'campaigns' => [
+        [
+            'goals' => [
+            [
+                'identifier' => 'CUSTOM',
+                'id' => 213,
+                'type' => 'CUSTOM_GOAL'
+            ]
+            ],
+            'variations' => [
+            [
+                'id' => 1,
+                'name' => 'Control',
+                'changes' => [],
+                'weight' => 50
+            ],
+            [
+                'id' => 2,
+                'name' => 'Variation-1',
+                'changes' => [],
+                'weight' => 50
+            ]
+            ],
+            'id' => 230,
+            'isOBv2' => true,
+            'percentTraffic' => 100,
+            'key' => 'testKey1',
+            'name' => 'bucket_algo_without_seed_with_isNB_and_without_isOB',
+            'status' => 'RUNNING',
+            'type' => 'VISUAL_AB',
+            'segments' => [],
+        ],
+        [
+            'goals' => [
+            [
+                'identifier' => 'CUSTOM',
+                'id' => 213,
+                'type' => 'CUSTOM_GOAL'
+            ]
+            ],
+            'variations' => [
+            [
+                'id' => 1,
+                'name' => 'Control',
+                'changes' => [],
+                'weight' => 50
+            ],
+            [
+                'id' => 2,
+                'name' => 'Variation-1',
+                'changes' => [],
+                'weight' => 50
+            ]
+            ],
+            'id' => 231,
+            'isOBv2' => true,
+            'percentTraffic' => 100,
+            'key' => 'testKey2',
+            'name' => 'bucket_algo_without_seed_with_isNB_and_without_isOB_2',
+            'status' => 'RUNNING',
+            'type' => 'VISUAL_AB',
+            'segments' => [],
+        ],
+        [
+            'goals' => [
+            [
+                'identifier' => 'CUSTOM',
+                'id' => 213,
+                'type' => 'CUSTOM_GOAL'
+            ]
+            ],
+            'variations' => [
+            [
+                'id' => 1,
+                'name' => 'Control',
+                'changes' => [],
+                'weight' => 50
+            ],
+            [
+                'id' => 2,
+                'name' => 'Variation-1',
+                'changes' => [],
+                'weight' => 50
+            ]
+            ],
+            'id' => 232,
+            'isOBv2' => true,
+            'percentTraffic' => 100,
+            'key' => 'testKey3',
+            'name' => 'bucket_algo_without_seed_with_isNB_and_without_isOB_3',
+            'status' => 'RUNNING',
+            'type' => 'VISUAL_AB',
+            'segments' => [],
+        ]
+        ],
+        'accountId' => 123456,
+        'version' => 1
+    ];
 }

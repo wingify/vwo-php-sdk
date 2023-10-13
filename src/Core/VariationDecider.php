@@ -109,6 +109,9 @@ class VariationDecider
 
         $isCampaignPartOfGroup = $this->settings && CampaignUtil::isPartOfGroup($this->settings, $campaign["id"]);
         $campaignKey = $campaign['key'];
+        if($this->settings!=null){
+            $accountId = $this->settings["accountId"];
+        }
         $decision['isUserWhitelisted'] = false;
         $decision['fromUserStorageService'] = false;
 
@@ -117,6 +120,13 @@ class VariationDecider
             $is_new_bucketing_enabled = true;
         } else {
             $is_new_bucketing_enabled = false;
+        }
+
+        # get new bucketing V2 enabled flag from settings
+        if ($this->settings!=null && isset($this->settings["isNBv2"]) && $this->settings["isNBv2"]) {
+            $is_new_bucketing_v2_enabled = true;
+        } else {
+            $is_new_bucketing_v2_enabled = false;
         }
 
         // VWO generated UUID based on passed UserId and Account ID
@@ -208,7 +218,7 @@ class VariationDecider
                                 self::CLASSNAME
                             );
                             if ($winnerCampaign && $winnerCampaign["id"] == $campaign["id"]) {
-                                $bucketInfo = Bucketer::getBucket($userId, $campaign, $is_new_bucketing_enabled);
+                                $bucketInfo = Bucketer::getBucket($userId, $campaign, $is_new_bucketing_enabled, $is_new_bucketing_v2_enabled, $accountId);
                                 if ($bucketInfo == null) {
                                     return $bucketInfo;
                                 } else {
@@ -657,6 +667,10 @@ class VariationDecider
     private function getVariationIfPreSegmentationApplied($isPreSegmentation, $campaign, $userId, $userStorageObj = null, $goalIdentifier = '')
     {
         $bucketInfo = null;
+        $accountId = null;
+        if($this->settings!=null){
+           $accountId = $this->settings["accountId"];
+        }
         //check for pre-segmentation if applied
         if ($isPreSegmentation == false) {
             LoggerService::log(
@@ -679,7 +693,14 @@ class VariationDecider
             $is_new_bucketing_enabled = false;
         }
 
-        $bucketInfo = Bucketer::getBucket($userId, $campaign, $is_new_bucketing_enabled);
+        # get new bucketing V2 enabled flag from settings
+        if ($this->settings!=null && isset($this->settings["isNBv2"]) && $this->settings["isNBv2"]) {
+            $is_new_bucketing_v2_enabled = true;
+        } else {
+            $is_new_bucketing_v2_enabled = false;
+        }
+
+        $bucketInfo = Bucketer::getBucket($userId, $campaign, $is_new_bucketing_enabled, $is_new_bucketing_v2_enabled, $accountId);
         LoggerService::log(
             Logger::INFO,
             'USER_VARIATION_ALLOCATION_STATUS',

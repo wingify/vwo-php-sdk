@@ -182,4 +182,38 @@ class BucketerTest extends TestCase
             $this->assertEquals($expected[$userId], $result);
         }
     }
+
+    public function testSameUserMultipleCampaignsWithIsNBv2AndWithoutIsOBv2()
+    {
+        // initializations
+        $settings = new SettingsFileBucketing();
+        $settingsFile = $settings->setting_with_isNBv2_and_without_isOBv2_and_without_seed_flag;
+        $vwoInstance = TestUtil::instantiateSdk($settingsFile, ['isDevelopmentMode' => 1]);
+        $campaigns = $settingsFile['campaigns'];
+
+        //expected result array
+        $expected = $this->variationResults->results['BUCKET_ALGO_WITHOUT_SEED_FLAG_WITH_isNBV2_WITHOUT_isOBV2'];
+
+        foreach($campaigns as $i => $campaign){
+            $result[] = $vwoInstance->activate($campaign['key'], 'Ashley');
+        }
+        $this->assertEquals($expected, $result);
+    }
+
+    public function testSameUserMultipleCampaignsWithIsNBv2AndIsOBv2()
+    {
+        // initializations
+        $settings = new SettingsFileBucketing();
+        $settingsFile = $settings->setting_with_isNBv2_and_with_isOBv2_and_without_seed_flag;
+        $vwoInstance = TestUtil::instantiateSdk($settingsFile, ['isDevelopmentMode' => 1]);
+        $campaigns = $settingsFile['campaigns'];
+
+        //expected result array
+        $expected = $this->variationResults->results['BUCKET_ALGO_WITHOUT_SEED_FLAG_WITH_isNBV2_WITH_isOBV2'];
+
+        foreach($campaigns as $i => $campaign){
+            $result[] = $vwoInstance->activate($campaign['key'], 'Ashley');
+        }
+        $this->assertEquals($expected, $result);
+    }
 }
