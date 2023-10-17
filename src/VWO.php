@@ -654,13 +654,14 @@ class VWO
                             $identifiers = [];
                         }
 
-
+                        
+                        $checkHasProps = isset($goal['hasProps']) ? $goal['hasProps'] : false;
                         if (!in_array($goalIdentifier, $identifiers)) {
                             $bucketInfo['goalIdentifier'] .=  "_vwo_$goalIdentifier";
                             if (!empty($this->_userStorageObj)) {
                                 $this->variationDecider->userStorageSet($this->_userStorageObj, $userId, $campaign['key'], $bucketInfo, $bucketInfo['goalIdentifier']);
                             }
-                        } elseif ($mca != -1) {
+                        } elseif (!($goal['type'] == "REVENUE_TRACKING" && $mca != null && $mca == -1) && !($checkHasProps)) {
                             LoggerService::log(
                                 Logger::INFO,
                                 'CAMPAIGN_GOAL_ALREADY_TRACKED',

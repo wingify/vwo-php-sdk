@@ -25,6 +25,7 @@ use vwo\Utils\AccountUtil;
 use vwo\Utils\Common;
 use vwo\Utils\DataLocationManager;
 use vwo\Utils\SegmentEvaluator;
+use vwo\Storage\UserStorageInterface;
 
 /***
  * Class VWOTest
@@ -53,6 +54,7 @@ class VWOTest extends TestCase
         $this->settings9 = Settings9::setup();
         $this->settingsFileEventProperties = SettingsFileEventProperties::setup();
         $this->MABTrueSettingsFile = MABTrueSettingsFile::setup();
+        $this->settingsFileHasProps = SettingsFileHasProps::setup();
         $segmentEvaluatorJson = new SegmentEvaluatorJson();
         $results = new VariationResults();
 
@@ -1032,7 +1034,7 @@ class VWOTest extends TestCase
         $options = [
             'eventProperties' => $eventProperties
         ];
-        $response = $vwoInstance->track($campaignKey,'Abby','Track3',$options);
+        $response = $vwoInstance->track($campaignKey, 'Abby', 'Track3', $options);
         $this->assertEquals(true, $response);
     }
 
@@ -1062,5 +1064,90 @@ class VWOTest extends TestCase
         $vwoInstance = TestUtil::instantiateSdk($this->MABTrueSettingsFile, ['isUserStorage' => 1, 'isDevelopmentMode' => 1]);
         $variation = $vwoInstance->activate($campaignKey, 'George');
         $this->assertEquals($variation, 'Control');
+    }
+    
+    public function testTrackGoalHasProps()
+    {
+        $userStorageInstance = new UserStorageService();
+        $campaignInfo = [
+            "userId" => "Ashley",
+            "campaignKey" => "Track",
+            "variationName" => "Variation-1",
+            "goalIdentifier" => "Track1"
+        ];
+        $userStorageInstance->set($campaignInfo);
+        $config = [
+            'settingsFile' => $this->settingsFileHasProps,
+            'logging' => new CustomLogger(),
+            'userStorageService' =>  $userStorageInstance
+        ];
+        $sdkInstance = new VWO($config);
+        $result = $sdkInstance->track("Track", "Ashley", "Track1");
+        $this->assertEquals($result, true);
+    }
+
+    public function testTrackGoalNoHasProps()
+    {
+        $userStorageInstance = new UserStorageservice();
+        $campaignInfo = [
+            "userId" => "Ashley",
+            "campaignKey" => "Track",
+            "variationName" => "Control",
+            "goalIdentifier" => "Track2"
+        ];
+        $userStorageInstance->set($campaignInfo);
+        $config = [
+            'settingsFile' => $this->settingsFileHasProps,
+            'logging' => new CustomLogger(),
+            'userStorageService' =>  $userStorageInstance
+        ];
+        $sdkInstance = new VWO($config);
+        $result = $sdkInstance->track("Track", "Ashley", "Track2");
+        $this->assertEquals($result, false);
+    }
+}
+
+
+class UserStorageService implements UserStorageInterface
+{
+    public $campaignStorageArray = array();
+    private $goalIdentifier = '';
+
+    /**
+     * @param  $userId
+     * @param  $campaignKey
+     * @return array
+     */
+    public function get($userId, $campaignKey)
+    {
+        if (is_array($this->campaignStorageArray)) {
+            //var_dump($this->campaignStorageArray);
+            foreach ($this->campaignStorageArray as $savedCampaign) {
+                if (isset($savedCampaign['userId']) && isset($savedCampaign['campaignKey']) && $savedCampaign['userId'] === $userId && $savedCampaign['campaignKey'] === $campaignKey) {
+                    return $savedCampaign;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  $campaignInfo
+     * @return bool
+     */
+
+    public function set($campaignUserMapping)
+    {
+        if (!in_array($campaignUserMapping, $this->campaignStorageArray, true)) {
+            $this->campaignStorageArray[] = $campaignUserMapping;
+        }
+    }
+    /**
+     * @param $goalIdentifier
+     */
+    public function setGoalIdentifier($goalIdentifier)
+    {
+        $this->goalIdentifier = $goalIdentifier;
     }
 }

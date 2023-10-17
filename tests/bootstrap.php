@@ -40,3 +40,4 @@ require 'TestUtil.php';
 require 'assets/SettingsFileBucketing.php';
 require 'assets/SettingsFileEventProperties.php';
 require 'assets/MABTrueSettingsFile.php';
+require 'assets/SettingsFileHasProps.php';
