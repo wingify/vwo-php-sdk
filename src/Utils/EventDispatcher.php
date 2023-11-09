@@ -105,8 +105,10 @@ class EventDispatcher
         $request  = $method . ' ' . $path . '?' . http_build_query($params);
         $request .= ' HTTP/1.1' . "\r\n";
         $request .= 'Host: ' . $host . "\r\n";
-        $request .= VisitorConstants::CUSTOM_HEADER_USER_AGENT . ': ' . $params[VisitorConstants::USER_AGENT] . "\r\n";
-        $request .= VisitorConstants::CUSTOM_HEADER_IP . ': ' . $params[VisitorConstants::IP] . "\r\n";
+        if(isset($params[VisitorConstants::USER_AGENT]))
+            $request .= VisitorConstants::CUSTOM_HEADER_USER_AGENT . ': ' . $params[VisitorConstants::USER_AGENT] . "\r\n";
+        if(isset($params[VisitorConstants::IP]))
+            $request .= VisitorConstants::CUSTOM_HEADER_IP . ': ' . $params[VisitorConstants::IP] . "\r\n";
         $request .= 'Connection: Close' . "\r\n\r\n";
 
         // Send Request

@@ -31,7 +31,7 @@ class ImpressionBuilder
     /**
      * sdk version for api hit
      */
-    const SDK_VERSION = '1.64.0';
+    const SDK_VERSION = '1.65.0';
     /**
      * sdk langauge for api hit
      */
@@ -39,7 +39,7 @@ class ImpressionBuilder
 
     const CLASSNAME = FileNameEnum::IMPRESSION_BUILDER;
 
-    public static function getVisitorQueryParams($accountId, $campaign, $userId, $combination, $sdkKey, $visitorUserAgent = '', $userIpAddress = '')
+    public static function getVisitorQueryParams($accountId, $campaign, $userId, $combination, $sdkKey, $visitorUserAgent = null, $userIpAddress = null)
     {
         $params = array(
             'ed' => '{"p":"server"}',
@@ -59,7 +59,7 @@ class ImpressionBuilder
         return $params;
     }
 
-    public static function getConversionQueryParams($accountId, $campaign, $userId, $combination, $goal, $revenueValue, $sdkKey, $visitorUserAgent = '', $userIpAddress = '')
+    public static function getConversionQueryParams($accountId, $campaign, $userId, $combination, $goal, $revenueValue, $sdkKey, $visitorUserAgent = null, $userIpAddress = null)
     {
         $params = array(
             'goal_id' => $goal['id']
@@ -123,7 +123,7 @@ class ImpressionBuilder
      *
      * @return array
      */
-    public static function mergeCommonTrackingQueryParams($accountId, $campaign, $userId, $combination, $params = [], $sdkKey = '', $visitorUserAgent = '', $userIpAddress = '')
+    public static function mergeCommonTrackingQueryParams($accountId, $campaign, $userId, $combination, $params = [], $sdkKey = '', $visitorUserAgent = null, $userIpAddress = null)
     {
         $params['experiment_id'] = $campaign['id'];
         $params['combination'] = $combination; // variation id
@@ -168,7 +168,7 @@ class ImpressionBuilder
      * @param  array  $usageStats
      * @return array $properties
      */
-    public static function getEventsBaseProperties($accountId, $sdkKey, $eventName, $visitorUserAgent = '', $userIpAddress = '', $usageStats = [])
+    public static function getEventsBaseProperties($accountId, $sdkKey, $eventName, $visitorUserAgent = null, $userIpAddress = null, $usageStats = [])
     {
          $properties = [
              "en" => $eventName,
