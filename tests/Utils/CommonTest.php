@@ -23,7 +23,7 @@ use vwo\Utils\Common as CommonUtil;
 
 class CommonTest extends TestCase
 {
-    public function setUp(): void
+    public function setUp()
     {
     }
 

@@ -23,7 +23,7 @@ use vwo\Services\LoggerService;
 
 class LoggerServiceTest extends TestCase
 {
-    protected function setUp(): void
+    protected function setUp()
     {
     }
 

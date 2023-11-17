@@ -39,7 +39,7 @@ class VWOTest extends TestCase
     private $segmentEvaluatorJson = '';
     const GOAL_TYPES = ['CUSTOM', 'REVENUE', 'ALL', null];// null is for testing when goalType not set
 
-    protected function setUp(): void
+    protected function setUp()
     {
         $this->users = TestUtil::getUsers();
 

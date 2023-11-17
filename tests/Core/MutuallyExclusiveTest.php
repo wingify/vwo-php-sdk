@@ -22,7 +22,7 @@ use PHPUnit\Framework\TestCase;
 
 class MutuallyExclusiveTest extends TestCase
 {
-    protected function setUp(): void
+    protected function setUp()
     {
         $this->settingsFileMEG = SettingsFileMEG::setup();
         $this->settingsFileNewMEG1 = SettingsFileNewMEG1::setup();
