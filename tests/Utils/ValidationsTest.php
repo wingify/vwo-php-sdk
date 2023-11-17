@@ -23,7 +23,7 @@ use vwo\Utils\Validations as ValidationsUtil;
 
 class ValidationsTest extends TestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->users = TestUtil::getUsers();
     }

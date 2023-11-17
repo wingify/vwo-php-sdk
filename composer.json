@@ -9,7 +9,7 @@
     "description": "VWO server side sdk",
     "require": {
         "monolog/monolog": "^1.0 || ^2.0",
-        "ramsey/uuid": "^3.8 || ^4.4",
+        "ramsey/uuid": "^3.8",
         "justinrainbow/json-schema": "^5.2",
         "vwo/vwo-sdk-log-messages": ">=0.10.0"
     },

@@ -27,7 +27,7 @@ use vwo\Core\VariationDecider as VariationDecider;
 class BucketerTest extends TestCase
 {
     private $variationDecider;
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->users = TestUtil::getUsers();
         $this->variationDecider = new VariationDecider();

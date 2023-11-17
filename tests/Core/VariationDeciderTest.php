@@ -28,7 +28,7 @@ class VariationDeciderTest extends TestCase
 {
     /** @var VariationDecider $variationDecider */
     private $variationDecider;
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->users = TestUtil::getUsers();
         $this->variationDecider = new VariationDecider();
