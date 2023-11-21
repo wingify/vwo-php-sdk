@@ -429,7 +429,8 @@ class MutuallyExclusiveTest extends TestCase
 
         $winners = 0;
         for ($i = 0; $i < $iterations; $i++) {
-            $variation = $vwoInstance->getVariationName($campaignKey, 'George');
+            $userId = "user" . $i;
+            $variation = $vwoInstance->getVariationName($campaignKey, $userId);
             if ($variation != null) {
                 $winners = $winners + 1;
             }
@@ -464,8 +465,9 @@ class MutuallyExclusiveTest extends TestCase
 
         $winners = 0;
         for ($i = 0; $i < $iterations; $i++) {
-            $variation = $vwoInstance->getVariationName($campaignKey, 'George');
-            $winners = $variation == 'Control' ? $winners + 1 : $winners;
+            $userId = "user" . $i;
+            $variation = $vwoInstance->getVariationName($campaignKey, $userId);
+            $winners = $variation != null ? $winners + 1 : $winners;
         }
 
         $actualRatio = $winners / $iterations;

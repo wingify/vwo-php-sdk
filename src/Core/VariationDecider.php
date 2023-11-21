@@ -487,35 +487,30 @@ class VariationDecider
                 // If winnerCampaign not found through Priority, then go for weighted Random distribution and for that,
                 // Store the list of campaigns (participatingCampaigns) out of eligibleCampaigns and their corresponding weights which are present in weightage distribution array (wt) in 2 different lists
                 if ($winnerCampaign == null) {
-                    $weights = array();
                     $partipatingCampaignList = array();
 
                     for ($i = 0; $i < count($eligibleCampaigns); $i++) {
                         $campaignId = $eligibleCampaigns[$i]['id'];
                         if (isset($wt[$campaignId])) {
-                            $weights[] = $wt[$campaignId];
+                            // Add weight to the campaign
+                            $eligibleCampaigns[$i]['weight'] = $wt[$campaignId];
+                            
                             $partipatingCampaignList[] = $eligibleCampaigns[$i];
                         }
                     }
 
-                    /*
-                    * Finding winner campaign using weighted random distribution :
-                    1. Calculate the sum of all weights
-                    2. Generate a random number between 0 and the weight sum:
-                    3. Iterate over the weights array and subtract each weight from the random number until the random number becomes negative. The corresponding ith value is the required value
-                    4. Set the ith campaign as WinnerCampaign
+                    /* Finding winner campaign using weighted Distibution :
+                    1. Re-distribute the traffic by assigning range values for each camapign in particaptingCampaignList 
+                    2. Calculate bucket value for the given userId and groupId
+                    3. Get the winnerCampaign by checking the Start and End Bucket Allocations of each campaign
                     */
-                    $weightSum = array_sum($weights);
-                    $randomNumber = rand(1, $weightSum);
 
-                    $sum = 0;
-                    for ($i = 0; $i < count($weights); $i++) {
-                        $sum += $weights[$i];
-                        if ($randomNumber < $sum) {
-                            $winnerCampaign = $partipatingCampaignList[$i];
-                            break;
-                        }
-                    }
+                    //Allocate new range for campaigns
+                        $eligibleCampaigns = Bucketer::addRangesToCampaigns($partipatingCampaignList);
+                    //Now retrieve the campaign from the modified_campaign_for_whitelisting
+                        list($bucketVal, $hashValue) = Bucketer::getBucketVal($userId, [], false, true);
+                        
+                    $winnerCampaign = Bucketer::getCampaignUsingRange($bucketVal, $eligibleCampaigns);
                 }
 
                 return $winnerCampaign;
