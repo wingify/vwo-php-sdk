@@ -14,3 +14,4 @@ require_once 'src/Logger/LoggerInterface.php';
 require_once 'src/Logger/DefaultLogger.php';
 require_once 'src/Logger/Logger.php';
 require_once 'src/Utils/Constants.php';
+require_once 'src/Storage/RedisUserStorage.php';

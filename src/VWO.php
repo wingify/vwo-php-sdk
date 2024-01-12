@@ -41,6 +41,7 @@ use vwo\Services\LoggerService as LoggerService;
 use vwo\Logger\VWOLogger as VWOLogger;
 use vwo\Core\Bucketer as Bucketer;
 use vwo\Core\VariationDecider as VariationDecider;
+use vwo\Storage\RedisUserStorage;
 use vwo\Utils\LogMessagesUtil;
 
 /***
@@ -138,7 +139,13 @@ class VWO
         if (isset($config['userStorageService']) && ($config['userStorageService'] instanceof UserStorageInterface)) {
             $this->_userStorageObj = $config['userStorageService'];
             $usageStats['ss'] = 1;
-        } else {
+        }else if (isset($config['redisConfig'])) {
+            $this->_userStorageObj = new RedisUserStorage($config['redisConfig']);
+            //var_dump($this->_userStorageObj);
+            $config['userStorageService'] =  $this->_userStorageObj;
+            $usageStats['ss'] = 1;
+        } 
+        else {
             $this->_userStorageObj = '';
         }
 
