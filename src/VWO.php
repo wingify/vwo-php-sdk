@@ -91,6 +91,26 @@ class VWO
         'CUSTOM' => 'CUSTOM_GOAL',
         'ALL' => 'ALL'
     ];
+    /**
+     * Event dispatcher object.
+     *
+     * @var EventDispatcher
+     */
+    private $eventDispatcher;
+
+    /**
+     * Variation Decider object.
+     *
+     * @var VariationDecider
+     */
+    private $variationDecider;
+
+    /**
+     * Usage stats object.
+     *
+     * @var UsageStats
+     */
+    private $usageStats;
 
     /**
      * VWO constructor.
