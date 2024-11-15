@@ -363,7 +363,7 @@ class Connection
      *
      * @return mixed
      */
-    public function get($url, $query = false)
+    public function get($url, $query = false, $timeout)
     {
         $this->initializeRequest();
         if (is_array($query)) {
@@ -374,6 +374,9 @@ class Connection
         curl_setopt($this->curl, CURLOPT_POST, false);
         curl_setopt($this->curl, CURLOPT_PUT, false);
         curl_setopt($this->curl, CURLOPT_HTTPGET, true);
+        if ($timeout) {
+            curl_setopt($this->curl, CURLOPT_TIMEOUT, $timeout);
+        }
         curl_exec($this->curl);
         return $this->handleResponse();
     }
