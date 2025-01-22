@@ -45,7 +45,7 @@ class EventDispatcher
      *
      * @return boolean
      */
-    public function send($url, $parameters)
+    public function send($url, $parameters, $timeout)
     {
 
         if (self::$isDevelopmentMode) {
@@ -53,7 +53,7 @@ class EventDispatcher
         } else {
             $connection = new Connection();
 
-            $response = $connection->get($url, $parameters);
+            $response = $connection->get($url, $parameters, $timeout);
         }
 
         if (isset($response['httpStatus']) && $response['httpStatus'] == 200) {

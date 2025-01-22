@@ -224,9 +224,10 @@ class VWO
      * @param  String|Integer $accountId
      * @param  String         $sdkKey
      * @param  bool           $isTriggeredByWebhook
+     * @param  array          $options
      * @return bool|mixed
      */
-    public static function getSettingsFile($accountId, $sdkKey, $isTriggeredByWebhook = false)
+    public static function getSettingsFile($accountId, $sdkKey, $isTriggeredByWebhook = false, $options = [])
     {
         self::$apiName = 'getSettingsFile';
         LoggerService::setApiName(self::$apiName);
@@ -237,6 +238,8 @@ class VWO
         try {
             $parameters = ImpressionBuilder::getSettingsFileQueryParams($accountId, $sdkKey);
             $eventDispatcher = new EventDispatcher(false);
+            
+            $timeout = isset($options['timeout']) ? $options['timeout'] : 60;
 
             if ($isTriggeredByWebhook) {
                 $url = UrlConstants::WEBHOOK_SETTINGS_URL;
@@ -244,7 +247,7 @@ class VWO
                 $url = UrlConstants::SETTINGS_URL;
             }
 
-            return $eventDispatcher->send($url, $parameters);
+            return $eventDispatcher->send($url, $parameters, $timeout);
         } catch (Exception $e) {
             LoggerService::log(Logger::ERROR, $e->getMessage(), [], self::CLASSNAME);
         }

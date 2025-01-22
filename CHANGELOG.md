@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.69.0] - 2024-11-15
+
+### Added
+
+- Implemented a timeout mechanism for the `getSettingsFile` API ensuring that the connection is automatically terminated either after the specified timeout period or, by default, after 60 seconds.
+```php
+use vwo\VWO;
+
+// 10 seconds timeout
+// third parameter is false by default and is true only when used after webhook.
+$settingsFile = VWO::getSettingsFile(ACCOUNT_ID, SDK_KEY, false, ['timeout' => 10]);
+
+// no timeout, default is 60 seconds
+$settingsFile = VWO::getSettingsFile(ACCOUNT_ID, SDK_KEY);
+```
+
 ## [1.68.0] - 2024-01-12
 
 ### Added
