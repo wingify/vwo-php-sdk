@@ -358,12 +358,13 @@ class Connection
     /**
      * Make an HTTP GET request to the specified endpoint.
      *
-     * @param string     $url   URL to retrieve
-     * @param array|bool $query Optional array of query string parameters
+     * @param string     $url     URL to retrieve
+     * @param array|bool $query   Optional array of query string parameters
+     * @param int        $timeout Optional timeout for the request
      *
      * @return mixed
      */
-    public function get($url, $query = false, $timeout)
+    public function get($url, $query = false, $timeout = 13)
     {
         $this->initializeRequest();
         if (is_array($query)) {
