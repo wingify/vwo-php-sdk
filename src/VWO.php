@@ -43,7 +43,7 @@ use vwo\Core\Bucketer as Bucketer;
 use vwo\Core\VariationDecider as VariationDecider;
 use vwo\Storage\RedisUserStorage;
 use vwo\Utils\LogMessagesUtil;
-
+use vwo\Constants\HttpRetries;
 /***
  * Class for exposing various APIs
  */
@@ -219,7 +219,7 @@ class VWO
             $parameters = ImpressionBuilder::getSettingsFileQueryParams($accountId, $sdkKey);
             $eventDispatcher = new EventDispatcher(false);
             
-            $timeout = isset($options['timeout']) ? $options['timeout'] : 60;
+            $timeout = isset($options['timeout']) ? $options['timeout'] : HttpRetries::DEFAULT_TIMEOUT;
 
             if ($isTriggeredByWebhook) {
                 $url = UrlConstants::WEBHOOK_SETTINGS_URL;
@@ -872,7 +872,7 @@ class VWO
                                 $campaign['id'],
                                 $bucketInfo['id']
                             );
-                            $this->eventDispatcher->sendEventRequest($parameters, $payload);
+                            $response = $this->eventDispatcher->sendEventRequest($parameters, $payload);
                         } else {
                             $parameters = ImpressionBuilder::getVisitorQueryParams(
                                 $this->settings['accountId'],
@@ -885,37 +885,41 @@ class VWO
                             );
 
                             $parameters =  array_merge($parameters, $this->usageStats->getUsageStats());
-                            $this->eventDispatcher->sendAsyncRequest(CommonUtil::getUrl(Urls::TRACK_USER_ENDPOINT), 'GET', $parameters);
                             LoggerService::log(
                                 Logger::DEBUG,
                                 'IMPRESSION_FOR_TRACK_USER',
                                 ['{properties}' => $this->getAllowedToLogImpressionParams($parameters)],
                                 self::CLASSNAME
                             );
+                            $response = $this->eventDispatcher->sendAsyncRequest(CommonUtil::getUrl(Urls::TRACK_USER_ENDPOINT), 'GET', $parameters);   
                         }
 
                         if (!$this->isDevelopmentMode) {
                             if ($this->isEventArchEnabled()) {
-                                LoggerService::log(
-                                    Logger::INFO,
-                                    'IMPRESSION_SUCCESS_FOR_EVENT_ARCH',
-                                    [
-                                        '{accountId}' => $parameters["a"],
-                                        '{event}' => 'visitor property:' . json_encode($payload["d"]["visitor"]["props"]),
-                                        '{endPoint}' => CommonUtil::getEventsUrl()
-                                    ]
-                                );
+                                if ($response) {
+                                    LoggerService::log(
+                                        Logger::INFO,
+                                        'IMPRESSION_SUCCESS_FOR_EVENT_ARCH',
+                                        [
+                                            '{accountId}' => $parameters["a"],
+                                            '{event}' => 'visitor property:' . json_encode($payload["d"]["visitor"]["props"]),
+                                            '{endPoint}' => CommonUtil::getEventsUrl()
+                                        ]
+                                    );
+                                }
                             } else {
-                                LoggerService::log(
-                                    Logger::INFO,
-                                    'IMPRESSION_SUCCESS',
-                                    [
-                                        '{mainKeys}' => json_encode(["campaignId" => $campaign['id'], "variationId" => $bucketInfo['id']]),
-                                        '{endPoint}' => Urls::TRACK_USER_ENDPOINT,
-                                        '{accountId}' => $this->settings['accountId']
-                                    ],
-                                    self::CLASSNAME
-                                );
+                                if ($response) {
+                                    LoggerService::log(
+                                        Logger::INFO,
+                                        'IMPRESSION_SUCCESS',
+                                        [
+                                            '{mainKeys}' => json_encode(["campaignId" => $campaign['id'], "variationId" => $bucketInfo['id']]),
+                                            '{endPoint}' => Urls::TRACK_USER_ENDPOINT,
+                                            '{accountId}' => $this->settings['accountId']
+                                        ],
+                                        self::CLASSNAME
+                                    );
+                                }
                             }
                         }
                     } else {

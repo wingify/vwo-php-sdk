@@ -36,7 +36,7 @@ namespace vwo\HttpHandler;
 use vwo\Error\ClientError;
 use vwo\Error\ServerError;
 use vwo\Error\NetworkError;
-
+use vwo\Constants\HttpRetries;
 /**
  * HTTP connection.
  *
@@ -134,7 +134,7 @@ class Connection
         } else {
             $this->followLocation = true;
         }
-        $this->setTimeout(60);
+        $this->setTimeout(HttpRetries::DEFAULT_TIMEOUT);
     }
 
     /**
@@ -147,6 +147,7 @@ class Connection
     {
         curl_setopt($this->curl, CURLOPT_TIMEOUT, $timeout);
         curl_setopt($this->curl, CURLOPT_CONNECTTIMEOUT, $timeout);
+        curl_setopt($this->curl, CURLOPT_TIMEOUT_MS, $timeout * 1000); // Forces a hard limit in milliseconds
     }
 
     /**
@@ -377,7 +378,10 @@ class Connection
         if ($timeout) {
             curl_setopt($this->curl, CURLOPT_TIMEOUT, $timeout);
         }
-        curl_exec($this->curl);
+        $response = curl_exec($this->curl);
+        if ($response === false) {
+            return false;
+        }
         return $this->handleResponse();
     }
 

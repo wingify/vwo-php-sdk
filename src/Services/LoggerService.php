@@ -74,6 +74,26 @@ class LoggerService
     }
 
     /**
+     * function to log message directly without any message type
+     * @param mixed $level log level
+     * @param mixed $message log message
+     * @param mixed $params log message params
+     * @param mixed $classname log message class name
+     * @return void
+     */
+    public static function logWithMessage( $level, $message, $params = [], $classname = '')
+    {
+        if (self::$_logger == null) {
+            self::$_logger = new VWOLogger(Logger::DEBUG, 'php://stdout');
+        }
+        if (empty($classname)) {
+            $classname = self::name();
+        }
+        $message = CommonUtil::buildLogMessage($message, $params, $classname, self::$apiName);
+        self::$_logger->log($message, $level);
+    }
+
+    /**
      * function to get log message on the basis of log levels
      *
      * @param  int    $logLevel

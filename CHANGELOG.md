@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.70.0] - 2025-02-26
+
+### Added
+
+- Implemented retry mechanism with exponential backoff for all network calls to VWO server. Retries up to 5 times on network errors or non-200 status codes.
+- API response time is improved for Data360-enabled accounts by using socket connection instead of curl for sending tracking data to VWO server.
+
 ## [1.69.0] - 2024-11-15
 
 ### Added
