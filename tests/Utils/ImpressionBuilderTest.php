@@ -175,10 +175,11 @@ class ImpressionBuilderTest extends TestCase
         return true;
     }
 
-    public function testgetEventsBasePropertiesArchEnabledWithUAAndIPTest(){
+    public function testgetEventsBasePropertiesArchEnabledWithUAAndIPTest()
+    {
         $accountId = 1;
         $sdkKey = '12345';
-        $queryParams = ImpressionBuilder::getEventsBaseProperties($accountId, $sdkKey, EventEnum::VWO_SYNC_VISITOR_PROP,"abcBot","123.10.234");
+        $queryParams = ImpressionBuilder::getEventsBaseProperties($accountId, $sdkKey, EventEnum::VWO_SYNC_VISITOR_PROP, "abcBot", "123.10.234");
         
         $containsVisitorUa = array_key_exists("visitor_ua", $queryParams);
         $containsVisitorIp = array_key_exists("visitor_ip", $queryParams);
@@ -186,7 +187,8 @@ class ImpressionBuilderTest extends TestCase
         $this->assertEquals(true, $containsVisitorIp);
     }
 
-    public function testgetVisitorQueryParamsWithUAAndIPTest(){
+    public function testgetVisitorQueryParamsWithUAAndIPTest()
+    {
         $settingsFileEventProperties = SettingsFileEventProperties::setUp();
         $campaign = $settingsFileEventProperties['campaigns'][0];
         $visitorUserAgent = "abcBot";
@@ -208,7 +210,8 @@ class ImpressionBuilderTest extends TestCase
         $this->assertEquals(true, $containsVisitorIp);
     }
 
-    public function testgetConversionQueryParamsArchEnabledWithUAAndIPTest(){
+    public function testgetConversionQueryParamsArchEnabledWithUAAndIPTest()
+    {
         $settingsFileEventProperties = SettingsFileEventProperties::setUp();
         $campaign = $settingsFileEventProperties['campaigns'][0];
         $visitorUserAgent = "abcBot";

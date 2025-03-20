@@ -520,8 +520,7 @@ class VWO
         $revenueValue = CommonUtil::getValueFromOptions($options, 'revenueValue');
         $bucketInfo = null;
 
-        if (
-            empty($userId)
+        if (empty($userId)
             || empty($goalIdentifier)
             || !(is_null($campaignKey) || is_array($campaignKey) || is_string($campaignKey))
         ) {
@@ -597,7 +596,7 @@ class VWO
                                     /*
                                     In this case it is expected that goal will have revenueProp
                                     Error should be logged if eventProperties is not Defined ` OR ` eventProperties does not have revenueProp key
-                                */
+                                    */
                                     if (!isset($eventProperties) || !array_key_exists($goal['revenueProp'], $eventProperties)) {
                                         LoggerService::log(
                                             Logger::ERROR,
@@ -614,10 +613,10 @@ class VWO
                                     }
                                 } else {
                                     /*
-                                here mca == -1 so there could only be 2 scenarios,
-                                1. If revenueProp is defined then eventProperties should have revenueProp key
-                                2. if revenueProp is not defined then it's a metric of type - Number of times an event has been triggered.
-                                */
+                                    here mca == -1 so there could only be 2 scenarios,
+                                    1. If revenueProp is defined then eventProperties should have revenueProp key
+                                    2. if revenueProp is not defined then it's a metric of type - Number of times an event has been triggered.
+                                    */
                                     if ($doesRevenuePropExist) {
                                         // Error should be logged if eventProperties is not Defined ` OR ` eventProperties does not have revenueProp key
                                         if (!isset($eventProperties) || !array_key_exists($goal['revenueProp'], $eventProperties)) {
@@ -653,7 +652,7 @@ class VWO
                             );
                             $result[$campaign['key']] = null;
                             continue;
-                         }
+                        }
                     }
 
                     if (isset($goalIdentifier)) {
@@ -1049,9 +1048,9 @@ class VWO
     }
 
     /**
-     * @param array $customDimensionMap
-     * @param bool  $result
-     * @param array $respResult
+     * @param  array $customDimensionMap
+     * @param  bool  $result
+     * @param  array $respResult
      * @return array
      */
     private function preparePushResponse($customDimensionMap, $result, $respResult)

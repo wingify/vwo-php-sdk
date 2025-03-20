@@ -26,7 +26,9 @@ use vwo\Utils\Campaign;
 
 class VariationDeciderTest extends TestCase
 {
-    /** @var VariationDecider $variationDecider */
+    /**
+     * @var VariationDecider $variationDecider 
+     */
     private $variationDecider;
     protected function setUp()
     {
@@ -93,7 +95,9 @@ class VariationDeciderTest extends TestCase
         $expected = $this->variationResults->results['REAL_TIME_PRE_SEGMENTATION'];
 
         foreach ($this->users as $i => $userId) {
-            /** @var VariationDecider $variationDecider */
+            /**
+             * @var VariationDecider $variationDecider 
+            */
             $result = $this->variationDecider->fetchVariationData('', $campaign, $userId, ['customVariables' => ['browser' => 'chrome']], 'testcases');
             $this->assertEquals($expected[$userId], $result['name']);
         }

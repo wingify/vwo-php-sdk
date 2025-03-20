@@ -75,10 +75,11 @@ class LoggerService
 
     /**
      * function to log message directly without any message type
-     * @param mixed $level log level
-     * @param mixed $message log message
-     * @param mixed $params log message params
-     * @param mixed $classname log message class name
+     *
+     * @param  mixed $level     log level
+     * @param  mixed $message   log message
+     * @param  mixed $params    log message params
+     * @param  mixed $classname log message class name
      * @return void
      */
     public static function logWithMessage( $level, $message, $params = [], $classname = '')
@@ -104,18 +105,18 @@ class LoggerService
     {
         $message = "";
         switch ($logLevel) {
-            case Logger::DEBUG:
-                $message = LogMessagesUtil::instance()->getDebugMessage($messageType);
-                break;
-            case Logger::INFO:
-                $message = LogMessagesUtil::instance()->getInfoMessage($messageType);
-                break;
-            case Logger::ERROR:
-                $message = LogMessagesUtil::instance()->getErrorMessage($messageType);
-                break;
-            case Logger::WARNING:
-                $message = LogMessagesUtil::instance()->getWarnMessage($messageType);
-                break;
+        case Logger::DEBUG:
+            $message = LogMessagesUtil::instance()->getDebugMessage($messageType);
+            break;
+        case Logger::INFO:
+            $message = LogMessagesUtil::instance()->getInfoMessage($messageType);
+            break;
+        case Logger::ERROR:
+            $message = LogMessagesUtil::instance()->getErrorMessage($messageType);
+            break;
+        case Logger::WARNING:
+            $message = LogMessagesUtil::instance()->getWarnMessage($messageType);
+            break;
         }
 
         return $message;

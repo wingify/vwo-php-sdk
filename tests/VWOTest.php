@@ -441,18 +441,18 @@ class VWOTest extends TestCase
             $variation = $this->vwoInstance->getVariationName($featureTestKey, $userId);
 
             switch ($variation) {
-                case 'Control':
-                    $expectedIsFeatureEnabled = true;
-                    $expectedFeatureVariableValue = 10;
-                    break;
-                case 'Variation-1':
-                    $expectedIsFeatureEnabled = false;
-                    $expectedFeatureVariableValue = 10;
-                    break;
-                case 'Variation-2':
-                    $expectedIsFeatureEnabled = true;
-                    $expectedFeatureVariableValue = 20;
-                    break;
+            case 'Control':
+                $expectedIsFeatureEnabled = true;
+                $expectedFeatureVariableValue = 10;
+                break;
+            case 'Variation-1':
+                $expectedIsFeatureEnabled = false;
+                $expectedFeatureVariableValue = 10;
+                break;
+            case 'Variation-2':
+                $expectedIsFeatureEnabled = true;
+                $expectedFeatureVariableValue = 20;
+                break;
             }
 
             $campaignKeyWrong = $this->vwoInstance->getFeatureVariableValue(123, 'V!', $userId);
@@ -1007,24 +1007,28 @@ class VWOTest extends TestCase
             $this->assertEquals(true, $response[$tagKey]);
         }
     }
-    public function testWhenRevenueValueNotPassedInTheGoal(){
+
+    public function testWhenRevenueValueNotPassedInTheGoal()
+    {
 
         $settingsFileEventProperties = SettingsFileEventProperties::setUp();
         $campaignKey = $settingsFileEventProperties['campaigns'][0]['key'];
         $vwoInstance = TestUtil::instantiateSdk($settingsFileEventProperties);
-        $response = $vwoInstance->track($campaignKey,'Abby','Track3');
+        $response = $vwoInstance->track($campaignKey, 'Abby', 'Track3');
         $this->assertEquals(false, $response);
     }
 
-    public function testWhenRevenueValueIsNotPassedForMetricOfTypeNumberOfTimesEventIsTriggered(){
+    public function testWhenRevenueValueIsNotPassedForMetricOfTypeNumberOfTimesEventIsTriggered()
+    {
         $settingsFileEventProperties = SettingsFileEventProperties::setUp();
         $campaignKey = $settingsFileEventProperties['campaigns'][0]['key'];
         $vwoInstance = TestUtil::instantiateSdk($settingsFileEventProperties);
-        $response = $vwoInstance->track($campaignKey,'Abby','Track4');
+        $response = $vwoInstance->track($campaignKey, 'Abby', 'Track4');
         $this->assertEquals(true, $response);
     }
 
-    public function testIfEventPropertiesIsPassedInsteadOfRevenueValue(){
+    public function testIfEventPropertiesIsPassedInsteadOfRevenueValue()
+    {
         $settingsFileEventProperties = SettingsFileEventProperties::setUp();
         $campaignKey = $settingsFileEventProperties['campaigns'][0]['key'];
         $vwoInstance = TestUtil::instantiateSdk($settingsFileEventProperties);
@@ -1038,7 +1042,8 @@ class VWOTest extends TestCase
         $this->assertEquals(true, $response);
     }
 
-    public function testIfEventPropertiesDoNotHaveRevenuePropAndItIsPassedInsteadOfRevenueValue(){
+    public function testIfEventPropertiesDoNotHaveRevenuePropAndItIsPassedInsteadOfRevenueValue()
+    {
         $settingsFileEventProperties = SettingsFileEventProperties::setUp();
         $campaignKey = $settingsFileEventProperties['campaigns'][0]['key'];
         $vwoInstance = TestUtil::instantiateSdk($settingsFileEventProperties);
@@ -1048,18 +1053,20 @@ class VWOTest extends TestCase
         $options = [
             'eventProperties' => $eventProperties
         ];
-        $response = $vwoInstance->track($campaignKey,'Abby','Track3',$options);
+        $response = $vwoInstance->track($campaignKey, 'Abby', 'Track3', $options);
         $this->assertEquals(false, $response);
     }
 
-    public function testWhenMABTrueButNoUserStorage(){
+    public function testWhenMABTrueButNoUserStorage()
+    {
         $campaignKey = $this->MABTrueSettingsFile['campaigns'][0]['key'];
         $vwoInstance = TestUtil::instantiateSdk($this->MABTrueSettingsFile, ['isDevelopmentMode' => 1]);
         $variation = $vwoInstance->activate($campaignKey, 'George');
         $this->assertEquals($variation, null);
     }
 
-    public function testWhenMABTrueWithUserStorageEnabled(){
+    public function testWhenMABTrueWithUserStorageEnabled()
+    {
         $campaignKey = $this->MABTrueSettingsFile['campaigns'][0]['key'];
         $vwoInstance = TestUtil::instantiateSdk($this->MABTrueSettingsFile, ['isUserStorage' => 1, 'isDevelopmentMode' => 1]);
         $variation = $vwoInstance->activate($campaignKey, 'George');
@@ -1136,7 +1143,6 @@ class UserStorageService implements UserStorageInterface
      * @param  $campaignInfo
      * @return bool
      */
-
     public function set($campaignUserMapping)
     {
         if (!in_array($campaignUserMapping, $this->campaignStorageArray, true)) {

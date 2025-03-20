@@ -40,7 +40,6 @@ class Common
      * @param  $className
      * @return mixed
      */
-
     public static function buildLogMessage($message, $params, $className = '', $apiName = '')
     {
         $params['{file}'] = $className;
@@ -57,7 +56,6 @@ class Common
      * @param  string $goalIdentifier
      * @return array
      */
-
     public static function getUserCampaignVariationMapping($campaignKey, $variation, $userId, $goalIdentifier)
     {
         $data =  [
@@ -120,16 +118,16 @@ class Common
     public static function typeCast($value, $type)
     {
         switch ($type) {
-            case 'double':
-                return (float)$value;
-            case 'string':
-                return (string)$value;
-            case 'boolean':
-                return (bool)$value;
-            case 'integer':
-                return (int)$value;
-            case 'json':
-                return $value;
+        case 'double':
+            return (float)$value;
+        case 'string':
+            return (string)$value;
+        case 'boolean':
+            return (bool)$value;
+        case 'integer':
+            return (int)$value;
+        case 'json':
+            return $value;
         }
     }
 
@@ -178,10 +176,10 @@ class Common
             return $options[$optionName];
         }
         switch ($optionName) {
-            case 'customVariables':
-                return [];
-            case 'variationTargetingVariables':
-                return [];
+        case 'customVariables':
+            return [];
+        case 'variationTargetingVariables':
+            return [];
         }
         return null;
     }

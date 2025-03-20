@@ -65,10 +65,9 @@ class ImpressionBuilder
             'goal_id' => $goal['id']
         );
 
-        if (
-            $goal['type'] == "REVENUE_TRACKING" && (is_string($revenueValue) || is_float(
-                $revenueValue
-            ) || is_int($revenueValue))
+        if ($goal['type'] == "REVENUE_TRACKING" && (is_string($revenueValue) || is_float(
+            $revenueValue
+        ) || is_int($revenueValue))
         ) {
             $params['r'] = $revenueValue;
         }
@@ -358,9 +357,9 @@ class ImpressionBuilder
     /**
      * Builds postData for multiple custom dimension for batch events call
      *
-     * @param  integer  $accountId
-     * @param  String   $userId
-     * @param  array    $customDimensionMap
+     * @param  integer $accountId
+     * @param  String  $userId
+     * @param  array   $customDimensionMap
      * @return array
      */
     public static function getPushBatchEventData($accountId, $userId, $customDimensionMap)
@@ -382,9 +381,9 @@ class ImpressionBuilder
     /**
      * Builds query params for batch events call
      *
-     * @param integer $accountId
-     * @param string $sdkKey
-     * @param array $usageStats
+     * @param  integer $accountId
+     * @param  string  $sdkKey
+     * @param  array   $usageStats
      * @return array
      */
     public static function getBatchEventQueryParams($accountId, $sdkKey, $usageStats = [])
@@ -402,12 +401,12 @@ class ImpressionBuilder
     /**
      * Builds postData for tracking multiple goals for batch events call
      *
-     * @param integer $accountId
-     * @param String  $userId
-     * @param integer $campaignId
-     * @param integer $variationId
-     * @param array   $goal
-     * @param string|float|integer|null $revenue
+     * @param  integer                   $accountId
+     * @param  String                    $userId
+     * @param  integer                   $campaignId
+     * @param  integer                   $variationId
+     * @param  array                     $goal
+     * @param  string|float|integer|null $revenue
      * @return array
      */
     public static function getTrackBatchEventData($accountId, $userId, $campaignId, $variationId, $goal, $revenue = null)
