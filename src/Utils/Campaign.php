@@ -79,7 +79,7 @@ class Campaign
                 [
                     '{status}' => $status,
                     '{userId}' => $userId,
-                    '{variation}' => $status == 'satisfy' ? ($campaign["type"] == CampaignTypes::FEATURE_ROLLOUT ? 'and hence becomes part of the rollout' : $bucketInfo['name'] . 'and hence variation is assigned') : '',
+                    '{variation}' => $status == 'satisfy' ? ($campaign["type"] == CampaignTypes::FEATURE_ROLLOUT ? 'and hence becomes part of the rollout' : $bucketInfo['name'] . ' and hence variation is assigned') : '',
                     '{campaignKey}' => $campaign['key'],
                     '{customVariables}' => json_encode($variationTargetingVariables),
                     '{segmentationType}' => 'whitelisting'
