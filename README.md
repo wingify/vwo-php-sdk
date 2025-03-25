@@ -1,7 +1,24 @@
-# VWO PHP SDK
+# ⚠️ [DEPRECATED] VWO PHP SDK
 
-[![Latest Stable Version](https://img.shields.io/packagist/v/vwo/vwo-php-sdk.svg)](https://packagist.org/packages/vwo/vwo-php-sdk) [![CI](https://github.com/wingify/vwo-php-sdk/workflows/CI/badge.svg?branch=master)](https://github.com/wingify/vwo-php-sdk/actions?query=workflow%3ACI)
- [![Coverage Status](https://coveralls.io/repos/github/wingify/vwo-php-sdk/badge.svg?branch=master)](https://coveralls.io/github/wingify/vwo-php-sdk?branch=master)[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
+**⚠️ This project is no longer actively developed. ⚠️**
+
+**✅ We are only fixing critical bugs and security issues.**
+
+**❌ No new features, enhancements, or non-critical updates will be added.**
+
+#### Switch to *VWO Feature Management & Experimentation(FME)* – The Better Alternative! 🚀
+
+VWO’s FME product empowers teams to seamlessly test, release, optimize, and roll back features across their entire tech stack while minimizing risk and maximizing business impact.
+
+* Check out FME developer documentation [here](https://developers.vwo.com/v2/docs/fme-overview).
+* Check [this](https://developers.vwo.com/v2/docs/sdks-release-info ) for the list of all FME-supported SDKs.
+
+**💡 Need Help?**
+For migration assistance or any questions, contact us at [support@vwo.com](support@vwo.com)
+
+------
+
+[![Latest Stable Version](https://img.shields.io/packagist/v/vwo/vwo-php-sdk.svg)](https://packagist.org/packages/vwo/vwo-php-sdk) [![CI](https://github.com/wingify/vwo-php-sdk/workflows/CI/badge.svg?branch=master)](https://github.com/wingify/vwo-php-sdk/actions?query=workflow%3ACI) [![Coverage Status](https://coveralls.io/repos/github/wingify/vwo-php-sdk/badge.svg?branch=master)](https://coveralls.io/github/wingify/vwo-php-sdk?branch=master) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 
 This open source library provides you server-side testing capabilities.
 
