@@ -110,8 +110,8 @@ class Validations
      * Validate tagKey and TagValue
      *
      * @param  string $userId
-     * @param  string  $tagKey
-     * @param  string  $tagValue
+     * @param  string $tagKey
+     * @param  string $tagValue
      * @return bool
      */
     private static function validateTagKeyAndValue($userId, $tagKey, $tagValue)
@@ -306,8 +306,8 @@ class Validations
     /**
      * user id should be string type
      *
-     * @param string $userId
-     * @param bool $disableLogs
+     * @param  string $userId
+     * @param  bool   $disableLogs
      * @return bool
      */
     public static function validateUserId($userId, $disableLogs = false)

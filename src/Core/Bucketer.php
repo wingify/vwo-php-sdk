@@ -42,7 +42,6 @@ class Bucketer
      * @param  $weight
      * @return float
      */
-
     public static function getLimit($weight)
     {
         return floor($weight * self::$MAX_RANGE / 100);
@@ -88,14 +87,14 @@ class Bucketer
         }
 
         // based on bucketing algo flag, determine bucket value
-        if((!$is_new_bucketing_enabled && !$is_new_bucketing_v2_enabled)|| ($is_new_bucketing_enabled && isset($campaign["isOB"]) && $campaign["isOB"])){
+        if((!$is_new_bucketing_enabled && !$is_new_bucketing_v2_enabled)|| ($is_new_bucketing_enabled && isset($campaign["isOB"]) && $campaign["isOB"])) {
             // old algo
             $multiplier = self::getMultiplier($campaign['percentTraffic'], $disableLogs);
             list($bucketVal, $hashValue) = self::getBucketVal($userId, $campaign, $is_new_bucketing_enabled, $disableLogs);
 
             // log for type of algo
             LoggerService::log(Logger::INFO, 'Using Old Algo!');
-        } else if (($is_new_bucketing_enabled && !isset($campaign["isOB"]) && !$is_new_bucketing_v2_enabled) || ($is_new_bucketing_v2_enabled && isset($campaign["isOBv2"]) && $campaign["isOBv2"])){
+        } else if (($is_new_bucketing_enabled && !isset($campaign["isOB"]) && !$is_new_bucketing_v2_enabled) || ($is_new_bucketing_v2_enabled && isset($campaign["isOBv2"]) && $campaign["isOBv2"])) {
             // new algo
             $multiplier = 1;
             list($bucketVal, $hashValue) = self::getBucketVal($userId, null, $is_new_bucketing_enabled, $disableLogs);
@@ -167,7 +166,7 @@ class Bucketer
     */
     public static function getBucketVal($userId, $campaign = [], $is_new_bucketing_enabled, $disableLogs = false)
     {
-        # if (isset($campaign["isBucketingSeedEnabled"]) && $campaign["isBucketingSeedEnabled"]) {
+        // if (isset($campaign["isBucketingSeedEnabled"]) && $campaign["isBucketingSeedEnabled"]) {
         if ($campaign!=null && ($is_new_bucketing_enabled || (isset($campaign["isBucketingSeedEnabled"]) && $campaign["isBucketingSeedEnabled"]))) {
             $userId = $campaign["id"] . '_' . $userId;
         }
@@ -197,7 +196,6 @@ class Bucketer
      * @param  $str
      * @return number
      */
-
     public static function getmurmurHash_Int($str)
     {
         return $hash = Murmur::hash3_int($str, self::$SEED);

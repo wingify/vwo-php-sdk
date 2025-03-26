@@ -109,20 +109,20 @@ class VariationDecider
 
         $isCampaignPartOfGroup = $this->settings && CampaignUtil::isPartOfGroup($this->settings, $campaign["id"]);
         $campaignKey = $campaign['key'];
-        if($this->settings!=null){
+        if($this->settings!=null) {
             $accountId = $this->settings["accountId"];
         }
         $decision['isUserWhitelisted'] = false;
         $decision['fromUserStorageService'] = false;
 
-        # get new bucketing enabled flag from settings
+        // get new bucketing enabled flag from settings
         if ($this->settings!=null && isset($this->settings["isNB"]) && $this->settings["isNB"]) {
             $is_new_bucketing_enabled = true;
         } else {
             $is_new_bucketing_enabled = false;
         }
 
-        # get new bucketing V2 enabled flag from settings
+        // get new bucketing V2 enabled flag from settings
         if ($this->settings!=null && isset($this->settings["isNBv2"]) && $this->settings["isNBv2"]) {
             $is_new_bucketing_v2_enabled = true;
         } else {
@@ -327,10 +327,9 @@ class VariationDecider
                 );
             }
 
-            if (
-                isset($variationInfo['variationName']) && is_string(
-                    $variationInfo['variationName']
-                ) && !empty($variationInfo['variationName']) && array_key_exists('campaignKey', $variationInfo) && $variationInfo['campaignKey'] == $campaignKey
+            if (isset($variationInfo['variationName']) && is_string(
+                $variationInfo['variationName']
+            ) && !empty($variationInfo['variationName']) && array_key_exists('campaignKey', $variationInfo) && $variationInfo['campaignKey'] == $campaignKey
             ) {
                 LoggerService::log(
                     Logger::INFO,
@@ -446,7 +445,7 @@ class VariationDecider
      */
     private static function findWinnerCampaign($userId, $eligibleCampaigns, $megAlgoNumber, $groupId, $settingsFile)
     {
-        # get new bucketing enabled flag from settings
+        // get new bucketing enabled flag from settings
         if ($settingsFile!=null && isset($settingsFile["isNB"]) && $settingsFile["isNB"]) {
             $is_new_bucketing_enabled = true;
         } else {
@@ -457,11 +456,11 @@ class VariationDecider
             return  $eligibleCampaigns[0];
         } else {
             if ($megAlgoNumber == self::RandomAlgo) {
-            //Scale the traffic percent of each campaign
+                //Scale the traffic percent of each campaign
                 $eligibleCampaigns = CampaignUtil::scaleCampaigns($eligibleCampaigns);
-            //Allocate new range for campaigns
+                //Allocate new range for campaigns
                 $eligibleCampaigns = Bucketer::addRangesToCampaigns($eligibleCampaigns);
-            //Now retrieve the campaign from the modified_campaign_for_whitelisting
+                //Now retrieve the campaign from the modified_campaign_for_whitelisting
                 list($bucketVal, $hashValue) = Bucketer::getBucketVal($userId, [], false, true);
                 return Bucketer::getCampaignUsingRange($bucketVal, $eligibleCampaigns);
             } else {
@@ -564,7 +563,7 @@ class VariationDecider
      */
     private function checkWhitelistingOrStorageForGroupedCampaigns($userStorageObj, $userId, $calledCampaign, $groupCampaigns, $groupName, $options)
     {
-        # get new bucketing enabled flag from settings
+        // get new bucketing enabled flag from settings
         if ($this->settings!=null && isset($this->settings["isNB"]) && $this->settings["isNB"]) {
             $is_new_bucketing_enabled = true;
         } else {
@@ -624,8 +623,7 @@ class VariationDecider
      */
     private static function checkCampaignNotActivated($apiName, $userStorageObj, $userId, $campaignKey)
     {
-        if (
-            in_array($apiName, ['track', 'getVariationName', 'getFeatureVariableValue'])
+        if (in_array($apiName, ['track', 'getVariationName', 'getFeatureVariableValue'])
             && !empty($userStorageObj)
         ) {
             LoggerService::log(
@@ -653,18 +651,18 @@ class VariationDecider
      * Get variation by murmur logic if pre segmentation pass
      *
      * @param  bool   $isPreSegmentation pre-segmentation flag
-     * @param  string $userId         the unique ID assigned to User
-     * @param  object $userStorageObj userStorage object
-     * @param  array  $campaign       campaign data
-     * @param  string $goalIdentifier goal Identifier used in track API
+     * @param  string $userId            the unique ID assigned to User
+     * @param  object $userStorageObj    userStorage object
+     * @param  array  $campaign          campaign data
+     * @param  string $goalIdentifier    goal Identifier used in track API
      * @return array|null
      */
     private function getVariationIfPreSegmentationApplied($isPreSegmentation, $campaign, $userId, $userStorageObj = null, $goalIdentifier = '')
     {
         $bucketInfo = null;
         $accountId = null;
-        if($this->settings!=null){
-           $accountId = $this->settings["accountId"];
+        if($this->settings!=null) {
+            $accountId = $this->settings["accountId"];
         }
         //check for pre-segmentation if applied
         if ($isPreSegmentation == false) {
@@ -681,14 +679,14 @@ class VariationDecider
             return $bucketInfo;
         }
 
-        # get new bucketing enabled flag from settings
+        // get new bucketing enabled flag from settings
         if ($this->settings!=null && isset($this->settings["isNB"]) && $this->settings["isNB"]) {
             $is_new_bucketing_enabled = true;
         } else {
             $is_new_bucketing_enabled = false;
         }
 
-        # get new bucketing V2 enabled flag from settings
+        // get new bucketing V2 enabled flag from settings
         if ($this->settings!=null && isset($this->settings["isNBv2"]) && $this->settings["isNBv2"]) {
             $is_new_bucketing_v2_enabled = true;
         } else {

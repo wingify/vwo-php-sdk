@@ -36,8 +36,7 @@ class HooksManager
      */
     public function init($config = [])
     {
-        if (
-            isset($config['integrations'])
+        if (isset($config['integrations'])
             && isset($config['integrations']['callback'])
             && is_callable($config['integrations']['callback'])
         ) {
