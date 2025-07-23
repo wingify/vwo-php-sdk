@@ -207,16 +207,18 @@ class VariationDecider
                             );
                             $winnerCampaign = $this->findWinnerCampaign($userId, $eligibleCampaigns, $megAlgoNumber, $groupId, $this->settings);
 
-                            LoggerService::log(
-                                Logger::INFO,
-                                'MEG_GOT_WINNER_CAMPAIGN',
-                                [
-                                    '{userId}' => $userId,
-                                    '{campaignKey}' => $winnerCampaign["key"],
-                                    '{groupName}' => $groupName
-                                ],
-                                self::CLASSNAME
-                            );
+                            if ($winnerCampaign && isset($winnerCampaign["key"])) {
+                                LoggerService::log(
+                                    Logger::INFO,
+                                    'MEG_GOT_WINNER_CAMPAIGN',
+                                    [
+                                        '{userId}' => $userId,
+                                        '{campaignKey}' => $winnerCampaign["key"],
+                                        '{groupName}' => $groupName
+                                    ],
+                                    self::CLASSNAME
+                                );
+                            }
                             if ($winnerCampaign && $winnerCampaign["id"] == $campaign["id"]) {
                                 $bucketInfo = Bucketer::getBucket($userId, $campaign, $is_new_bucketing_enabled, $is_new_bucketing_v2_enabled, $accountId);
                                 if ($bucketInfo == null) {
