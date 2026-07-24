@@ -38,7 +38,7 @@ class RedisUserStorage implements UserStorageInterface
     /**
      * Constructor for initializing the RedisUserStorageService.
      *
-     * @param RedisConfig $redisConfig Configuration object containing Redis server details.
+     * @param  RedisConfig $redisConfig Configuration object containing Redis server details.
      * @throws Exception If there is an issue connecting to Redis.
      */
     public function __construct($redisConfig)
@@ -63,8 +63,8 @@ class RedisUserStorage implements UserStorageInterface
     /**
      * Get user-campaign mapping for the given user ID and campaign key.
      *
-     * @param string $userId User ID.
-     * @param string $campaignKey Campaign key.
+     * @param  string $userId      User ID.
+     * @param  string $campaignKey Campaign key.
      * @return array|null The user-campaign mapping as an associative array, or null if not found.
      */
     public function Get($userId, $campaignKey)

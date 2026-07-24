@@ -72,10 +72,12 @@ class EventDispatcher
         }
 
         // Log failure after exhausting retries
-        LoggerService::log(Logger::ERROR, 'IMPRESSION_FAILED', [
+        LoggerService::log(
+            Logger::ERROR, 'IMPRESSION_FAILED', [
             '{endPoint}' => $url,
             '{err}' => 'Request failed after max retries: ' . $error
-        ], self::CLASSNAME);
+            ], self::CLASSNAME
+        );
 
         return false;
     }
@@ -203,8 +205,8 @@ class EventDispatcher
      * Send batch events call to the destination i.e. VWO server
      *
      * @param  string $sdkKey
-     * @param  array $params
-     * @param  array $postData
+     * @param  array  $params
+     * @param  array  $postData
      * @return bool
      */
     public function sendBatchEventRequest($sdkKey, $params, $postData)
